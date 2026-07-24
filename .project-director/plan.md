@@ -1,8 +1,11 @@
-# Plan
+# Plan — Context Infra V2
 
-- [x] Discover project structure and platform constraints.
-- [x] Define the first-release contract and acceptance criteria.
-- [x] Implement persistence and upload routes.
-- [x] Build the responsive PWA workspace.
-- [x] Validate core behavior and production build.
-- [ ] Publish a private owner preview.
+- [x] Inspect current release and user-demand map.
+- [x] Define product boundary and acceptance criteria.
+- [x] Extend the persistent context model.
+- [x] Implement personal, team, task, and boundary views.
+- [x] Enforce personal/team visibility in server routes.
+- [x] Generate and inspect migrations.
+- [x] Run typecheck, lint, tests, and production build.
+- [ ] Commit and push the validated source.
+- [ ] Save and deploy a private production version.

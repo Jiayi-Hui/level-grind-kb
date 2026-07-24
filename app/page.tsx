@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Workspace } from "./workspace";
 
 export const metadata: Metadata = {
-  title: "Workspace · Level Grind",
-  description: "Capture once. Find it everywhere.",
+  title: "Context Infra · Level Grind",
+  description: "Personal, team and task context for research.",
 };
 
 export default function Home() {

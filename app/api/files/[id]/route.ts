@@ -12,11 +12,14 @@ export async function GET(
   if (!email && host !== "localhost" && host !== "127.0.0.1") {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   }
+  const viewerEmail = email || "owner@level-grind.com";
 
   const { id } = await context.params;
   const row = await env.DB.prepare(
-    "SELECT file_key, file_name, file_type FROM documents WHERE id = ?1"
-  ).bind(id).first<{ file_key: string; file_name: string; file_type: string }>();
+    `SELECT file_key, file_name, file_type
+     FROM documents
+     WHERE id = ?1 AND (visibility = 'team' OR author_email = ?2)`
+  ).bind(id, viewerEmail).first<{ file_key: string; file_name: string; file_type: string }>();
   if (!row?.file_key) return NextResponse.json({ error: "File not found" }, { status: 404 });
 
   const object = await env.FILES.get(row.file_key);

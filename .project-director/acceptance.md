@@ -1,11 +1,12 @@
-# Acceptance
+# Acceptance — Context Infra V2
 
-- [ ] Installable Level Grind PWA.
-- [ ] Responsive desktop and mobile layouts.
-- [ ] Empty, loading, success, and error states.
-- [ ] Durable D1 records and R2 attachments.
-- [ ] Searchable personal and team views.
-- [ ] Markdown download and Obsidian export.
-- [ ] Successful production build.
-- [ ] Private production deployment.
-
+- [x] Existing capture and attachment workflow remains available.
+- [x] Captures include source, topic, event date, confidence, and personal/team scope.
+- [x] Personal context can be saved independently.
+- [x] Team context shows topic lines and provenance.
+- [x] Task context packs can be created and reviewed.
+- [x] System boundaries are explicit and do not claim nonexistent connectors.
+- [x] Private record listing and file download enforce ownership.
+- [x] Production checks pass.
+- [ ] GitHub source is updated.
+- [ ] Private production deployment is updated.

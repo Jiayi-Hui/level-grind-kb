@@ -1,22 +1,24 @@
 # Level Grind
 
-Level Grind is an installable private research workspace. Team members capture notes, links, and files once, then find and review them from any device.
+Level Grind is a private context infrastructure for fundamental research teams. It keeps personal research methods, approved team intelligence, and task-specific context separate while making each layer usable from any device.
 
-## First-release capabilities
+## Current capabilities
 
-- Personal inbox, team, project, and PM views.
-- Text, link, and file capture.
-- Durable document metadata and attachment storage.
-- Search across titles, notes, and projects.
+- Context-aware text, link, and file capture with source, topic, event date, confidence, and personal/team scope.
+- Personal context profiles for coverage, output preferences, working method, and private memory.
+- Team topic lines and source provenance.
+- Task context packs with objective, allowed context, output format, and guardrails.
+- Search across titles, notes, projects, topics, and source systems.
 - Markdown download and one-click Obsidian handoff.
+- Explicit system-boundary view for Obsidian, company AVD, Excel, and Quant research.
 - Responsive desktop and mobile interface.
 - PWA installation and offline shell.
 
 ## Product boundary
 
-The web workspace is the source of truth. Obsidian and Git are optional export or archive destinations, not synchronization engines.
+Level Grind is the source of truth for context, provenance, permissions, task state, timelines, and approved research results. Raw data can remain in systems such as Obsidian, Bloomberg, Wind, WeChat, Teams, Excel, or a separate Quant research stack.
 
-The first production deployment is owner-only. Company-email invitation, team membership, and production role administration are the next rollout phase.
+The current production deployment remains owner-only. Company-email invitation, team membership, record-level roles, automated extraction, external connectors, agent execution, and two-way Obsidian sync are later phases.
 
 ## Development
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const schema = `
+const documentsSchema = `
   CREATE TABLE IF NOT EXISTS documents (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -24,6 +24,18 @@ const schema = `
   )
 `;
 
+const contextSchema = `
+  CREATE TABLE IF NOT EXISTS document_context (
+    document_id TEXT PRIMARY KEY,
+    context_scope TEXT NOT NULL DEFAULT 'team',
+    source_system TEXT NOT NULL DEFAULT 'manual',
+    topics TEXT NOT NULL DEFAULT '',
+    event_date TEXT,
+    confidence TEXT NOT NULL DEFAULT 'medium',
+    FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE
+  )
+`;
+
 function identity(request: NextRequest) {
   const email = request.headers.get("oai-authenticated-user-email");
   const encodedName = request.headers.get("oai-authenticated-user-full-name");
@@ -37,7 +49,6 @@ function identity(request: NextRequest) {
     }
   }
   if (email) return { email, name };
-
   const host = request.nextUrl.hostname;
   if (host === "localhost" || host === "127.0.0.1") {
     return { email: "owner@level-grind.com", name: "Level Grind Owner" };
@@ -46,10 +57,13 @@ function identity(request: NextRequest) {
 }
 
 async function prepareDb() {
-  await env.DB.prepare(schema).run();
-  await env.DB.prepare(
-    "CREATE INDEX IF NOT EXISTS documents_created_idx ON documents(created_at DESC)"
-  ).run();
+  await env.DB.batch([
+    env.DB.prepare(documentsSchema),
+    env.DB.prepare(contextSchema),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS documents_created_idx ON documents(created_at DESC)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS document_context_scope_idx ON document_context(context_scope)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS document_context_source_idx ON document_context(source_system)"),
+  ]);
 }
 
 export async function GET(request: NextRequest) {
@@ -60,18 +74,25 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   const scope = request.nextUrl.searchParams.get("scope") ?? "team";
   const like = `%${query}%`;
-  const statement =
-    scope === "mine"
-      ? env.DB.prepare(
-          `SELECT * FROM documents
-           WHERE author_email = ?1 AND (?2 = '' OR title LIKE ?3 OR body LIKE ?3 OR project LIKE ?3)
-           ORDER BY created_at DESC LIMIT 100`
-        ).bind(user.email, query, like)
-      : env.DB.prepare(
-          `SELECT * FROM documents
-           WHERE (?1 = '' OR title LIKE ?2 OR body LIKE ?2 OR project LIKE ?2)
-           ORDER BY created_at DESC LIMIT 100`
-        ).bind(query, like);
+  const personal = scope === "mine" || scope === "personal";
+  const accessClause = personal
+    ? "d.author_email = ?1"
+    : "(d.visibility = 'team' OR d.author_email = ?1)";
+  const statement = env.DB.prepare(
+    `SELECT d.*,
+            COALESCE(c.context_scope, CASE WHEN d.visibility = 'team' THEN 'team' ELSE 'personal' END) AS context_scope,
+            COALESCE(c.source_system, 'manual') AS source_system,
+            COALESCE(c.topics, d.project) AS topics,
+            c.event_date,
+            COALESCE(c.confidence, 'medium') AS confidence
+     FROM documents d
+     LEFT JOIN document_context c ON c.document_id = d.id
+     WHERE ${accessClause}
+       AND (?2 = '' OR d.title LIKE ?3 OR d.body LIKE ?3 OR d.project LIKE ?3
+         OR c.topics LIKE ?3 OR c.source_system LIKE ?3)
+     ORDER BY COALESCE(c.event_date, d.created_at) DESC
+     LIMIT 150`
+  ).bind(user.email, query, like);
   const result = await statement.all();
   return NextResponse.json({ documents: result.results, user });
 }
@@ -87,7 +108,14 @@ export async function POST(request: NextRequest) {
   const sourceUrl = String(form.get("sourceUrl") ?? "").trim();
   const project = String(form.get("project") ?? "General").trim() || "General";
   const importance = String(form.get("importance") ?? "normal");
-  const visibility = String(form.get("visibility") ?? "team");
+  const contextScope = String(form.get("contextScope") ?? "team") === "personal" ? "personal" : "team";
+  const visibility = contextScope === "personal" ? "private" : "team";
+  const sourceSystem = String(form.get("sourceSystem") ?? "manual").trim().slice(0, 80) || "manual";
+  const topics = String(form.get("topics") ?? project).trim().slice(0, 500);
+  const eventDate = String(form.get("eventDate") ?? "").trim();
+  const confidence = ["low", "medium", "high"].includes(String(form.get("confidence")))
+    ? String(form.get("confidence"))
+    : "medium";
   const file = form.get("file");
 
   if (!title || title.length > 180) {
@@ -107,7 +135,7 @@ export async function POST(request: NextRequest) {
 
   if (file instanceof File && file.size > 0) {
     if (file.size > 25 * 1024 * 1024) {
-      return NextResponse.json({ error: "Files must be 25 MB or smaller in this preview." }, { status: 400 });
+      return NextResponse.json({ error: "Files must be 25 MB or smaller." }, { status: 400 });
     }
     kind = "file";
     fileName = file.name.slice(0, 240);
@@ -120,18 +148,23 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  await env.DB.prepare(
-    `INSERT INTO documents (
-      id, title, kind, body, source_url, author_email, author_name, project,
-      importance, visibility, file_key, file_name, file_type, file_size,
-      created_at, updated_at
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)`
-  )
-    .bind(
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO documents (
+        id, title, kind, body, source_url, author_email, author_name, project,
+        importance, visibility, file_key, file_name, file_type, file_size,
+        created_at, updated_at
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)`
+    ).bind(
       id, title, kind, body, sourceUrl || null, user.email, user.name, project,
       importance, visibility, fileKey, fileName, fileType, fileSize, now, now
-    )
-    .run();
+    ),
+    env.DB.prepare(
+      `INSERT INTO document_context (
+        document_id, context_scope, source_system, topics, event_date, confidence
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+    ).bind(id, contextScope, sourceSystem, topics, eventDate || now.slice(0, 10), confidence),
+  ]);
 
   return NextResponse.json({ id }, { status: 201 });
 }

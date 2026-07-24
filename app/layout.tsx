@@ -14,19 +14,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.level-grind.com"),
-  title: "Level Grind",
-  description: "A private research workspace for teams that turn daily inputs into shared intelligence.",
+  title: "Level Grind Context Infra",
+  description: "Personal, team and task context for fundamental research teams.",
   manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Level Grind",
-    description: "Capture once. Find it everywhere.",
+    description: "The right context for every research task.",
     type: "website",
     images: [{ url: "/og.png", width: 1728, height: 909, alt: "Level Grind research workspace" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Level Grind",
-    description: "Capture once. Find it everywhere.",
+    description: "The right context for every research task.",
     images: ["/og.png"],
   },
   appleWebApp: {

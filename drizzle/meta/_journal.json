@@ -15,6 +15,13 @@
       "when": 1784822046569,
       "tag": "0001_useful_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784879451900,
+      "tag": "0002_loud_caretaker",
+      "breakpoints": true
     }
   ]
 }
