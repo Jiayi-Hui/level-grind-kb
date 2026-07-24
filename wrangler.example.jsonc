@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "level-grind-kb",
+  "compatibility_date": "2026-07-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "level-grind-kb-alpha",
+      "database_id": "replace-with-d1-database-id"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "level-grind-kb-files-alpha"
+    }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_replace_me",
+    "CLERK_SIGN_IN_URL": "/sign-in",
+    "CLERK_SIGN_UP_URL": "/sign-up",
+    "CLERK_AFTER_SIGN_IN_URL": "/",
+    "CLERK_AFTER_SIGN_UP_URL": "/",
+    "LEVEL_GRIND_INVITED_EMAILS": "you@example.com"
+  }
+}

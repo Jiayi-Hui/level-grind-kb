@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAppUser } from "../../../lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -36,26 +37,6 @@ const contextSchema = `
   )
 `;
 
-function identity(request: NextRequest) {
-  const email = request.headers.get("oai-authenticated-user-email");
-  const encodedName = request.headers.get("oai-authenticated-user-full-name");
-  const encoding = request.headers.get("oai-authenticated-user-full-name-encoding");
-  let name = email?.split("@")[0] ?? "";
-  if (encodedName && encoding === "percent-encoded-utf-8") {
-    try {
-      name = decodeURIComponent(encodedName);
-    } catch {
-      // Keep the safe email-derived fallback.
-    }
-  }
-  if (email) return { email, name };
-  const host = request.nextUrl.hostname;
-  if (host === "localhost" || host === "127.0.0.1") {
-    return { email: "owner@level-grind.com", name: "Level Grind Owner" };
-  }
-  return null;
-}
-
 async function prepareDb() {
   await env.DB.batch([
     env.DB.prepare(documentsSchema),
@@ -67,8 +48,8 @@ async function prepareDb() {
 }
 
 export async function GET(request: NextRequest) {
-  const user = identity(request);
-  if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  const { user, response } = await requireAppUser();
+  if (!user) return response;
 
   await prepareDb();
   const query = request.nextUrl.searchParams.get("q")?.trim() ?? "";
@@ -98,8 +79,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = identity(request);
-  if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  const { user, response } = await requireAppUser();
+  if (!user) return response;
 
   await prepareDb();
   const form = await request.formData();

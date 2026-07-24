@@ -20,6 +20,8 @@ Level Grind is the source of truth for context, provenance, permissions, task st
 
 The current production deployment remains owner-only. Company-email invitation, team membership, record-level roles, automated extraction, external connectors, agent execution, and two-way Obsidian sync are later phases.
 
+The alpha web app uses Clerk for simple email-based login plus an environment-managed invitation allowlist. Outlook, Teams, and other company systems remain future connector channels, not the primary login dependency.
+
 ## Development
 
 Requires Node.js 22.13 or newer.
@@ -31,3 +33,5 @@ npm run build
 ```
 
 The site declares Cloudflare D1 and R2 bindings in `.openai/hosting.json`.
+
+See `DEPLOYMENT.md` for Clerk, D1, and R2 setup notes.
