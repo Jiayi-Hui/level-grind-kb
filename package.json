@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.13.0",
-    "@clerk/nextjs": "^7.6.0",
+    "@clerk/react": "^6.12.7",
     "cross-env": "^10.1.0",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",

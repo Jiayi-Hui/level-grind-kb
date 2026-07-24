@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type View = "inbox" | "personal" | "team" | "tasks" | "sources";
@@ -101,6 +102,7 @@ function markdown(doc: DocumentRecord) {
 }
 
 export function Workspace() {
+  const { getToken } = useAuth();
   const [active, setActive] = useState<View>("inbox");
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [context, setContext] = useState<ContextPayload | null>(null);
@@ -115,14 +117,21 @@ export function Workspace() {
   const [mobileNav, setMobileNav] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const authorizedFetch = useCallback(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const token = await getToken();
+    const headers = new Headers(init.headers);
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return fetch(input, { ...init, headers });
+  }, [getToken]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const scope = active === "personal" ? "personal" : "team";
       const [documentsResponse, contextResponse] = await Promise.all([
-        fetch(`/api/documents?scope=${scope}&q=${encodeURIComponent(query)}`),
-        fetch("/api/context"),
+        authorizedFetch(`/api/documents?scope=${scope}&q=${encodeURIComponent(query)}`),
+        authorizedFetch("/api/context"),
       ]);
       if (!documentsResponse.ok || !contextResponse.ok) {
         throw new Error("The context workspace could not be loaded.");
@@ -140,7 +149,7 @@ export function Workspace() {
     } finally {
       setLoading(false);
     }
-  }, [active, query]);
+  }, [active, authorizedFetch, query]);
 
   useEffect(() => {
     const timer = window.setTimeout(load, 160);
@@ -167,7 +176,7 @@ export function Workspace() {
     setSaving(true);
     setError("");
     try {
-      const response = await fetch("/api/documents", { method: "POST", body: new FormData(event.currentTarget) });
+      const response = await authorizedFetch("/api/documents", { method: "POST", body: new FormData(event.currentTarget) });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Capture failed.");
       setComposer(false);
@@ -185,7 +194,7 @@ export function Workspace() {
     event.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch("/api/context", { method: "POST", body: new FormData(event.currentTarget) });
+      const response = await authorizedFetch("/api/context", { method: "POST", body: new FormData(event.currentTarget) });
       if (!response.ok) throw new Error("Personal context could not be saved.");
       setToast("Personal context updated");
       await load();
@@ -200,7 +209,7 @@ export function Workspace() {
     event.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch("/api/context", { method: "POST", body: new FormData(event.currentTarget) });
+      const response = await authorizedFetch("/api/context", { method: "POST", body: new FormData(event.currentTarget) });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Task context could not be saved.");
       setTaskComposer(false);
@@ -223,6 +232,22 @@ export function Workspace() {
     anchor.click();
     URL.revokeObjectURL(url);
     setToast("Markdown downloaded");
+  }
+
+  async function downloadFile(doc: DocumentRecord) {
+    if (!doc.file_name) return;
+    const response = await authorizedFetch(`/api/files/${doc.id}`);
+    if (!response.ok) {
+      setError("Attachment could not be downloaded.");
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = doc.file_name;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   async function openObsidian(doc: DocumentRecord) {
@@ -307,6 +332,7 @@ export function Workspace() {
                 selected={selected}
                 setSelected={setSelected}
                 downloadMarkdown={downloadMarkdown}
+                downloadFile={downloadFile}
                 openObsidian={openObsidian}
                 openCapture={() => setComposer(true)}
               />
@@ -462,6 +488,7 @@ function DocumentDesk({
   selected: DocumentRecord | null;
   setSelected: (doc: DocumentRecord) => void;
   downloadMarkdown: (doc: DocumentRecord) => void;
+  downloadFile: (doc: DocumentRecord) => void;
   openObsidian: (doc: DocumentRecord) => void;
   openCapture: () => void;
 }) {
@@ -493,7 +520,7 @@ function DocumentDesk({
             <p className="detail-meta">{selected.source_system} · {selected.author_name} · {selected.event_date || new Date(selected.created_at).toLocaleDateString()}</p>
             <div className="detail-body">{selected.body || "This item contains an attachment or external source."}</div>
             {selected.source_url && <a className="source-link" href={selected.source_url} target="_blank" rel="noreferrer">Open original source ↗</a>}
-            {selected.file_name && <a className="source-link" href={`/api/files/${selected.id}`}>Download {selected.file_name}</a>}
+            {selected.file_name && <button className="source-link file-link-button" onClick={() => downloadFile(selected)}>Download {selected.file_name}</button>}
             <div className="detail-actions"><button onClick={() => downloadMarkdown(selected)}>↓ Markdown</button><button className="obsidian-button" onClick={() => openObsidian(selected)}>Open in Obsidian ↗</button></div>
             <div className="freshness"><span>●</span><div><strong>{selected.context_scope === "personal" ? "Personal context" : "Approved team context"}</strong><small>Source, date and scope travel with this item.</small></div></div>
           </>

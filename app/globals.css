@@ -174,6 +174,7 @@ button { color: inherit; }
 .detail-meta { color: var(--muted); font-size: 10px; }
 .detail-body { margin: 24px 0; color: #3e4843; font: 14px/1.75 Georgia, serif; white-space: pre-wrap; max-height: 220px; overflow: auto; }
 .source-link { display: block; color: var(--green); font-size: 11px; margin: 9px 0; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.file-link-button { border: 0; background: transparent; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; }
 .detail-actions { display: flex; gap: 8px; margin-top: 24px; }
 .detail-actions button { flex: 1; border: 1px solid var(--line); background: white; border-radius: 6px; padding: 9px 8px; cursor: pointer; font-size: 10px; }
 .detail-actions .obsidian-button { background: #5a3f75; border-color: #5a3f75; color: white; }
