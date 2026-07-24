@@ -76,8 +76,8 @@ async function prepareDb() {
   ]);
 }
 
-export async function GET() {
-  const { user, response } = await requireAppUser();
+export async function GET(request: NextRequest) {
+  const { user, response } = await requireAppUser(request);
   if (!user) return response;
   await prepareDb();
 
@@ -134,7 +134,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { user, response } = await requireAppUser();
+  const { user, response } = await requireAppUser(request);
   if (!user) return response;
   await prepareDb();
 

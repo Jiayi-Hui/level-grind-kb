@@ -56,6 +56,12 @@ button { color: inherit; }
   align-items: center;
   gap: 16px;
 }
+.session-corner {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 80;
+}
 
 .app-shell { min-height: 100vh; display: flex; }
 .sidebar {

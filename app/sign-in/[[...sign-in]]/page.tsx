@@ -1,9 +1,5 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignInPanel } from "../../auth-widgets";
 
 export default function Page() {
-  return (
-    <main className="auth-page">
-      <SignIn />
-    </main>
-  );
+  return <SignInPanel />;
 }

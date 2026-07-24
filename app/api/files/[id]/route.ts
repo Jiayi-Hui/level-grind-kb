@@ -8,7 +8,7 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { user, response } = await requireAppUser();
+  const { user, response } = await requireAppUser(request);
   if (!user) return response;
 
   const { id } = await context.params;
