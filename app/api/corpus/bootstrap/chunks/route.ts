@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     pages?: Array<{ pageNumber?: number; content?: string }>;
   };
   const documentId = String(body.documentId ?? "");
-  const pages = Array.isArray(body.pages) ? body.pages.slice(0, 12) : [];
+  const pages = Array.isArray(body.pages) ? body.pages.slice(0, 50) : [];
   const document = await env.DB.prepare(
     "SELECT id FROM corpus_documents WHERE id = ?1",
   ).bind(documentId).first();

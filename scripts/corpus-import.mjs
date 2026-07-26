@@ -35,13 +35,6 @@ for (const record of selected) {
   const pdfPath = filesByName.get(filename);
   if (!filename || !pdfPath) throw new Error(`Missing PDF for ${record.title}`);
   const bytes = await readFile(pdfPath);
-  const extracted = await extractText(new Uint8Array(bytes), { mergePages: false });
-  const pages = (Array.isArray(extracted.text) ? extracted.text : [extracted.text])
-    .map((content, index) => ({
-      pageNumber: index + 1,
-      content: content.replace(/\u0000/g, "").trim(),
-    }))
-    .filter((page) => page.content);
   const metadata = {
     securityCode: record.code,
     companyName: record.company,
@@ -61,6 +54,13 @@ for (const record of selected) {
     console.log(`${imported}/${selected.length} ${record.company} ${record.title} · already imported`);
     continue;
   }
+  const extracted = await extractText(new Uint8Array(bytes), { mergePages: false });
+  const pages = (Array.isArray(extracted.text) ? extracted.text : [extracted.text])
+    .map((content, index) => ({
+      pageNumber: index + 1,
+      content: content.replace(/\u0000/g, "").trim(),
+    }))
+    .filter((page) => page.content);
   const partSize = 3_000_000;
   for (let offset = 0, partNumber = 0; offset < bytes.length; offset += partSize, partNumber += 1) {
     const part = bytes.subarray(offset, Math.min(offset + partSize, bytes.length));
@@ -83,12 +83,12 @@ for (const record of selected) {
       pageCount: extracted.totalPages,
     }),
   });
-  for (let offset = 0; offset < pages.length; offset += 12) {
+  for (let offset = 0; offset < pages.length; offset += 50) {
     await requestJson("/api/corpus/bootstrap/chunks", {
       method: "POST",
       body: JSON.stringify({
         documentId: completed.id,
-        pages: pages.slice(offset, offset + 12),
+        pages: pages.slice(offset, offset + 50),
       }),
     });
   }
