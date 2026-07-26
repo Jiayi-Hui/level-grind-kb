@@ -24,7 +24,9 @@ The Multi-user Alpha stores team membership in D1. Owners and admins can add or 
 
 The alpha web app uses Clerk for identity. `LEVEL_GRIND_OWNER_EMAIL` safely bootstraps the first owner; the legacy environment-managed invitation allowlist is retained only as a migration path into persistent membership.
 
-Conversation routing is manual and reviewable in the current release. Automatic topic-shift detection requires a future connector to an approved chat-history source; Level Grind does not silently ingest raw conversations.
+Conversation-routing principles are intentionally outside this product. Level
+Grind stores research material, evidence, preferences, and question history; it
+does not inspect or route a user's unrelated conversations.
 
 GitHub can synchronize validated source, schema, and product documentation between computers. Live D1 records and R2 attachments remain in the cloud deployment and are not committed to Git.
 

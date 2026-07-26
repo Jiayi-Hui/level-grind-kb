@@ -72,6 +72,8 @@ export const taskContexts = sqliteTable(
   ]
 );
 
+// Legacy tables remain declared only to avoid a destructive production
+// migration. They have no route or user-facing product surface.
 export const routingPolicies = sqliteTable("routing_policies", {
   email: text("email").primaryKey(),
   reminderEnabled: integer("reminder_enabled", { mode: "boolean" }).notNull().default(true),
@@ -178,5 +180,34 @@ export const aiUsageEvents = sqliteTable(
   (table) => [
     index("ai_usage_user_idx").on(table.userEmail),
     index("ai_usage_created_idx").on(table.createdAt),
+  ],
+);
+
+export const userPreferences = sqliteTable("user_preferences", {
+  email: text("email").primaryKey(),
+  language: text("language").notNull().default("en"),
+  storageQuotaBytes: integer("storage_quota_bytes").notNull().default(5_368_709_120),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const researchQueries = sqliteTable(
+  "research_queries",
+  {
+    id: text("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    evidenceMode: text("evidence_mode").notNull().default("reports"),
+    citationsJson: text("citations_json").notNull().default("[]"),
+    webResultsJson: text("web_results_json").notNull().default("[]"),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    estimatedCostUsd: text("estimated_cost_usd").notNull().default("0"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("research_queries_user_created_idx").on(table.userEmail, table.createdAt),
   ],
 );

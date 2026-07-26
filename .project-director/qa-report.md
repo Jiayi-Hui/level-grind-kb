@@ -29,6 +29,13 @@
 | Bootstrap shutdown | Pass | Temporary production import credential removed after the verified batch |
 | Provider boundary | Pass | API key remains server-side; DeepSeek/GLM/Kimi share one runtime-configured contract |
 | Current validation | Pass | ESLint, TypeScript, production build, and 3/3 contract tests |
+| Markdown answer rendering | Pass | Safe React renderer handles headings, bold, lists, links, and citation markers |
+| Research history | Pass | Private per-user D1 history stores mode, answer, sources, model, tokens, and cost |
+| Language persistence | Pass | Account preference API plus local first-paint fallback |
+| Storage visibility | Pass | Personal attachment usage and owner/member quotas are separated from shared corpus bytes |
+| Navigation boundary | Pass | Context pages and Conversation routing removed from the active app; routing API deleted |
+| Report-open latency UX | Pass | Same-origin report route opens immediately in a new tab with button progress |
+| Web research contract | Pass | Report/Web/Hybrid modes; missing search key returns explicit 503; Tavily adapter is server-only |
 
 ## Acceptance Mapping
 

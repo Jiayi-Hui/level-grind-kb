@@ -18,19 +18,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://app.level-grind.com"),
-  title: "Level Grind Context Infra",
-  description: "Personal, team and task context for fundamental research teams.",
+  title: "Level Grind Research OS",
+  description: "A governed research workspace for reports, public evidence, and durable AI-assisted analysis.",
   manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Level Grind",
-    description: "The right context for every research task.",
+    description: "Reports, public evidence, and durable AI-assisted research.",
     type: "website",
     images: [{ url: "/og.png", width: 1728, height: 909, alt: "Level Grind research workspace" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Level Grind",
-    description: "The right context for every research task.",
+    description: "Reports, public evidence, and durable AI-assisted research.",
     images: ["/og.png"],
   },
   appleWebApp: {

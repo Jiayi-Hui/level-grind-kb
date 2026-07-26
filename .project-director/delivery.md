@@ -18,6 +18,13 @@ Interactive admin uploads now accept PDFs up to 25 MB. The bootstrap importer
 uses chunked file and page-text writes for larger documents; its temporary
 production credential was removed after the batch completed.
 
+The Research OS experience increment replaces the context-heavy navigation with
+five repeated-use surfaces: Research inbox, Report library, Ask research,
+History, and Settings. It adds account-persisted Chinese/English localization,
+per-login release notes, formatted Markdown answers, private query history,
+Obsidian export, personal storage visibility, faster report opening feedback,
+and explicit Report/Web/Hybrid evidence modes.
+
 ## Changed Areas
 
 - Context-aware capture and search.
@@ -38,6 +45,13 @@ production credential was removed after the batch completed.
 - Per-user query, token, estimated-cost, latency, and status records.
 - Provider-neutral DeepSeek/GLM/Kimi server boundary.
 - Per-answer output hard cap to bound pilot cost and latency.
+- Whole-product PRD and status matrix.
+- Safe Markdown answer rendering.
+- Private per-user research-query history.
+- Language and storage-preference API.
+- Selective public-web evidence capture.
+- Settings-based profile, quota, Obsidian, integration, and team controls.
+- Removed Conversation routing UI/API and the three context navigation items.
 
 ## Verification
 
@@ -49,6 +63,9 @@ production credential was removed after the batch completed.
   user's device.
 - Retrieval is keyword-grounded in this Alpha; embeddings and hybrid/vector
   ranking are a later quality layer.
+- Web and Hybrid modes require a separate server-side search provider key.
+  DeepSeek performs synthesis; its standard API does not bundle the consumer
+  app's search results.
 - Scanned/image-only PDFs still require OCR.
 - No external chat connector, knowledge graph, or autonomous agent execution.
 - No two-way Obsidian sync or Excel runner.

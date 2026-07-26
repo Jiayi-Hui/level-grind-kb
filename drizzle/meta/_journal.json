@@ -50,6 +50,13 @@
       "when": 1785071737193,
       "tag": "0006_little_lionheart",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1785078630057,
+      "tag": "0007_right_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

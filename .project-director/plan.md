@@ -33,3 +33,21 @@
 - [x] Raise interactive PDF uploads to 25 MB and add chunked bootstrap ingestion for larger files.
 - [ ] Add HKEX, SEC, JPX, TWSE, and KRX source adapters for the remaining companies.
 - [ ] Build V4.3 Azure gateway and permission-filtered semantic retrieval.
+
+## V4.4 — Research OS Experience
+
+- [x] Maintain a whole-product PRD with live, current-increment, and planned states.
+- [x] Replace the context-heavy navigation with Inbox, Library, Ask, History, and Settings.
+- [x] Remove Conversation routing from the product UI and API surface.
+- [x] Add account-persisted Chinese/English localization.
+- [x] Add per-login Welcome back release notes.
+- [x] Render answer Markdown safely.
+- [x] Persist private Q&A history with usage and evidence.
+- [x] Add Markdown and Obsidian URI export.
+- [x] Stream report opening in a new tab with visible progress.
+- [x] Add Report, Web, and Hybrid evidence contracts.
+- [x] Add selective web-result capture with provenance.
+- [x] Add personal storage/quota visibility and shared-corpus separation.
+- [x] Pass lint, TypeScript, production build, and focused tests.
+- [ ] Deploy the validated Research OS version and complete authenticated browser QA.
+- [ ] Configure a governed public-web search API key.

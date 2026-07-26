@@ -127,10 +127,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
       <main className="auth-page">
         <section className="auth-card">
           <p className="eyebrow">PRIVATE ALPHA</p>
-          <h1>Level Grind Context Infra</h1>
+          <h1>Level Grind Research OS</h1>
           <p>
-            Sign in to your invited account before opening the research context
-            workspace.
+            Sign in to your invited account to open the bilingual report and
+            research workspace.
           </p>
           <SignInAction />
         </section>

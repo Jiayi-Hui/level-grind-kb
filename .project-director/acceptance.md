@@ -1,22 +1,37 @@
-# Acceptance — Context Infra V3
+# Acceptance — Research OS Alpha
 
-- [x] Existing capture and attachment workflow remains available.
-- [x] Captures include source, topic, event date, confidence, and personal/team scope.
-- [x] Personal context can be saved independently.
-- [x] Team context shows topic lines and provenance.
-- [x] Task context packs can be created and reviewed.
-- [x] System boundaries are explicit and do not claim nonexistent connectors.
-- [x] Private record listing and file download enforce ownership.
-- [x] Personal routing preference persists.
-- [x] Workstream handoffs persist and remain owner-scoped.
-- [x] The UI distinguishes continue, new chat, and new project.
-- [x] Automatic topic-shift detection is labelled connector-dependent.
-- [x] Clerk protects the routing API.
-- [x] Production checks pass.
-- [x] GitHub Alpha source is updated.
-- [x] Team membership persists with owner, admin, and member roles.
-- [x] Unknown and suspended accounts fail closed after Clerk authentication.
-- [x] Owners and admins can manage members; members cannot.
-- [x] Owner role is protected from member-API changes.
-- [x] Cross-computer Context Infra relay is handled by the separate `context-infra` repository.
-- [ ] Private production deployment is updated when Clerk keys and owner email are ready.
+## Delivered foundation
+
+- [x] Clerk authentication plus D1 owner/admin/member authorization.
+- [x] Shared R2 report storage and D1 page-level searchable text.
+- [x] 30 CNINFO reports covering 15 companies and 6,237 pages in production.
+- [x] Server-side DeepSeek adapter with per-user tokens, cost, latency, and status.
+- [x] Owner/admin team usage view.
+- [x] 25 MB interactive upload and chunked controlled corpus import.
+
+## Current increment
+
+- [x] Model Markdown renders as formatted text without visible `**` markers.
+- [x] Chinese/English switching is available in the top bar and Settings.
+- [x] Language persists per user.
+- [x] A per-session Welcome back banner describes current changes.
+- [x] Conversation routing is removed from the product UI and API surface.
+- [x] Personal, team, and task context pages are removed from the sidebar.
+- [x] Low-frequency research-profile controls are available in Settings.
+- [x] Settings shows personal storage used, remaining, and quota.
+- [x] Report Q&A history persists and reopens after refresh.
+- [x] History exports Markdown and opens the Obsidian URI handoff.
+- [x] Reports open in a new tab immediately with visible progress feedback.
+- [x] Report, Web, and Hybrid evidence modes exist.
+- [x] Unconfigured web search fails honestly with a setup message.
+- [x] Web results can be selected and saved with provenance into the knowledge base.
+- [x] Responsive loading, empty, error, success, and disabled states are present.
+- [ ] Lint, typecheck, tests, build, hosted deployment, and GitHub push pass.
+
+## Planned product acceptance
+
+- [ ] Persona onboarding supports PM, JEM PM, Analyst, and named other users.
+- [ ] Personal quota enforcement and owner-managed allocation are implemented.
+- [ ] Hybrid semantic/vector retrieval is production-ready.
+- [ ] Company Azure gateway is approved and reachable from the public app.
+- [ ] Additional filing-source adapters are validated.
