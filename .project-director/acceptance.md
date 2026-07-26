@@ -26,7 +26,7 @@
 - [x] Unconfigured web search fails honestly with a setup message.
 - [x] Web results can be selected and saved with provenance into the knowledge base.
 - [x] Responsive loading, empty, error, success, and disabled states are present.
-- [ ] Lint, typecheck, tests, build, hosted deployment, and GitHub push pass.
+- [x] Lint, typecheck, tests, build, hosted deployment, and GitHub push pass.
 
 ## Planned product acceptance
 

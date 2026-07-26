@@ -1,10 +1,11 @@
-# Delivery — Multi-user Alpha
+# Delivery — Research OS Alpha
 
 ## Summary
 
-Level Grind now adds a durable conversation-routing layer to personal, team, and task context. Users can save a routing rule and a concise handoff when a chat should continue, move to a new chat, or become a new project.
-
-The current Alpha increment replaces the environment-only access list with persistent D1 team membership, owner/admin/member roles, suspension enforcement, and an in-product team access panel.
+Level Grind Research OS Alpha is live in production. The current experience is
+organized around Research inbox, Report library, Ask research, History, and
+Settings, with Clerk authentication and persistent D1 team membership,
+owner/admin/member roles, and suspension enforcement.
 
 The V4 storage increment is now published. Report PDFs use the hosted R2
 `FILES` binding; report metadata, extracted page text, and per-user AI usage use
@@ -55,7 +56,12 @@ and explicit Report/Web/Hybrid evidence modes.
 
 ## Verification
 
-- Typecheck, lint, build, automated tests, migration inspection, unauthorized API probe, and local persistence probes passed.
+- Typecheck, lint, build, 3/3 automated tests, migration inspection,
+  unauthorized API probes, and local persistence probes passed.
+- Production version 11 is live. The homepage returns the new Research OS and
+  protected APIs correctly reject anonymous requests after edge propagation.
+- The validated source commit and this release record are pushed to GitHub on
+  `add-clerk-auth-alpha`.
 
 ## Known Limitations
 
@@ -77,6 +83,6 @@ and explicit Report/Web/Hybrid evidence modes.
 
 1. Complete the Gmail owner-session walkthrough and persona onboarding.
 2. Ask one production report question and verify citations plus usage metering.
-3. Add quota visibility for the current user and owner-wide operations view.
-4. Add an approved conversation connector and drift-classification service.
+3. Configure the governed public-web search provider key.
+4. Add owner-managed quota allocation and hard quota enforcement.
 5. Build governed Obsidian and company-AVD connectors.

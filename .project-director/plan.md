@@ -49,5 +49,6 @@
 - [x] Add selective web-result capture with provenance.
 - [x] Add personal storage/quota visibility and shared-corpus separation.
 - [x] Pass lint, TypeScript, production build, and focused tests.
-- [ ] Deploy the validated Research OS version and complete authenticated browser QA.
+- [x] Deploy validated Research OS version 11 and verify production route/auth health.
+- [ ] Complete the authenticated owner-session browser walkthrough.
 - [ ] Configure a governed public-web search API key.

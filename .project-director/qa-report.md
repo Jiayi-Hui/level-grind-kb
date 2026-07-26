@@ -36,6 +36,7 @@
 | Navigation boundary | Pass | Context pages and Conversation routing removed from the active app; routing API deleted |
 | Report-open latency UX | Pass | Same-origin report route opens immediately in a new tab with button progress |
 | Web research contract | Pass | Report/Web/Hybrid modes; missing search key returns explicit 503; Tavily adapter is server-only |
+| Production deployment | Pass | Version 11 deployed successfully; homepage returns 200 and protected routes return 401 anonymously after edge propagation |
 
 ## Acceptance Mapping
 
@@ -71,3 +72,4 @@
 - Connector and agent cards describe boundaries; no external system is connected.
 - The dependency audit reports upstream package vulnerabilities that require a separate dependency-upgrade review.
 - Nightly GitHub synchronization covers source and schema, not live D1/R2 records.
+- The authenticated owner-session walkthrough remains a manual release check.
