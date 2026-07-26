@@ -11,6 +11,13 @@ The V4 storage increment is now published. Report PDFs use the hosted R2
 the hosted D1 `DB` binding. The report assistant can switch among DeepSeek,
 GLM, and Kimi using server-side runtime settings.
 
+The first CNINFO production corpus is live: 30 annual and half-year reports
+covering 15 A-share companies and 6,237 PDF pages were imported and then
+rechecked idempotently.
+Interactive admin uploads now accept PDFs up to 25 MB. The bootstrap importer
+uses chunked file and page-text writes for larger documents; its temporary
+production credential was removed after the batch completed.
+
 ## Changed Areas
 
 - Context-aware capture and search.
@@ -38,10 +45,8 @@ GLM, and Kimi using server-side runtime settings.
 
 ## Known Limitations
 
-- Clerk production keys and owner bootstrap still need to be set before Gmail
-  sign-in can be validated end to end.
-- The model adapter is configured for DeepSeek V4 Flash, but calls remain
-  disabled until a server-side `AI_API_KEY` is added.
+- Gmail/Clerk sign-in still needs a final owner-session walkthrough on the
+  user's device.
 - Retrieval is keyword-grounded in this Alpha; embeddings and hybrid/vector
   ranking are a later quality layer.
 - Scanned/image-only PDFs still require OCR.
@@ -53,9 +58,8 @@ GLM, and Kimi using server-side runtime settings.
 
 ## Follow-Up
 
-1. Configure Clerk keys and `LEVEL_GRIND_OWNER_EMAIL` in Sites.
-2. Add a small, capped DeepSeek API balance and store `AI_API_KEY` as a secret.
-3. Verify owner bootstrap, import one report, and ask one cited question.
-4. Import the remaining validated CNINFO batch after the one-report runtime test.
-5. Add an approved conversation connector and drift-classification service.
-6. Build governed Obsidian and company-AVD connectors.
+1. Complete the Gmail owner-session walkthrough and persona onboarding.
+2. Ask one production report question and verify citations plus usage metering.
+3. Add quota visibility for the current user and owner-wide operations view.
+4. Add an approved conversation connector and drift-classification service.
+5. Build governed Obsidian and company-AVD connectors.

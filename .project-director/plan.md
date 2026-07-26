@@ -16,7 +16,7 @@
 - [x] Add persistent members, roles, and admin authorization.
 - [x] Add Multi-user Alpha team access UI.
 - [x] Generate and inspect the membership migration.
-- [ ] Deploy only after Clerk production variables and owner bootstrap are verified.
+- [x] Deploy after Clerk variables and owner bootstrap are verified.
 
 ## V4 — Team Research OS
 
@@ -29,5 +29,7 @@
 - [x] Add R2-backed PDF storage and D1-backed corpus/search/usage records.
 - [x] Add a provider-neutral server adapter for DeepSeek, GLM, and Kimi.
 - [x] Publish the storage-enabled version and verify hosted D1/R2 wiring.
+- [x] Import and re-verify the first 30-report CNINFO corpus in production.
+- [x] Raise interactive PDF uploads to 25 MB and add chunked bootstrap ingestion for larger files.
 - [ ] Add HKEX, SEC, JPX, TWSE, and KRX source adapters for the remaining companies.
 - [ ] Build V4.3 Azure gateway and permission-filtered semantic retrieval.

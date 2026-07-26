@@ -24,6 +24,9 @@
 | CNINFO metadata match | Pass | 30/30 exact-code full annual/half-year reports; summaries excluded |
 | CNINFO file integrity | Pass | 30/30 PDF signatures, byte sizes, and SHA-256 values match manifest |
 | Report storage contract | Pass | PDF bytes use R2 `FILES`; metadata, page chunks, and usage use D1 `DB` |
+| Production corpus import | Pass | 30/30 reports and 6,237 PDF pages imported; second run confirmed every source was already present |
+| Large-report ingestion | Pass | Interactive upload limit raised to 25 MB; bootstrap path chunks larger PDFs and page text |
+| Bootstrap shutdown | Pass | Temporary production import credential removed after the verified batch |
 | Provider boundary | Pass | API key remains server-side; DeepSeek/GLM/Kimi share one runtime-configured contract |
 | Current validation | Pass | ESLint, TypeScript, production build, and 3/3 contract tests |
 
@@ -49,14 +52,15 @@
 
 - Initial test command used an older system Node runtime; validation was rerun with the workspace runtime required by the project.
 - The restored Alpha branch had two strict TypeScript failures: an optional Clerk key and a missing attachment-download prop. Both are fixed.
-- The Alpha branch does not include a checked-in Clerk secret, so authenticated browser writes require the configured deployment environment.
-- Sites production currently has no Clerk keys or owner bootstrap email, so deploying this branch now would show the explicit configuration-required state.
+- Clerk and model secrets remain production-only and are not checked into Git.
+- PDF extraction emitted font-substitution warnings for some Chinese filings;
+  every import completed, but representative search-result text should still be
+  spot-checked in the owner session.
 
 ## Residual Risk
 
-- Production team membership and role administration remain out of scope.
 - Topics are free-text strings, not canonical entities.
-- Binary attachments are stored but not extracted or indexed.
+- Scanned or image-only pages still require OCR.
 - Connector and agent cards describe boundaries; no external system is connected.
 - The dependency audit reports upstream package vulnerabilities that require a separate dependency-upgrade review.
 - Nightly GitHub synchronization covers source and schema, not live D1/R2 records.
