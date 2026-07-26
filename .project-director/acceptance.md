@@ -14,5 +14,9 @@
 - [x] Clerk protects the routing API.
 - [x] Production checks pass.
 - [x] GitHub Alpha source is updated.
+- [x] Team membership persists with owner, admin, and member roles.
+- [x] Unknown and suspended accounts fail closed after Clerk authentication.
+- [x] Owners and admins can manage members; members cannot.
+- [x] Owner role is protected from member-API changes.
 - [x] Cross-computer Context Infra relay is handled by the separate `context-infra` repository.
-- [ ] Private production deployment is updated when Clerk environment configuration is ready.
+- [ ] Private production deployment is updated when Clerk keys and owner email are ready.

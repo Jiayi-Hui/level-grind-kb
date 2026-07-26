@@ -7,6 +7,7 @@ Level Grind is a private context infrastructure for fundamental research teams. 
 - Context-aware text, link, and file capture with source, topic, event date, confidence, and personal/team scope.
 - Personal context profiles for coverage, output preferences, working method, and private memory.
 - Team topic lines and source provenance.
+- Persistent team membership with owner, admin, and member roles.
 - Task context packs with objective, allowed context, output format, and guardrails.
 - Conversation-routing rules and durable handoffs between chats or projects.
 - Search across titles, notes, projects, topics, and source systems.
@@ -19,9 +20,9 @@ Level Grind is a private context infrastructure for fundamental research teams. 
 
 Level Grind is the source of truth for context, provenance, permissions, task state, timelines, and approved research results. Raw data can remain in systems such as Obsidian, Bloomberg, Wind, WeChat, Teams, Excel, or a separate Quant research stack.
 
-The current production deployment remains owner-only. Company-email invitation, team membership, record-level roles, automated extraction, external connectors, agent execution, and two-way Obsidian sync are later phases.
+The Multi-user Alpha stores team membership in D1. Owners and admins can add or update members, while personal records remain owner-scoped and team records remain shared.
 
-The alpha web app uses Clerk for simple email-based login plus an environment-managed invitation allowlist. Outlook, Teams, and other company systems remain future connector channels, not the primary login dependency.
+The alpha web app uses Clerk for identity. `LEVEL_GRIND_OWNER_EMAIL` safely bootstraps the first owner; the legacy environment-managed invitation allowlist is retained only as a migration path into persistent membership.
 
 Conversation routing is manual and reviewable in the current release. Automatic topic-shift detection requires a future connector to an approved chat-history source; Level Grind does not silently ingest raw conversations.
 

@@ -21,12 +21,15 @@ CLERK_SIGN_UP_URL=/sign-up
 CLERK_AFTER_SIGN_IN_URL=/
 CLERK_AFTER_SIGN_UP_URL=/
 LEVEL_GRIND_INVITED_EMAILS=you@example.com,analyst@example.com
+LEVEL_GRIND_OWNER_EMAIL=you@example.com
 ```
 
 Do not commit `CLERK_SECRET_KEY`.
 
-`LEVEL_GRIND_INVITED_EMAILS` is fail-closed: if it is empty or missing, signed-in
-users cannot reach application data. Set it explicitly before deployment.
+`LEVEL_GRIND_OWNER_EMAIL` bootstraps exactly one owner into D1 on first sign-in.
+After that, owners and admins manage persistent members in the Team context
+screen. `LEVEL_GRIND_INVITED_EMAILS` remains an optional, fail-closed migration
+path: listed users are inserted as members after a verified Clerk sign-in.
 
 ## 2. Cloudflare D1 and R2
 
@@ -40,6 +43,7 @@ The application creates its D1 tables lazily from the API routes:
 - `document_context`
 - `personal_contexts`
 - `task_contexts`
+- `team_members`
 
 ## 3. Local verification
 

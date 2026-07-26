@@ -103,3 +103,20 @@ export const conversationWorkstreams = sqliteTable(
     index("conversation_workstream_updated_idx").on(table.updatedAt),
   ]
 );
+
+export const teamMembers = sqliteTable(
+  "team_members",
+  {
+    email: text("email").primaryKey(),
+    displayName: text("display_name").notNull().default(""),
+    role: text("role").notNull().default("member"),
+    status: text("status").notNull().default("active"),
+    invitedBy: text("invited_by"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("team_members_status_idx").on(table.status),
+    index("team_members_role_idx").on(table.role),
+  ],
+);

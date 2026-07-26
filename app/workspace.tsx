@@ -48,12 +48,20 @@ type ContextTask = {
 };
 
 type ContextPayload = {
-  user: { email: string; name: string };
+  user: { email: string; name: string; role: "owner" | "admin" | "member" };
   personal: PersonalContext;
   tasks: ContextTask[];
   topics: Array<{ topic: string; item_count: number; last_signal: string }>;
   sources: Array<{ source: string; item_count: number }>;
   counts: { personal_items: number; team_items: number; high_signals: number };
+};
+
+type TeamMember = {
+  email: string;
+  display_name: string;
+  role: "owner" | "admin" | "member";
+  status: "active" | "suspended";
+  updated_at: string;
 };
 
 type RoutingPolicy = {
@@ -144,6 +152,7 @@ export function Workspace() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [routing, setRouting] = useState<RoutingPayload | null>(null);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -168,20 +177,23 @@ export function Workspace() {
     setError("");
     try {
       const scope = active === "personal" ? "personal" : "team";
-      const [documentsResponse, contextResponse, routingResponse] = await Promise.all([
+      const [documentsResponse, contextResponse, routingResponse, membersResponse] = await Promise.all([
         authorizedFetch(`/api/documents?scope=${scope}&q=${encodeURIComponent(query)}`),
         authorizedFetch("/api/context"),
         authorizedFetch("/api/routing"),
+        authorizedFetch("/api/members"),
       ]);
-      if (!documentsResponse.ok || !contextResponse.ok || !routingResponse.ok) {
+      if (!documentsResponse.ok || !contextResponse.ok || !routingResponse.ok || !membersResponse.ok) {
         throw new Error("The context workspace could not be loaded.");
       }
       const documentsData = (await documentsResponse.json()) as { documents: DocumentRecord[] };
       const contextData = (await contextResponse.json()) as ContextPayload;
       const routingData = (await routingResponse.json()) as RoutingPayload;
+      const membersData = (await membersResponse.json()) as { members: TeamMember[] };
       setDocuments(documentsData.documents ?? []);
       setContext(contextData);
       setRouting(routingData);
+      setMembers(membersData.members ?? []);
       setSelected((current) => {
         const next = (documentsData.documents ?? []).find((item) => item.id === current?.id);
         return next ?? documentsData.documents?.[0] ?? null;
@@ -192,6 +204,34 @@ export function Workspace() {
       setLoading(false);
     }
   }, [active, authorizedFetch, query]);
+
+  async function saveMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const form = new FormData(event.currentTarget);
+      const response = await authorizedFetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.get("email"),
+          displayName: form.get("displayName"),
+          role: form.get("role"),
+          status: "active",
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Member update failed.");
+      event.currentTarget.reset();
+      setToast("Team member saved");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Member update failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => {
     const timer = window.setTimeout(load, 160);
@@ -373,7 +413,7 @@ export function Workspace() {
           </div>
           <div className="profile">
             <span className="avatar">{(context?.user.name || "LG").slice(0, 2).toUpperCase()}</span>
-            <div><strong>{context?.user.name || "Workspace owner"}</strong><small>Private preview</small></div>
+            <div><strong>{context?.user.name || "Workspace owner"}</strong><small>{context?.user.role || "private alpha"}</small></div>
           </div>
         </div>
       </aside>
@@ -472,6 +512,30 @@ export function Workspace() {
                   <div className="policy-strip"><strong>Team context rule</strong><p>Share normalized entities, timelines and approved conclusions—not every raw source.</p></div>
                 </section>
               </div>
+              <section className="member-panel">
+                <div className="section-title">
+                  <div><p className="eyebrow">MULTI-USER ALPHA</p><h2>Team access</h2></div>
+                  <span>{members.filter((member) => member.status === "active").length} active members</span>
+                </div>
+                <div className="member-list">
+                  {members.map((member) => (
+                    <article className="member-row" key={member.email}>
+                      <span className="avatar">{(member.display_name || member.email).slice(0, 2).toUpperCase()}</span>
+                      <div><strong>{member.display_name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
+                      <span className={`member-role role-${member.role}`}>{member.role}</span>
+                      <span className={`member-status status-${member.status}`}>{member.status}</span>
+                    </article>
+                  ))}
+                </div>
+                {(context.user.role === "owner" || context.user.role === "admin") && (
+                  <form className="member-form" onSubmit={saveMember}>
+                    <label>Name<input name="displayName" maxLength={120} placeholder="Team member" /></label>
+                    <label>Email<input name="email" type="email" required placeholder="analyst@company.com" /></label>
+                    <label>Role<select name="role"><option value="member">Member</option><option value="admin">Admin</option></select></label>
+                    <button className="upload-button" disabled={saving}>{saving ? "Saving…" : "Add or update"}</button>
+                  </form>
+                )}
+              </section>
             </>
           )}
 

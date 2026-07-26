@@ -13,4 +13,7 @@
 - [x] Run typecheck, lint, tests, and production build.
 - [x] Commit and push the validated Alpha source.
 - [x] Keep nightly conflict-aware synchronization in the separate Context Infra project.
-- [ ] Deploy only after Clerk production variables and access behavior are verified.
+- [x] Add persistent members, roles, and admin authorization.
+- [x] Add Multi-user Alpha team access UI.
+- [x] Generate and inspect the membership migration.
+- [ ] Deploy only after Clerk production variables and owner bootstrap are verified.

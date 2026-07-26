@@ -20,6 +20,7 @@ The first release stores document metadata in D1, attachments in R2, and exposes
 - `task_contexts`: objective, topic, allowed context, output format, guardrails, state.
 - `routing_policies`: private reminder toggle and scope-shift rules.
 - `conversation_workstreams`: project, chat, active goal, deliverable, shift reason, route recommendation, and handoff summary.
+- `team_members`: verified email, display name, role, status, inviter, and timestamps.
 
 ## API / Contract
 
@@ -31,6 +32,8 @@ The first release stores document metadata in D1, attachments in R2, and exposes
 | Context | `POST /api/context` | profile or task form | saved status / id | 400, 401 |
 | Routing | `GET /api/routing` | Clerk bearer token | private policy and owner workstreams | 401 |
 | Routing | `POST /api/routing` | policy or workstream form | saved status / id | 400, 401 |
+| Members | `GET /api/members` | authenticated member | team roster and current role | 401 |
+| Members | `POST /api/members` | owner/admin plus member details | saved membership | 400, 401, 403, 409 |
 | Files | `GET /api/files/:id` | authenticated user | authorized attachment | 401, 404 |
 
 ## Frontend Flow
@@ -50,6 +53,9 @@ The first release stores document metadata in D1, attachments in R2, and exposes
 - Team access uses the deployment access boundary in the current preview.
 - External connector cards describe architecture only; they do not imply live access.
 - Clerk validates bearer tokens before routing preferences or workstreams are read or written.
+- Clerk authentication is followed by D1 membership authorization on every protected route.
+- `LEVEL_GRIND_OWNER_EMAIL` bootstraps one owner; legacy invited emails migrate into member rows.
+- Suspended members fail closed, and the owner cannot be demoted through the member endpoint.
 - Workstreams are filtered by the authenticated owner email.
 - Automatic drift detection is not claimed until a chat-history connector exists.
 

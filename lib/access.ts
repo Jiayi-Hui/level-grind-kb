@@ -1,4 +1,5 @@
 import { createClerkClient } from "@clerk/backend";
+import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -7,7 +8,20 @@ export type AppUser = {
   id: string;
   email: string;
   name: string;
+  role: "owner" | "admin" | "member";
 };
+
+const membersSchema = `
+  CREATE TABLE IF NOT EXISTS team_members (
+    email TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT 'member',
+    status TEXT NOT NULL DEFAULT 'active',
+    invited_by TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
 
 export function invitedEmails() {
   return new Set(
@@ -62,12 +76,34 @@ export async function getAppUser(request?: NextRequest): Promise<AppUser | null>
   const email =
     user.primaryEmailAddress?.emailAddress?.toLowerCase() ??
     user.emailAddresses.at(0)?.emailAddress?.toLowerCase();
-  if (!email || !isEmailInvited(email)) return null;
+  if (!email) return null;
+
+  await env.DB.prepare(membersSchema).run();
+  const normalizedOwner = (process.env.LEVEL_GRIND_OWNER_EMAIL ?? "").trim().toLowerCase();
+  const isBootstrapOwner = Boolean(normalizedOwner) && email === normalizedOwner;
+  const isLegacyInvite = isEmailInvited(email);
+  let member = await env.DB.prepare(
+    "SELECT role, status FROM team_members WHERE email = ?1"
+  ).bind(email).first<{ role: string; status: string }>();
+
+  if (!member && (isBootstrapOwner || isLegacyInvite)) {
+    const now = new Date().toISOString();
+    const role = isBootstrapOwner ? "owner" : "member";
+    await env.DB.prepare(
+      `INSERT INTO team_members (email, display_name, role, status, invited_by, created_at, updated_at)
+       VALUES (?1, ?2, ?3, 'active', ?1, ?4, ?4)`
+    ).bind(email, user.fullName || user.firstName || "", role, now).run();
+    member = { role, status: "active" };
+  }
+
+  if (!member || member.status !== "active") return null;
+  const role = member.role === "owner" || member.role === "admin" ? member.role : "member";
 
   return {
     id: user.id,
     email,
     name: user.fullName || user.firstName || email.split("@")[0] || "User",
+    role,
   };
 }
 
@@ -77,7 +113,7 @@ export async function requireAppUser(request?: NextRequest) {
     return {
       user: null,
       response: NextResponse.json(
-        { error: "Sign in required or this email has not been invited." },
+        { error: "Sign in required or this account is not an active team member." },
         { status: 401 },
       ),
     };

@@ -1,4 +1,4 @@
-# PRD — Context Infra V3
+# PRD — Multi-user Alpha
 
 ## Objective
 
@@ -21,6 +21,8 @@ Add conversation routing so a user can keep chats attached to a clear project, a
 - Record-level personal/team visibility enforcement for lists and file downloads.
 - Personal conversation-routing rules.
 - Durable workstream handoffs with project, chat, goal, deliverable, shift reason, recommended route, and summary.
+- Persistent team membership with owner, admin, member, active, and suspended states.
+- Owner/admin member administration inside Team context.
 - An honest distinction between manual routing and future automatic topic-shift detection.
 
 ## Non-Goals
@@ -30,7 +32,7 @@ Add conversation routing so a user can keep chats attached to a clear project, a
 - Multi-agent orchestration, OCR, embeddings, or a production knowledge graph.
 - Two-way Obsidian sync.
 - Quant backtesting or portfolio construction.
-- Multi-user administration in the owner-only preview.
+- Organization provisioning, SCIM, SSO, and multi-team tenancy.
 - Reading Codex, Claude, WeChat, or Teams chat history without an explicit connector.
 - Automatically creating external chats or projects.
 - Storing raw chat transcripts in D1.
@@ -53,6 +55,9 @@ Add conversation routing so a user can keep chats attached to a clear project, a
 - FR-7: A user can persist a private reminder rule for conversation scope changes.
 - FR-8: A user can save a workstream handoff and choose continue, new chat, or new project.
 - FR-9: The interface clearly states that automatic drift detection requires a connector.
+- FR-10: A configured owner can bootstrap safely after verified Clerk sign-in.
+- FR-11: Owners and admins can add or update members; ordinary members cannot.
+- FR-12: Suspended or unknown accounts cannot access application data.
 
 ## Acceptance Criteria
 
@@ -63,6 +68,8 @@ Add conversation routing so a user can keep chats attached to a clear project, a
 - AC-5: The production build, lint, typecheck, and focused tests pass.
 - AC-6: Routing preferences and handoffs survive refresh and are owner-scoped.
 - AC-7: The Clerk bearer-token boundary protects the routing API.
+- AC-8: Membership and roles persist in D1 and gate every protected API.
+- AC-9: The owner role cannot be overwritten through the member API.
 
 ## Risks
 

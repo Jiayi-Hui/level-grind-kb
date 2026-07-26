@@ -232,6 +232,21 @@ button { color: inherit; }
 .policy-strip { margin: 18px; padding: 15px; background: #eef1eb; border-radius: 8px; }
 .policy-strip strong { font-size: 10px; color: var(--green); }
 .policy-strip p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.member-panel { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.member-list { display: grid; }
+.member-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 14px 18px; border-top: 1px solid #e7e5de; }
+.member-row div { display: grid; gap: 3px; }
+.member-row strong { font: 500 13px Georgia, serif; }
+.member-row small { color: var(--muted); font-size: 9px; }
+.member-role, .member-status { padding: 4px 8px; border-radius: 10px; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.role-owner { color: #8a4b34; background: #eee0d9; }
+.role-admin { color: #624d77; background: #e7e1ec; }
+.role-member { color: #326245; background: #dceadf; }
+.status-active { color: #326245; background: #edf3ee; }
+.status-suspended { color: #93472e; background: #f8e7e1; }
+.member-form { display: grid; grid-template-columns: .8fr 1.3fr .55fr auto; gap: 10px; align-items: end; padding: 18px; border-top: 1px solid var(--line); background: #f6f4ee; }
+.member-form label { display: grid; gap: 6px; color: #535d57; font-size: 9px; font-weight: 700; }
+.member-form input, .member-form select { width: 100%; border: 1px solid #d8d7cf; background: white; border-radius: 7px; padding: 10px 11px; outline: 0; color: var(--ink); font-size: 11px; }
 
 .task-board { margin-top: 30px; }
 .task-principle { padding: 28px; background: #e7ece5; border-bottom: 1px solid var(--line); }
@@ -325,7 +340,7 @@ button { color: inherit; }
 @media (max-width: 980px) {
   .desk { grid-template-columns: 1fr; }
   .detail { position: static; }
-  .context-layout, .team-grid, .routing-grid { grid-template-columns: 1fr; }
+  .context-layout, .team-grid, .routing-grid, .member-form { grid-template-columns: 1fr; }
   .context-explainer { position: static; }
   .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -1,8 +1,10 @@
-# Delivery — Context Infra V3
+# Delivery — Multi-user Alpha
 
 ## Summary
 
 Level Grind now adds a durable conversation-routing layer to personal, team, and task context. Users can save a routing rule and a concise handoff when a chat should continue, move to a new chat, or become a new project.
+
+The current Alpha increment replaces the environment-only access list with persistent D1 team membership, owner/admin/member roles, suspension enforcement, and an in-product team access panel.
 
 ## Changed Areas
 
@@ -18,6 +20,7 @@ Level Grind now adds a durable conversation-routing layer to personal, team, and
 - Personal routing policy and owner-scoped workstream register.
 - Manual handoff builder with explicit automatic-detection boundary.
 - Fail-closed invitation allowlist and clear missing-Clerk configuration state.
+- Owner bootstrap plus persistent member and role administration.
 
 ## Verification
 
@@ -34,8 +37,9 @@ Level Grind now adds a durable conversation-routing layer to personal, team, and
 
 ## Follow-Up
 
-1. Verify Clerk with invited users in the target deployment.
-2. Merge or promote the Alpha branch after the access test.
+1. Configure Clerk keys and `LEVEL_GRIND_OWNER_EMAIL` in Sites.
+2. Verify owner bootstrap and one invited member in the target deployment.
+3. Merge or promote the Alpha branch after the access test.
 3. Add an approved conversation connector and drift-classification service.
 4. Add team membership and roles.
 5. Build governed Obsidian and company-AVD connectors.

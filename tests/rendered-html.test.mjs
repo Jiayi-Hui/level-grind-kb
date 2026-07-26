@@ -20,11 +20,12 @@ test("ships the Level Grind context workspace instead of a starter", async () =>
 });
 
 test("keeps context boundaries and persistence explicit in source", async () => {
-  const [workspace, documentsRoute, contextRoute, routingRoute, access, schema, readme] = await Promise.all([
+  const [workspace, documentsRoute, contextRoute, routingRoute, membersRoute, access, schema, readme] = await Promise.all([
     readFile(new URL("../app/workspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/documents/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/context/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/routing/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/members/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/access.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
@@ -45,12 +46,17 @@ test("keeps context boundaries and persistence explicit in source", async () => 
   assert.match(routingRoute, /routing_policies/);
   assert.match(routingRoute, /conversation_workstreams/);
   assert.match(routingRoute, /WHERE owner_email = \?1/);
-  assert.match(access, /invited\.size > 0 && invited\.has/);
+  assert.match(membersRoute, /Admin access required/);
+  assert.match(membersRoute, /existing\?\.role === "owner"/);
+  assert.match(access, /team_members/);
+  assert.match(access, /LEVEL_GRIND_OWNER_EMAIL/);
+  assert.match(access, /member\.status !== "active"/);
   assert.match(schema, /documentContext/);
   assert.match(schema, /personalContexts/);
   assert.match(schema, /taskContexts/);
   assert.match(schema, /routingPolicies/);
   assert.match(schema, /conversationWorkstreams/);
+  assert.match(schema, /teamMembers/);
   assert.match(readme, /Raw data can remain/);
   assert.match(readme, /Automatic topic-shift detection requires/);
 });
