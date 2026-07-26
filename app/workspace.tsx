@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type View = "inbox" | "personal" | "team" | "tasks" | "sources";
+type View = "inbox" | "personal" | "team" | "tasks" | "routing" | "sources";
 
 type DocumentRecord = {
   id: string;
@@ -56,13 +56,44 @@ type ContextPayload = {
   counts: { personal_items: number; team_items: number; high_signals: number };
 };
 
+type RoutingPolicy = {
+  email: string;
+  reminder_enabled: number;
+  trigger_rules: string;
+};
+
+type ConversationWorkstream = {
+  id: string;
+  project_name: string;
+  chat_title: string;
+  active_goal: string;
+  deliverable: string;
+  shift_reason: string;
+  recommended_action: "continue" | "new-chat" | "new-project";
+  handoff_summary: string;
+  status: string;
+  updated_at: string;
+};
+
+type RoutingPayload = {
+  policy: RoutingPolicy;
+  workstreams: ConversationWorkstream[];
+};
+
 const navItems: Array<[View, string, string]> = [
   ["inbox", "Research inbox", "⌂"],
   ["personal", "My context", "◌"],
   ["team", "Team context", "◎"],
   ["tasks", "Task context", "◇"],
+  ["routing", "Conversation routing", "↗"],
   ["sources", "System boundary", "⊙"],
 ];
+
+const routingLabels = {
+  continue: "Continue current chat",
+  "new-chat": "Start a new chat",
+  "new-project": "Start a new project",
+} as const;
 
 const sourceBoundaries = [
   {
@@ -70,6 +101,12 @@ const sourceBoundaries = [
     state: "Active",
     detail: "Notes, links and files enter the shared context layer directly.",
     className: "active",
+  },
+  {
+    name: "Conversation routing",
+    state: "Manual handoff",
+    detail: "Routing rules and handoffs are active. Automatic topic-shift detection requires a governed chat-history connector.",
+    className: "partial",
   },
   {
     name: "Obsidian",
@@ -106,12 +143,14 @@ export function Workspace() {
   const [active, setActive] = useState<View>("inbox");
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [context, setContext] = useState<ContextPayload | null>(null);
+  const [routing, setRouting] = useState<RoutingPayload | null>(null);
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [composer, setComposer] = useState(false);
   const [taskComposer, setTaskComposer] = useState(false);
+  const [routingComposer, setRoutingComposer] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const [mobileNav, setMobileNav] = useState(false);
@@ -129,17 +168,20 @@ export function Workspace() {
     setError("");
     try {
       const scope = active === "personal" ? "personal" : "team";
-      const [documentsResponse, contextResponse] = await Promise.all([
+      const [documentsResponse, contextResponse, routingResponse] = await Promise.all([
         authorizedFetch(`/api/documents?scope=${scope}&q=${encodeURIComponent(query)}`),
         authorizedFetch("/api/context"),
+        authorizedFetch("/api/routing"),
       ]);
-      if (!documentsResponse.ok || !contextResponse.ok) {
+      if (!documentsResponse.ok || !contextResponse.ok || !routingResponse.ok) {
         throw new Error("The context workspace could not be loaded.");
       }
       const documentsData = (await documentsResponse.json()) as { documents: DocumentRecord[] };
       const contextData = (await contextResponse.json()) as ContextPayload;
+      const routingData = (await routingResponse.json()) as RoutingPayload;
       setDocuments(documentsData.documents ?? []);
       setContext(contextData);
+      setRouting(routingData);
       setSelected((current) => {
         const next = (documentsData.documents ?? []).find((item) => item.id === current?.id);
         return next ?? documentsData.documents?.[0] ?? null;
@@ -223,6 +265,45 @@ export function Workspace() {
     }
   }
 
+  async function saveRoutingPolicy(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const response = await authorizedFetch("/api/routing", {
+        method: "POST",
+        body: new FormData(event.currentTarget),
+      });
+      if (!response.ok) throw new Error("Routing preference could not be saved.");
+      setToast("Conversation routing preference updated");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveWorkstream(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const response = await authorizedFetch("/api/routing", {
+        method: "POST",
+        body: new FormData(event.currentTarget),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Workstream could not be saved.");
+      setRoutingComposer(false);
+      event.currentTarget.reset();
+      setToast("Handoff context saved");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function downloadMarkdown(doc: DocumentRecord) {
     const blob = new Blob([markdown(doc)], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -263,6 +344,7 @@ export function Workspace() {
     personal: ["PERSONAL CONTEXT", "My research context", "Your coverage, working method, preferences and private memory."],
     team: ["SHARED INTELLIGENCE", "Team context", "Topics, provenance and signals the team is allowed to share."],
     tasks: ["MINIMUM SUFFICIENT CONTEXT", "Task context", "Package the right context for an agent without dumping the whole knowledge base."],
+    routing: ["WORKSTREAM BOUNDARIES", "Conversation routing", "Keep each chat attached to one goal, then hand off cleanly when the work changes."],
     sources: ["TRUST BOUNDARIES", "System boundary", "Keep raw data where it belongs; move only governed context and results."],
   }[active];
 
@@ -306,6 +388,8 @@ export function Workspace() {
           </div>
           {active === "tasks" ? (
             <button className="upload-button" onClick={() => setTaskComposer(true)}>＋ New task context</button>
+          ) : active === "routing" ? (
+            <button className="upload-button" onClick={() => setRoutingComposer(true)}>＋ New handoff</button>
           ) : (
             <button className="upload-button" onClick={() => setComposer(true)}>＋ Capture</button>
           )}
@@ -411,6 +495,109 @@ export function Workspace() {
             </section>
           )}
 
+          {active === "routing" && routing && (
+            <section className="routing-board">
+              <div className="routing-intro">
+                <div>
+                  <p className="eyebrow">CONVERSATION ROUTING</p>
+                  <h2>One chat, one active goal.</h2>
+                  <p>
+                    Save the current workstream before the topic drifts. A future chat connector can
+                    detect the shift automatically; today the handoff is explicit and reviewable.
+                  </p>
+                </div>
+                <span className="boundary-status partial">Manual routing active</span>
+              </div>
+
+              <div className="routing-grid">
+                <form className="routing-policy" onSubmit={saveRoutingPolicy}>
+                  <input type="hidden" name="action" value="policy" />
+                  <div className="section-title">
+                    <h2>Your routing rule</h2>
+                    <span>Personal context</span>
+                  </div>
+                  <label className="toggle-row">
+                    <input
+                      name="reminderEnabled"
+                      type="checkbox"
+                      defaultChecked={Boolean(routing.policy.reminder_enabled)}
+                    />
+                    <span>
+                      <strong>Remind me when the workstream changes</strong>
+                      <small>Use the saved rule when a conversation connector is available.</small>
+                    </span>
+                  </label>
+                  <label className="routing-rule">
+                    Trigger rule
+                    <textarea
+                      name="triggerRules"
+                      rows={5}
+                      defaultValue={routing.policy.trigger_rules}
+                    />
+                  </label>
+                  <div className="composer-foot">
+                    <span>Stored privately for your account</span>
+                    <button className="upload-button" disabled={saving}>
+                      {saving ? "Saving…" : "Save rule"}
+                    </button>
+                  </div>
+                </form>
+
+                <section className="routing-guide">
+                  <div className="section-title"><h2>Where should the work go?</h2><span>Decision guide</span></div>
+                  <article>
+                    <b>Continue</b>
+                    <div><strong>Same goal and deliverable</strong><p>A short tangent still supports the original outcome.</p></div>
+                  </article>
+                  <article>
+                    <b>New chat</b>
+                    <div><strong>New goal inside the same project</strong><p>The deliverable changes, but the people, data boundary, and project remain related.</p></div>
+                  </article>
+                  <article>
+                    <b>New project</b>
+                    <div><strong>New repository or long-term workstream</strong><p>The data, permissions, stakeholders, or sustained objective has changed.</p></div>
+                  </article>
+                </section>
+              </div>
+
+              <div className="section-title routing-list-title">
+                <div><p className="eyebrow">SAVED HANDOFFS</p><h2>Workstream register</h2></div>
+                <button className="quiet-button" onClick={() => setRoutingComposer(true)}>New handoff</button>
+              </div>
+
+              {routing.workstreams.length === 0 ? (
+                <div className="empty-state routing-empty">
+                  <h3>No conversation handoffs yet.</h3>
+                  <p>Save a workstream when a chat starts producing a different deliverable or belongs to another project.</p>
+                  <button className="upload-button" onClick={() => setRoutingComposer(true)}>Save the first handoff</button>
+                </div>
+              ) : (
+                <div className="workstream-list">
+                  {routing.workstreams.map((workstream) => (
+                    <article className="workstream-card" key={workstream.id}>
+                      <div className="workstream-top">
+                        <span className="tag">{workstream.project_name}</span>
+                        <span className={`route-action route-${workstream.recommended_action}`}>
+                          {routingLabels[workstream.recommended_action]}
+                        </span>
+                      </div>
+                      <h3>{workstream.chat_title}</h3>
+                      <dl>
+                        <div><dt>Active goal</dt><dd>{workstream.active_goal}</dd></div>
+                        {workstream.deliverable && <div><dt>Deliverable</dt><dd>{workstream.deliverable}</dd></div>}
+                        {workstream.shift_reason && <div><dt>Why it shifted</dt><dd>{workstream.shift_reason}</dd></div>}
+                      </dl>
+                      {workstream.handoff_summary && (
+                        <div className="handoff-note"><strong>Handoff</strong><p>{workstream.handoff_summary}</p></div>
+                      )}
+                      <small>Updated {new Date(workstream.updated_at).toLocaleString()}</small>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
           {active === "sources" && (
             <>
               <div className="boundary-map">
@@ -475,13 +662,38 @@ export function Workspace() {
           </form>
         </div>
       )}
+
+      {routingComposer && (
+        <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setRoutingComposer(false)}>
+          <form className="composer" onSubmit={saveWorkstream}>
+            <input type="hidden" name="action" value="workstream" />
+            <div className="composer-head">
+              <div><p className="eyebrow">CONTEXT HANDOFF</p><h2>Route this conversation</h2></div>
+              <button type="button" onClick={() => setRoutingComposer(false)}>×</button>
+            </div>
+            <div className="form-grid">
+              <label>Project<input name="projectName" required placeholder="Team research & interviews" autoFocus /></label>
+              <label>Current chat<input name="chatTitle" required placeholder="Qitian profile and needs" /></label>
+            </div>
+            <label>Active goal<textarea name="activeGoal" required rows={3} placeholder="What outcome was this chat originally meant to produce?" /></label>
+            <label>Current deliverable<input name="deliverable" placeholder="Profile document, product spec, code change…" /></label>
+            <label>Why does this feel like a different workstream?<textarea name="shiftReason" rows={3} placeholder="The discussion moved from colleague profiles into a separate software repository and deployment workflow." /></label>
+            <label>Recommended route<select name="recommendedAction" defaultValue="new-chat"><option value="continue">Continue current chat</option><option value="new-chat">Start a new chat in this project</option><option value="new-project">Start a new project</option></select></label>
+            <label>Handoff summary<textarea name="handoffSummary" rows={5} placeholder="Key context, decisions, files, open questions, and the next action for the new chat." /></label>
+            <div className="composer-foot">
+              <span>Only the handoff context is saved—not a hidden copy of the whole chat</span>
+              <button className="upload-button" disabled={saving}>{saving ? "Saving…" : "Save handoff"}</button>
+            </div>
+          </form>
+        </div>
+      )}
       {toast && <div className="toast">{toast}</div>}
     </main>
   );
 }
 
 function DocumentDesk({
-  loading, documents, selected, setSelected, downloadMarkdown, openObsidian, openCapture,
+  loading, documents, selected, setSelected, downloadMarkdown, downloadFile, openObsidian, openCapture,
 }: {
   loading: boolean;
   documents: DocumentRecord[];

@@ -20,7 +20,7 @@ export function invitedEmails() {
 
 export function isEmailInvited(email: string) {
   const invited = invitedEmails();
-  return invited.size === 0 || invited.has(email.trim().toLowerCase());
+  return invited.size > 0 && invited.has(email.trim().toLowerCase());
 }
 
 function appUrlFromHeaders(requestHeaders: Headers) {

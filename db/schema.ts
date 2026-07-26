@@ -71,3 +71,35 @@ export const taskContexts = sqliteTable(
     index("task_context_status_idx").on(table.status),
   ]
 );
+
+export const routingPolicies = sqliteTable("routing_policies", {
+  email: text("email").primaryKey(),
+  reminderEnabled: integer("reminder_enabled", { mode: "boolean" }).notNull().default(true),
+  triggerRules: text("trigger_rules").notNull().default(
+    "Remind me when the goal, deliverable, repository, data boundary, permissions, or long-term workstream changes."
+  ),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const conversationWorkstreams = sqliteTable(
+  "conversation_workstreams",
+  {
+    id: text("id").primaryKey(),
+    ownerEmail: text("owner_email").notNull(),
+    projectName: text("project_name").notNull(),
+    chatTitle: text("chat_title").notNull(),
+    activeGoal: text("active_goal").notNull(),
+    deliverable: text("deliverable").notNull().default(""),
+    shiftReason: text("shift_reason").notNull().default(""),
+    recommendedAction: text("recommended_action").notNull().default("new-chat"),
+    handoffSummary: text("handoff_summary").notNull().default(""),
+    status: text("status").notNull().default("active"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("conversation_workstream_owner_idx").on(table.ownerEmail),
+    index("conversation_workstream_status_idx").on(table.status),
+    index("conversation_workstream_updated_idx").on(table.updatedAt),
+  ]
+);

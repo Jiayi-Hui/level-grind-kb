@@ -4,13 +4,26 @@ import { ClerkProvider, SignIn, SignInButton, SignUp, UserButton, useAuth } from
 import type { ReactNode } from "react";
 
 export function AppClerkProvider({ children }: { children: ReactNode }) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <p className="eyebrow">CONFIGURATION REQUIRED</p>
+          <h1>Clerk is not configured.</h1>
+          <p>Add the public Clerk key to this environment before opening the workspace.</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={publishableKey}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      afterSignInUrl="/"
-      afterSignUpUrl="/"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
     >
       {children}
     </ClerkProvider>

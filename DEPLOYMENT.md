@@ -25,6 +25,9 @@ LEVEL_GRIND_INVITED_EMAILS=you@example.com,analyst@example.com
 
 Do not commit `CLERK_SECRET_KEY`.
 
+`LEVEL_GRIND_INVITED_EMAILS` is fail-closed: if it is empty or missing, signed-in
+users cannot reach application data. Set it explicitly before deployment.
+
 ## 2. Cloudflare D1 and R2
 
 Create one D1 database and one R2 bucket, then copy `wrangler.example.jsonc`

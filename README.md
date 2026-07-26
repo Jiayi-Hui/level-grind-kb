@@ -8,6 +8,7 @@ Level Grind is a private context infrastructure for fundamental research teams. 
 - Personal context profiles for coverage, output preferences, working method, and private memory.
 - Team topic lines and source provenance.
 - Task context packs with objective, allowed context, output format, and guardrails.
+- Conversation-routing rules and durable handoffs between chats or projects.
 - Search across titles, notes, projects, topics, and source systems.
 - Markdown download and one-click Obsidian handoff.
 - Explicit system-boundary view for Obsidian, company AVD, Excel, and Quant research.
@@ -21,6 +22,10 @@ Level Grind is the source of truth for context, provenance, permissions, task st
 The current production deployment remains owner-only. Company-email invitation, team membership, record-level roles, automated extraction, external connectors, agent execution, and two-way Obsidian sync are later phases.
 
 The alpha web app uses Clerk for simple email-based login plus an environment-managed invitation allowlist. Outlook, Teams, and other company systems remain future connector channels, not the primary login dependency.
+
+Conversation routing is manual and reviewable in the current release. Automatic topic-shift detection requires a future connector to an approved chat-history source; Level Grind does not silently ingest raw conversations.
+
+GitHub can synchronize validated source, schema, and product documentation between computers. Live D1 records and R2 attachments remain in the cloud deployment and are not committed to Git.
 
 ## Development
 
