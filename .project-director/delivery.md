@@ -6,6 +6,11 @@ Level Grind now adds a durable conversation-routing layer to personal, team, and
 
 The current Alpha increment replaces the environment-only access list with persistent D1 team membership, owner/admin/member roles, suspension enforcement, and an in-product team access panel.
 
+The V4 storage increment is now published. Report PDFs use the hosted R2
+`FILES` binding; report metadata, extracted page text, and per-user AI usage use
+the hosted D1 `DB` binding. The report assistant can switch among DeepSeek,
+GLM, and Kimi using server-side runtime settings.
+
 ## Changed Areas
 
 - Context-aware capture and search.
@@ -21,6 +26,10 @@ The current Alpha increment replaces the environment-only access list with persi
 - Manual handoff builder with explicit automatic-detection boundary.
 - Fail-closed invitation allowlist and clear missing-Clerk configuration state.
 - Owner bootstrap plus persistent member and role administration.
+- Admin PDF ingestion with source metadata and idempotent imports.
+- Searchable page chunks and citation-bearing report answers.
+- Per-user query, token, estimated-cost, latency, and status records.
+- Provider-neutral DeepSeek/GLM/Kimi server boundary.
 
 ## Verification
 
@@ -28,8 +37,14 @@ The current Alpha increment replaces the environment-only access list with persi
 
 ## Known Limitations
 
-- Clerk Alpha remains on its feature branch until production variables and access behavior are verified.
-- No external connectors, OCR, embeddings, knowledge graph, or agent execution.
+- Clerk production keys and owner bootstrap still need to be set before Gmail
+  sign-in can be validated end to end.
+- The model adapter is configured for DeepSeek V4 Flash, but calls remain
+  disabled until a server-side `AI_API_KEY` is added.
+- Retrieval is keyword-grounded in this Alpha; embeddings and hybrid/vector
+  ranking are a later quality layer.
+- Scanned/image-only PDFs still require OCR.
+- No external chat connector, knowledge graph, or autonomous agent execution.
 - No two-way Obsidian sync or Excel runner.
 - No Quant research computation in the web application.
 - Automatic topic-shift detection needs an approved chat-history connector.
@@ -38,8 +53,8 @@ The current Alpha increment replaces the environment-only access list with persi
 ## Follow-Up
 
 1. Configure Clerk keys and `LEVEL_GRIND_OWNER_EMAIL` in Sites.
-2. Verify owner bootstrap and one invited member in the target deployment.
-3. Merge or promote the Alpha branch after the access test.
-3. Add an approved conversation connector and drift-classification service.
-4. Add team membership and roles.
-5. Build governed Obsidian and company-AVD connectors.
+2. Add a small, capped DeepSeek API balance and store `AI_API_KEY` as a secret.
+3. Verify owner bootstrap, import one report, and ask one cited question.
+4. Import the remaining validated CNINFO batch after the one-report runtime test.
+5. Add an approved conversation connector and drift-classification service.
+6. Build governed Obsidian and company-AVD connectors.

@@ -28,6 +28,6 @@
 - [x] Run the first CNINFO portfolio batch from the WeChat company universe.
 - [x] Add R2-backed PDF storage and D1-backed corpus/search/usage records.
 - [x] Add a provider-neutral server adapter for DeepSeek, GLM, and Kimi.
-- [ ] Publish the storage-enabled version and verify hosted D1/R2 migrations.
+- [x] Publish the storage-enabled version and verify hosted D1/R2 wiring.
 - [ ] Add HKEX, SEC, JPX, TWSE, and KRX source adapters for the remaining companies.
 - [ ] Build V4.3 Azure gateway and permission-filtered semantic retrieval.
