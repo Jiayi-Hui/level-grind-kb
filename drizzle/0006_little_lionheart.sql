@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `corpus_documents_source_idx` ON `corpus_documents` (`source_url`);

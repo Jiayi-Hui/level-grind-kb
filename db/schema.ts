@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const documents = sqliteTable(
   "documents",
@@ -118,5 +118,65 @@ export const teamMembers = sqliteTable(
   (table) => [
     index("team_members_status_idx").on(table.status),
     index("team_members_role_idx").on(table.role),
+  ],
+);
+
+export const corpusDocuments = sqliteTable(
+  "corpus_documents",
+  {
+    id: text("id").primaryKey(),
+    securityCode: text("security_code").notNull(),
+    companyName: text("company_name").notNull(),
+    title: text("title").notNull(),
+    documentType: text("document_type").notNull(),
+    publishedAt: text("published_at").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    fileKey: text("file_key").notNull(),
+    fileName: text("file_name").notNull(),
+    fileSize: integer("file_size").notNull(),
+    pageCount: integer("page_count").notNull().default(0),
+    uploadedBy: text("uploaded_by").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("corpus_documents_company_idx").on(table.securityCode),
+    index("corpus_documents_published_idx").on(table.publishedAt),
+    uniqueIndex("corpus_documents_source_idx").on(table.sourceUrl),
+  ],
+);
+
+export const corpusChunks = sqliteTable(
+  "corpus_chunks",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => corpusDocuments.id, { onDelete: "cascade" }),
+    pageNumber: integer("page_number").notNull(),
+    content: text("content").notNull(),
+  },
+  (table) => [
+    index("corpus_chunks_document_idx").on(table.documentId),
+    index("corpus_chunks_page_idx").on(table.documentId, table.pageNumber),
+  ],
+);
+
+export const aiUsageEvents = sqliteTable(
+  "ai_usage_events",
+  {
+    id: text("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    estimatedCostUsd: text("estimated_cost_usd").notNull().default("0"),
+    latencyMs: integer("latency_ms").notNull().default(0),
+    status: text("status").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("ai_usage_user_idx").on(table.userEmail),
+    index("ai_usage_created_idx").on(table.createdAt),
   ],
 );

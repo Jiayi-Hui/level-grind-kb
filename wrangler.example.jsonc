@@ -22,6 +22,12 @@
     "CLERK_SIGN_UP_URL": "/sign-up",
     "CLERK_AFTER_SIGN_IN_URL": "/",
     "CLERK_AFTER_SIGN_UP_URL": "/",
-    "LEVEL_GRIND_INVITED_EMAILS": "you@example.com"
+    "LEVEL_GRIND_INVITED_EMAILS": "you@example.com",
+    "AI_PROVIDER": "deepseek",
+    "AI_MODEL": "deepseek-v4-flash",
+    "AI_BASE_URL": "https://api.deepseek.com",
+    "AI_INPUT_USD_PER_MTOK": "0.14",
+    "AI_CACHED_INPUT_USD_PER_MTOK": "0.0028",
+    "AI_OUTPUT_USD_PER_MTOK": "0.28"
   }
 }

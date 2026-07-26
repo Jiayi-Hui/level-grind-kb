@@ -20,6 +20,12 @@
 | Multi-user migration | Pass | Additive team member table and role/status indexes inspected |
 | Member authorization | Pass | Owner/admin writes; member writes return 403 |
 | Owner protection | Pass | Owner membership cannot be changed through the member endpoint |
+| CNINFO universe routing | Pass | 49 listed companies reviewed; 15 A-share names routed to CNINFO |
+| CNINFO metadata match | Pass | 30/30 exact-code full annual/half-year reports; summaries excluded |
+| CNINFO file integrity | Pass | 30/30 PDF signatures, byte sizes, and SHA-256 values match manifest |
+| Report storage contract | Pass | PDF bytes use R2 `FILES`; metadata, page chunks, and usage use D1 `DB` |
+| Provider boundary | Pass | API key remains server-side; DeepSeek/GLM/Kimi share one runtime-configured contract |
+| Current validation | Pass | ESLint, TypeScript, production build, and 3/3 contract tests |
 
 ## Acceptance Mapping
 

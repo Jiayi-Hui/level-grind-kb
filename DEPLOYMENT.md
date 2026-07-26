@@ -33,19 +33,47 @@ path: listed users are inserted as members after a verified Clerk sign-in.
 
 ## 2. Cloudflare D1 and R2
 
-Create one D1 database and one R2 bucket, then copy `wrangler.example.jsonc`
-to `wrangler.jsonc` and replace the D1 database id, R2 bucket name, and public
-Clerk key.
+The hosted Sites project owns one D1 database bound as `DB` and one R2 bucket
+bound as `FILES`. These logical bindings live in `.openai/hosting.json`; Sites
+creates and connects the real Cloudflare resources when a version is deployed.
+For a separate direct Cloudflare deployment, copy `wrangler.example.jsonc` to
+`wrangler.jsonc` and replace the placeholder resource identifiers.
 
-The application creates its D1 tables lazily from the API routes:
+The application includes migrations and also creates required tables
+idempotently from protected routes:
 
 - `documents`
 - `document_context`
 - `personal_contexts`
 - `task_contexts`
 - `team_members`
+- `corpus_documents`
+- `corpus_chunks`
+- `ai_usage_events`
 
-## 3. Local verification
+PDF bytes live in R2. Searchable report metadata, page text, permissions, and AI
+usage live in D1.
+
+## 3. Public model pilot
+
+Use a normal provider API key, never a Coding Plan or interactive OAuth token.
+The server supports DeepSeek, Z.AI, and Moonshot through one OpenAI-compatible
+contract:
+
+```text
+AI_PROVIDER=deepseek
+AI_API_KEY=...
+AI_MODEL=deepseek-v4-flash
+AI_BASE_URL=https://api.deepseek.com
+AI_INPUT_USD_PER_MTOK=0.14
+AI_CACHED_INPUT_USD_PER_MTOK=0.0028
+AI_OUTPUT_USD_PER_MTOK=0.28
+```
+
+Keep `AI_API_KEY` in the hosted secret store. The token-price settings are
+runtime values so the cost display can be updated without a code change.
+
+## 4. Local verification
 
 ```powershell
 npm install
@@ -55,7 +83,7 @@ npm run build
 npm run lint
 ```
 
-## 4. Boundary notes
+## 5. Boundary notes
 
 Level Grind stores context, provenance, permissions, task state, timelines, and
 approved research results. Raw systems such as Obsidian, Bloomberg, Wind,

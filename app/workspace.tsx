@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type View = "inbox" | "personal" | "team" | "tasks" | "routing" | "sources";
+type View = "inbox" | "library" | "assistant" | "personal" | "team" | "tasks" | "routing" | "sources";
 
 type DocumentRecord = {
   id: string;
@@ -88,8 +88,45 @@ type RoutingPayload = {
   workstreams: ConversationWorkstream[];
 };
 
+type CorpusDocument = {
+  id: string;
+  security_code: string;
+  company_name: string;
+  title: string;
+  document_type: string;
+  published_at: string;
+  source_url: string;
+  file_name: string;
+  file_size: number;
+  page_count: number;
+};
+
+type CorpusPayload = {
+  documents: CorpusDocument[];
+  usage: {
+    query_count: number;
+    input_tokens: number;
+    output_tokens: number;
+    estimated_cost_usd: number;
+  };
+  memberUsage: Array<{
+    user_email: string;
+    query_count: number;
+    total_tokens: number;
+    estimated_cost_usd: number;
+  }>;
+};
+
+type AskResult = {
+  answer: string;
+  usage?: { inputTokens: number; outputTokens: number; estimatedCostUsd: number; model: string; provider: string };
+  citations: Array<{ index: number; documentId: string; company: string; title: string; page: number }>;
+};
+
 const navItems: Array<[View, string, string]> = [
   ["inbox", "Research inbox", "⌂"],
+  ["library", "Report library", "▤"],
+  ["assistant", "Ask reports", "✦"],
   ["personal", "My context", "◌"],
   ["team", "Team context", "◎"],
   ["tasks", "Task context", "◇"],
@@ -153,6 +190,10 @@ export function Workspace() {
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [routing, setRouting] = useState<RoutingPayload | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [corpus, setCorpus] = useState<CorpusPayload | null>(null);
+  const [askResult, setAskResult] = useState<AskResult | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [importProgress, setImportProgress] = useState("");
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -177,23 +218,26 @@ export function Workspace() {
     setError("");
     try {
       const scope = active === "personal" ? "personal" : "team";
-      const [documentsResponse, contextResponse, routingResponse, membersResponse] = await Promise.all([
+      const [documentsResponse, contextResponse, routingResponse, membersResponse, corpusResponse] = await Promise.all([
         authorizedFetch(`/api/documents?scope=${scope}&q=${encodeURIComponent(query)}`),
         authorizedFetch("/api/context"),
         authorizedFetch("/api/routing"),
         authorizedFetch("/api/members"),
+        authorizedFetch("/api/corpus"),
       ]);
-      if (!documentsResponse.ok || !contextResponse.ok || !routingResponse.ok || !membersResponse.ok) {
+      if (!documentsResponse.ok || !contextResponse.ok || !routingResponse.ok || !membersResponse.ok || !corpusResponse.ok) {
         throw new Error("The context workspace could not be loaded.");
       }
       const documentsData = (await documentsResponse.json()) as { documents: DocumentRecord[] };
       const contextData = (await contextResponse.json()) as ContextPayload;
       const routingData = (await routingResponse.json()) as RoutingPayload;
       const membersData = (await membersResponse.json()) as { members: TeamMember[] };
+      const corpusData = (await corpusResponse.json()) as CorpusPayload;
       setDocuments(documentsData.documents ?? []);
       setContext(contextData);
       setRouting(routingData);
       setMembers(membersData.members ?? []);
+      setCorpus(corpusData);
       setSelected((current) => {
         const next = (documentsData.documents ?? []).find((item) => item.id === current?.id);
         return next ?? documentsData.documents?.[0] ?? null;
@@ -204,6 +248,96 @@ export function Workspace() {
       setLoading(false);
     }
   }, [active, authorizedFetch, query]);
+
+  async function importCorpus(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const input = event.currentTarget.elements.namedItem("corpusFiles") as HTMLInputElement;
+    const selectedFiles = Array.from(input.files ?? []);
+    const manifestFile = selectedFiles.find((file) => file.name === "manifest.json");
+    if (!manifestFile) {
+      setError("Select manifest.json together with its PDF files.");
+      return;
+    }
+    const manifest = JSON.parse(await manifestFile.text()) as {
+      records: Array<{
+        code: string;
+        company: string;
+        title: string;
+        documentType: string;
+        publishedAt: string;
+        sourceUrl: string;
+        file?: { filename?: string } | null;
+      }>;
+    };
+    const filesByName = new Map(selectedFiles.map((file) => [file.name, file]));
+    setSaving(true);
+    setError("");
+    let completed = 0;
+    try {
+      for (const record of manifest.records) {
+        const filename = record.file?.filename;
+        const file = filename ? filesByName.get(filename) : undefined;
+        if (!file) throw new Error(`Missing PDF: ${filename || record.title}`);
+        setImportProgress(`${completed + 1}/${manifest.records.length} · ${record.company}`);
+        const form = new FormData();
+        form.set("file", file);
+        form.set("securityCode", record.code);
+        form.set("companyName", record.company);
+        form.set("title", record.title);
+        form.set("documentType", record.documentType);
+        form.set("publishedAt", record.publishedAt);
+        form.set("sourceUrl", record.sourceUrl);
+        const response = await authorizedFetch("/api/corpus", { method: "POST", body: form });
+        const payload = (await response.json()) as { error?: string };
+        if (!response.ok) throw new Error(payload.error || `Import failed: ${record.title}`);
+        completed += 1;
+      }
+      event.currentTarget.reset();
+      setToast(`Imported ${completed} searchable reports`);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Report import failed.");
+    } finally {
+      setSaving(false);
+      setImportProgress("");
+    }
+  }
+
+  async function askReports(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const question = String(form.get("question") ?? "").trim();
+    if (!question) return;
+    setAsking(true);
+    setError("");
+    setAskResult(null);
+    try {
+      const response = await authorizedFetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      const payload = (await response.json()) as AskResult & { error?: string };
+      if (!response.ok) throw new Error(payload.error || "The report assistant could not answer.");
+      setAskResult(payload);
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The report assistant could not answer.");
+    } finally {
+      setAsking(false);
+    }
+  }
+
+  async function openCorpusDocument(document: CorpusDocument) {
+    const response = await authorizedFetch(`/api/corpus/files/${document.id}`);
+    if (!response.ok) {
+      setError("The report could not be opened.");
+      return;
+    }
+    const url = URL.createObjectURL(await response.blob());
+    window.open(url, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
 
   async function saveMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -381,6 +515,8 @@ export function Workspace() {
 
   const heading = {
     inbox: ["CAPTURE & ROUTE", "Research inbox", "Capture material once, then route it into personal or team context."],
+    library: ["SEARCHABLE FILINGS", "Report library", "Annual and interim reports stored once, indexed by company and available from any device."],
+    assistant: ["GROUNDED RESEARCH", "Ask the reports", "Search the report corpus and receive an answer with page-level citations."],
     personal: ["PERSONAL CONTEXT", "My research context", "Your coverage, working method, preferences and private memory."],
     team: ["SHARED INTELLIGENCE", "Team context", "Topics, provenance and signals the team is allowed to share."],
     tasks: ["MINIMUM SUFFICIENT CONTEXT", "Task context", "Package the right context for an agent without dumping the whole knowledge base."],
@@ -430,7 +566,7 @@ export function Workspace() {
             <button className="upload-button" onClick={() => setTaskComposer(true)}>＋ New task context</button>
           ) : active === "routing" ? (
             <button className="upload-button" onClick={() => setRoutingComposer(true)}>＋ New handoff</button>
-          ) : (
+          ) : active === "library" || active === "assistant" ? null : (
             <button className="upload-button" onClick={() => setComposer(true)}>＋ Capture</button>
           )}
         </header>
@@ -461,6 +597,87 @@ export function Workspace() {
                 openCapture={() => setComposer(true)}
               />
             </>
+          )}
+
+          {active === "library" && (
+            <section className="corpus-board">
+              <div className="metrics">
+                <article><span>REPORTS</span><strong>{corpus?.documents.length || 0}</strong><small>searchable PDFs</small></article>
+                <article><span>COMPANIES</span><strong>{new Set(corpus?.documents.map((doc) => doc.security_code)).size}</strong><small>in the library</small></article>
+                <article><span>PAGES</span><strong>{corpus?.documents.reduce((sum, doc) => sum + doc.page_count, 0) || 0}</strong><small>indexed pages</small></article>
+              </div>
+              {(context?.user.role === "owner" || context?.user.role === "admin") && (
+                <form className="corpus-import" onSubmit={importCorpus}>
+                  <div>
+                    <p className="eyebrow">ADMIN IMPORT</p>
+                    <h2>Add a verified report batch</h2>
+                    <p>Select the batch manifest and every referenced PDF. Files go to cloud storage; extracted pages become searchable context.</p>
+                  </div>
+                  <label className="file-drop">
+                    Select manifest + PDFs
+                    <input name="corpusFiles" type="file" accept=".json,.pdf" multiple required />
+                    <small>{importProgress || "CNINFO batch format"}</small>
+                  </label>
+                  <button className="upload-button" disabled={saving}>{saving ? "Importing…" : "Import batch"}</button>
+                </form>
+              )}
+              {!corpus?.documents.length ? (
+                <div className="empty-state"><h3>No reports in the cloud library yet.</h3><p>Import the verified CNINFO batch to make it available from every device.</p></div>
+              ) : (
+                <div className="corpus-grid">
+                  {corpus.documents.map((document) => (
+                    <article className="corpus-card" key={document.id}>
+                      <div><span className="tag">{document.security_code}</span><span>{document.document_type === "annual-report" ? "Annual" : "Interim"}</span></div>
+                      <h3>{document.company_name}</h3>
+                      <p>{document.title}</p>
+                      <small>{document.page_count} pages · {(document.file_size / 1048576).toFixed(1)} MB</small>
+                      <button className="quiet-button" onClick={() => openCorpusDocument(document)}>Open report</button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {active === "assistant" && (
+            <section className="assistant-board">
+              <div className="usage-strip">
+                <article><span>YOUR QUERIES</span><strong>{corpus?.usage.query_count || 0}</strong></article>
+                <article><span>INPUT TOKENS</span><strong>{Number(corpus?.usage.input_tokens || 0).toLocaleString()}</strong></article>
+                <article><span>OUTPUT TOKENS</span><strong>{Number(corpus?.usage.output_tokens || 0).toLocaleString()}</strong></article>
+                <article><span>EST. COST</span><strong>${Number(corpus?.usage.estimated_cost_usd || 0).toFixed(4)}</strong></article>
+              </div>
+              <form className="ask-box" onSubmit={askReports}>
+                <p className="eyebrow">REPORT ASSISTANT</p>
+                <h2>Ask across the team report library.</h2>
+                <textarea name="question" required rows={4} placeholder="例如：比较中兴通讯和光环新网在 2025 年对 AI 基础设施需求的表述，并标明出处。" />
+                <div className="composer-foot"><span>Answers are restricted to indexed report evidence</span><button className="upload-button" disabled={asking || !corpus?.documents.length}>{asking ? "Reading reports…" : "Ask"}</button></div>
+              </form>
+              {askResult && (
+                <article className="answer-card">
+                  <div className="section-title"><h2>Answer</h2><span>{askResult.usage ? `${askResult.usage.provider} · ${askResult.usage.model}` : "Retrieved evidence"}</span></div>
+                  <div className="answer-copy">{askResult.answer}</div>
+                  <div className="citation-list">
+                    {askResult.citations.map((citation) => (
+                      <button key={`${citation.documentId}-${citation.page}`} onClick={() => {
+                        const document = corpus?.documents.find((item) => item.id === citation.documentId);
+                        if (document) openCorpusDocument(document);
+                      }}>
+                        [{citation.index}] {citation.company} · {citation.title} · p.{citation.page}
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              )}
+              {(context?.user.role === "owner" || context?.user.role === "admin") && Boolean(corpus?.memberUsage.length) && (
+                <section className="member-usage">
+                  <div className="section-title"><h2>Team AI usage</h2><span>Operations view</span></div>
+                  {corpus?.memberUsage.map((usage) => (
+                    <article key={usage.user_email}><span>{usage.user_email}</span><b>{usage.query_count} queries</b><span>{Number(usage.total_tokens).toLocaleString()} tokens</span><span>${Number(usage.estimated_cost_usd).toFixed(4)}</span></article>
+                  ))}
+                </section>
+              )}
+            </section>
           )}
 
           {active === "personal" && context && (

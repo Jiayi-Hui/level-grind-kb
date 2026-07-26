@@ -60,3 +60,27 @@ test("keeps context boundaries and persistence explicit in source", async () => 
   assert.match(readme, /Raw data can remain/);
   assert.match(readme, /Automatic topic-shift detection requires/);
 });
+
+test("ships a real searchable report corpus and grounded assistant contract", async () => {
+  const [workspace, corpusRoute, askRoute, corpusLib, schema] = await Promise.all([
+    readFile(new URL("../app/workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/corpus/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/ask/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/corpus.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(workspace, /Report library/);
+  assert.match(workspace, /Ask the reports/);
+  assert.match(workspace, /Team AI usage/);
+  assert.match(corpusRoute, /extractText/);
+  assert.match(corpusRoute, /env\.FILES\.put/);
+  assert.match(corpusRoute, /alreadyImported/);
+  assert.match(askRoute, /AI_API_KEY/);
+  assert.match(askRoute, /deepseek-v4-flash/);
+  assert.match(askRoute, /Cite every material claim/);
+  assert.match(askRoute, /ai_usage_events/);
+  assert.match(corpusLib, /CREATE TABLE IF NOT EXISTS corpus_chunks/);
+  assert.match(schema, /corpusDocuments/);
+  assert.match(schema, /corpusChunks/);
+  assert.match(schema, /aiUsageEvents/);
+});

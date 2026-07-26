@@ -17,3 +17,17 @@
 - [x] Add Multi-user Alpha team access UI.
 - [x] Generate and inspect the membership migration.
 - [ ] Deploy only after Clerk production variables and owner bootstrap are verified.
+
+## V4 — Team Research OS
+
+- [x] Frame storage, onboarding, corpus, and Azure AI architecture.
+- [ ] Confirm company-Azure data boundary and identity mappings.
+- [ ] Build V4.1 persona onboarding and quota ledger.
+- [ ] Build V4.2 document taxonomy and public-document preload.
+- [x] Build and sample-validate the CNINFO annual/half-year report fetcher.
+- [x] Run the first CNINFO portfolio batch from the WeChat company universe.
+- [x] Add R2-backed PDF storage and D1-backed corpus/search/usage records.
+- [x] Add a provider-neutral server adapter for DeepSeek, GLM, and Kimi.
+- [ ] Publish the storage-enabled version and verify hosted D1/R2 migrations.
+- [ ] Add HKEX, SEC, JPX, TWSE, and KRX source adapters for the remaining companies.
+- [ ] Build V4.3 Azure gateway and permission-filtered semantic retrieval.
