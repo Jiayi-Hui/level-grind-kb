@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { runtimeEnv } from "../lib/runtime-env";
 import { AppClerkProvider } from "./auth-widgets";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +49,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const publishableKey = runtimeEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
 
   return (
     <html lang="en">

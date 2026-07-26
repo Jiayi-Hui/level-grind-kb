@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAppUser } from "../../../lib/access";
 import { prepareCorpusDb, searchTerms } from "../../../lib/corpus";
+import { runtimeEnv } from "../../../lib/runtime-env";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ type ProviderConfig = {
 };
 
 function providerConfig(): ProviderConfig {
-  const provider = (process.env.AI_PROVIDER || "deepseek").trim().toLowerCase();
+  const provider = (runtimeEnv("AI_PROVIDER") || "deepseek").trim().toLowerCase();
   const presets: Record<string, ProviderConfig> = {
     deepseek: {
       name: "DeepSeek",
@@ -41,9 +42,9 @@ function providerConfig(): ProviderConfig {
   };
   const preset = presets[provider] ?? presets.deepseek;
   return {
-    name: process.env.AI_PROVIDER_NAME?.trim() || preset.name,
-    baseUrl: (process.env.AI_BASE_URL?.trim() || preset.baseUrl).replace(/\/$/, ""),
-    model: process.env.AI_MODEL?.trim() || preset.model,
+    name: runtimeEnv("AI_PROVIDER_NAME")?.trim() || preset.name,
+    baseUrl: (runtimeEnv("AI_BASE_URL")?.trim() || preset.baseUrl).replace(/\/$/, ""),
+    model: runtimeEnv("AI_MODEL")?.trim() || preset.model,
   };
 }
 
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ answer: "I could not find relevant passages in the current report library.", citations: [] });
   }
 
-  const apiKey = process.env.AI_API_KEY;
+  const apiKey = runtimeEnv("AI_API_KEY");
   const provider = providerConfig();
   if (!apiKey) {
     return NextResponse.json(
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
           temperature: 0.1,
           max_tokens: Math.min(
             4000,
-            Math.max(256, Number(process.env.AI_MAX_OUTPUT_TOKENS || "1800")),
+            Math.max(256, Number(runtimeEnv("AI_MAX_OUTPUT_TOKENS") || "1800")),
           ),
           messages: [
             {
@@ -201,9 +202,9 @@ async function logUsage(
   latencyMs: number,
   status: string,
 ) {
-  const inputPrice = Number(process.env.AI_INPUT_USD_PER_MTOK || "0");
-  const cachedInputPrice = Number(process.env.AI_CACHED_INPUT_USD_PER_MTOK || inputPrice);
-  const outputPrice = Number(process.env.AI_OUTPUT_USD_PER_MTOK || "0");
+  const inputPrice = Number(runtimeEnv("AI_INPUT_USD_PER_MTOK") || "0");
+  const cachedInputPrice = Number(runtimeEnv("AI_CACHED_INPUT_USD_PER_MTOK") || inputPrice);
+  const outputPrice = Number(runtimeEnv("AI_OUTPUT_USD_PER_MTOK") || "0");
   const pricedInputTokens = Math.max(0, cacheMissTokens);
   const pricedCachedTokens = Math.max(0, Math.min(cacheHitTokens, inputTokens));
   const cost = (

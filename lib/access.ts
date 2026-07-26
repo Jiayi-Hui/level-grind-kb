@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { runtimeEnv } from "./runtime-env";
 
 export type AppUser = {
   id: string;
@@ -25,7 +26,7 @@ const membersSchema = `
 
 export function invitedEmails() {
   return new Set(
-    (process.env.LEVEL_GRIND_INVITED_EMAILS ?? "")
+    (runtimeEnv("LEVEL_GRIND_INVITED_EMAILS") ?? "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -55,8 +56,8 @@ async function requestLike(request?: NextRequest) {
 }
 
 export async function getAppUser(request?: NextRequest): Promise<AppUser | null> {
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const secretKey = runtimeEnv("CLERK_SECRET_KEY");
+  const publishableKey = runtimeEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
   if (!secretKey || !publishableKey) return null;
 
   const clerk = createClerkClient({ secretKey, publishableKey });
@@ -79,7 +80,7 @@ export async function getAppUser(request?: NextRequest): Promise<AppUser | null>
   if (!email) return null;
 
   await env.DB.prepare(membersSchema).run();
-  const normalizedOwner = (process.env.LEVEL_GRIND_OWNER_EMAIL ?? "").trim().toLowerCase();
+  const normalizedOwner = (runtimeEnv("LEVEL_GRIND_OWNER_EMAIL") ?? "").trim().toLowerCase();
   const isBootstrapOwner = Boolean(normalizedOwner) && email === normalizedOwner;
   const isLegacyInvite = isEmailInvited(email);
   let member = await env.DB.prepare(
