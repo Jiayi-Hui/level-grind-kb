@@ -30,6 +30,7 @@ GLM, and Kimi using server-side runtime settings.
 - Searchable page chunks and citation-bearing report answers.
 - Per-user query, token, estimated-cost, latency, and status records.
 - Provider-neutral DeepSeek/GLM/Kimi server boundary.
+- Per-answer output hard cap to bound pilot cost and latency.
 
 ## Verification
 

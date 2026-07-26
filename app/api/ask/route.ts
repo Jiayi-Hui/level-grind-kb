@@ -114,6 +114,10 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           model: provider.model,
           temperature: 0.1,
+          max_tokens: Math.min(
+            4000,
+            Math.max(256, Number(process.env.AI_MAX_OUTPUT_TOKENS || "1800")),
+          ),
           messages: [
             {
               role: "system",
