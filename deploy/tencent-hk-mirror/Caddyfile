@@ -1,0 +1,30 @@
+{
+	email {$TLS_EMAIL}
+	admin off
+}
+
+{$MIRROR_DOMAIN} {
+	@mirror_health path /mirror-health
+	respond @mirror_health "level-grind-hk-mirror: ok" 200
+
+	reverse_proxy https://{$UPSTREAM_DIAL} {
+		header_up Host {$UPSTREAM_HOST}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto https
+
+		transport http {
+			tls_server_name {$UPSTREAM_TLS_SERVER_NAME}
+			dial_timeout 10s
+			response_header_timeout 120s
+			keepalive 30s
+		}
+
+		flush_interval -1
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

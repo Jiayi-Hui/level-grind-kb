@@ -53,3 +53,7 @@ npm run build
 The site declares Cloudflare D1 and R2 bindings in `.openai/hosting.json`.
 
 See `DEPLOYMENT.md` for Clerk, D1, and R2 setup notes.
+
+For a cross-computer continuation, current demo blockers, portable data
+boundary, and alternatives to Sites hosting, see
+`HANDOVER_WORK_COMPUTER_2026-07-28.md`.

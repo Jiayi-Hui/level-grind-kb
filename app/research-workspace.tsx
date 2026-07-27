@@ -1670,7 +1670,10 @@ export function ResearchWorkspace() {
                       <h2>{activeChat?.title || c.askTitle}</h2>
                       <p>{language === "zh" ? "默认使用报告库 + 公开网络；每条结论都应该标注来源。" : "Hybrid is the default: report library plus public web, with sources attached to material claims."}</p>
                     </div>
-                    <span>DeepSeek · Tavily</span>
+                    <span className="chat-engine">
+                      DeepSeek · Tavily
+                      <small>{language === "zh" ? "拖动面板右下角调整大小" : "Drag the lower-right corner to resize"}</small>
+                    </span>
                   </div>
                   <div className="chat-thread" ref={chatScrollRef}>
                     {chatMessages.length === 0 && (
@@ -1729,7 +1732,7 @@ export function ResearchWorkspace() {
                         </button>
                       ))}
                     </fieldset>
-                    <textarea name="question" required rows={3} value={questionDraft} onChange={(event) => setQuestionDraft(event.target.value)} placeholder={c.askPlaceholder} />
+                    <textarea name="question" required rows={4} value={questionDraft} onChange={(event) => setQuestionDraft(event.target.value)} placeholder={c.askPlaceholder} />
                     <div className="composer-foot">
                       <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
                       <button className="upload-button" disabled={asking || (mode === "reports" && !corpus?.documents.length)}>

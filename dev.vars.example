@@ -1,0 +1,24 @@
+# Copy this file to .dev.vars for local development.
+# Never commit the populated .dev.vars file.
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_replace_me
+CLERK_SECRET_KEY=sk_test_replace_me
+CLERK_SIGN_IN_URL=/sign-in
+CLERK_SIGN_UP_URL=/sign-up
+CLERK_AFTER_SIGN_IN_URL=/
+CLERK_AFTER_SIGN_UP_URL=/
+
+LEVEL_GRIND_OWNER_EMAIL=you@example.com
+LEVEL_GRIND_INVITED_EMAILS=you@example.com
+
+AI_PROVIDER=deepseek
+AI_API_KEY=replace_me
+AI_MODEL=deepseek-v4-flash
+AI_BASE_URL=https://api.deepseek.com
+AI_MAX_OUTPUT_TOKENS=1800
+AI_INPUT_USD_PER_MTOK=0.14
+AI_CACHED_INPUT_USD_PER_MTOK=0.0028
+AI_OUTPUT_USD_PER_MTOK=0.28
+
+WEB_SEARCH_PROVIDER=tavily
+TAVILY_API_KEY=replace_me

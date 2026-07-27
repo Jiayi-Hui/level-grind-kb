@@ -1,0 +1,23 @@
+services:
+  mirror:
+    image: caddy:2.10-alpine
+    container_name: level-grind-hk-mirror
+    restart: unless-stopped
+    environment:
+      MIRROR_DOMAIN: ${MIRROR_DOMAIN:-cn.level-grind.com}
+      TLS_EMAIL: ${TLS_EMAIL:?Set TLS_EMAIL in .env}
+      UPSTREAM_DIAL: ${UPSTREAM_DIAL:-level-grind-workspace.dingjingbo3747.chatgpt.site:443}
+      UPSTREAM_HOST: ${UPSTREAM_HOST:-level-grind.com}
+      UPSTREAM_TLS_SERVER_NAME: ${UPSTREAM_TLS_SERVER_NAME:-level-grind.com}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

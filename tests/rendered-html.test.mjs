@@ -65,7 +65,7 @@ test("ships bounded research chats, project rename, multidimensional filters, an
     readFile(new URL("../public/Simple_Valuation_Model_Demo.xlsx", import.meta.url)),
     readFile(new URL("../app/model-workbench.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(css, /height: min\(980px, calc\(100dvh - 160px\)\)/);
+  assert.match(css, /height: min\(1160px, calc\(100dvh - 80px\)\)/);
   assert.match(css, /\.chat-thread \{ min-height: 0/);
   assert.match(workspace, /renameProject/);
   assert.match(sessions, /export async function PATCH/);
@@ -165,4 +165,20 @@ test("merges personal and team knowledge entries and lets owners manage them", a
   assert.match(workspace, /duplicateIds/);
   assert.match(workspace, /onEdit\(selected\)/);
   assert.match(workspace, /onDelete\(selected\)/);
+});
+
+test("ships a resizable research chat and a cross-computer handover", async () => {
+  const [workspace, styles, handover] = await Promise.all([
+    readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../HANDOVER_WORK_COMPUTER_2026-07-28.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(workspace, /拖动面板右下角调整大小/);
+  assert.match(styles, /\.chat-workspace[\s\S]*resize: both/);
+  assert.match(styles, /\.chat-composer textarea[\s\S]*min-height: 112px/);
+  assert.match(handover, /add-clerk-auth-alpha/);
+  assert.match(handover, /The visual layout is normal React\/CSS and does \*\*not\*\* depend on ChatGPT Sites/);
+  assert.match(handover, /live D1 rows and live R2 objects/);
+  assert.match(handover, /T\+1, T\+5, and T\+20/);
 });
