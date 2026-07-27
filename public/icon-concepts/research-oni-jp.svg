@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Level Grind research oni</title>
+  <desc id="desc">A tiny Japanese stationery-style research oni with a book and pencil.</desc>
+
+  <rect width="512" height="512" rx="116" fill="#F6F0E4"/>
+  <circle cx="252" cy="245" r="169" fill="#D66C55"/>
+
+  <!-- A quiet level-up mark, like a tiny stamp. -->
+  <path d="m399 78 14 15 14-15M413 93v34" fill="none" stroke="#29453C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m98 99 7 16 18 2-14 11 4 18-15-10-16 10 5-18-14-11 18-2 7-16Z" fill="#F3CE72"/>
+
+  <!-- Pencil, deliberately a little crooked and toy-like. -->
+  <g transform="rotate(24 374 300)" stroke="#29453C" stroke-linejoin="round">
+    <path d="M355 169h38v211h-38z" fill="#F1C966" stroke-width="13"/>
+    <path d="m355 169 19-43 19 43Z" fill="#FFF9EC" stroke-width="13"/>
+    <path d="m368 140 6-14 6 14Z" fill="#29453C" stroke="none"/>
+    <path d="M355 345h38v35h-38z" fill="#D66C55" stroke-width="13"/>
+  </g>
+
+  <!-- Oversized head and tiny body create the Japanese chibi proportion. -->
+  <path d="M180 331c-3 48 6 96 34 121 23 20 73 21 98 1 29-24 39-70 35-123Z" fill="#789884" stroke="#29453C" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M151 224c-4-78 44-135 116-136 73-1 123 53 123 131 0 79-48 134-121 137-73 3-114-48-118-132Z" fill="#90AC98" stroke="#29453C" stroke-width="15" stroke-linejoin="round"/>
+
+  <!-- One tiny oni horn and soft ear-like tufts. -->
+  <path d="m242 101 24-60 31 58Z" fill="#F3CE72" stroke="#29453C" stroke-width="14" stroke-linejoin="round"/>
+  <path d="m169 151-46-31 17 61M367 145l42-34-12 64" fill="#90AC98" stroke="#29453C" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Face sits low with lots of forehead, a classic stationery-character proportion. -->
+  <path d="M182 229c8-49 44-77 92-75 52 2 85 34 88 84 4 55-35 91-92 93-59 1-97-40-88-102Z" fill="#FFF9EC"/>
+  <ellipse cx="231" cy="246" rx="10" ry="14" fill="#29453C" transform="rotate(-5 231 246)"/>
+  <ellipse cx="310" cy="242" rx="10" ry="14" fill="#29453C" transform="rotate(5 310 242)"/>
+  <circle cx="228" cy="242" r="3.5" fill="#FFF9EC"/>
+  <circle cx="307" cy="238" r="3.5" fill="#FFF9EC"/>
+  <ellipse cx="210" cy="278" rx="17" ry="9" fill="#E99B8A" opacity=".9"/>
+  <ellipse cx="331" cy="274" rx="17" ry="9" fill="#E99B8A" opacity=".9"/>
+  <path d="M253 274c6 7 13 7 19-1 6 8 13 8 20 0" fill="none" stroke="#29453C" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Tiny limbs. -->
+  <path d="M188 355c-19 1-34 12-44 31M340 349c18 2 32 12 42 29M232 450c-4 15-13 25-26 31M298 451c4 15 13 24 27 29" fill="none" stroke="#29453C" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Small open-book shield. -->
+  <path d="M72 337c39-4 69 8 90 31 21-23 52-35 90-31v104c-36-6-66 3-90 27-24-24-54-33-90-27V337Z" fill="#FFF9EC" stroke="#29453C" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M162 368v100" fill="none" stroke="#29453C" stroke-width="10" stroke-linecap="round"/>
+  <path d="M98 371c18 0 33 5 45 14M98 401c18 0 32 4 43 12M226 371c-18 0-33 5-45 14M226 401c-18 0-32 4-43 12" fill="none" stroke="#D66C55" stroke-width="7" stroke-linecap="round"/>
+</svg>

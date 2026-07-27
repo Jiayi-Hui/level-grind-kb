@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">XP Cyclops</title>
+  <desc id="desc">A one-eyed research monster gaining experience points.</desc>
+  <rect width="512" height="512" rx="116" fill="#173F34"/>
+
+  <!-- XP trail -->
+  <path d="m104 120 15 16 15-16M119 136v45" fill="none" stroke="#F4C868" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m408 74 8 19 20 2-15 13 5 20-18-11-17 11 5-20-15-13 20-2 7-19Z" fill="#E8916A"/>
+  <circle cx="450" cy="166" r="10" fill="#F4F1E8"/>
+
+  <!-- Book backpack -->
+  <path d="M95 260c-19-6-30 3-34 25l-14 91c-4 24 9 39 30 42l90 11 22-150-94-19Z" fill="#D0623D" stroke="#0E2B24" stroke-width="17" stroke-linejoin="round"/>
+  <path d="m87 301 78 12M81 341l78 12M75 381l78 12" fill="none" stroke="#F3EFE4" stroke-width="9" stroke-linecap="round" opacity=".82"/>
+
+  <!-- Leaning cyclops -->
+  <path
+    d="M176 149c47-36 122-30 169 15 56 54 67 150 28 222-35 65-111 95-176 66-63-28-87-104-69-184 11-50 25-88 48-119Z"
+    fill="#B8D7C4"
+    stroke="#0E2B24"
+    stroke-width="18"
+    stroke-linejoin="round"
+  />
+  <path d="m185 167-8-72 55 45M310 139l39-56 23 77" fill="#B8D7C4" stroke="#0E2B24" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M184 258c8-57 48-91 99-84 54 8 87 58 72 112-15 55-64 82-113 68-47-13-66-48-58-96Z" fill="#F3EFE4"/>
+  <ellipse cx="274" cy="259" rx="46" ry="54" fill="#173F34" transform="rotate(8 274 259)"/>
+  <ellipse cx="263" cy="244" rx="14" ry="18" fill="#F3EFE4" transform="rotate(8 263 244)"/>
+  <path d="M249 331c19 16 39 15 58-2" fill="none" stroke="#173F34" stroke-width="13" stroke-linecap="round"/>
+  <path d="m300 348 23 31-34 2Z" fill="#F3EFE4" stroke="#173F34" stroke-width="8" stroke-linejoin="round"/>
+  <circle cx="205" cy="327" r="11" fill="#E8916A" opacity=".8"/>
+  <circle cx="335" cy="318" r="11" fill="#E8916A" opacity=".8"/>
+
+  <!-- Little climbing limbs -->
+  <path d="M170 340c-29 5-48 21-57 49M355 351c24 11 37 29 40 52M206 440c-6 17-17 28-34 33M328 430c8 17 21 27 39 30" fill="none" stroke="#0E2B24" stroke-width="18" stroke-linecap="round"/>
+</svg>

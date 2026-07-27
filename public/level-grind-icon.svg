@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Level Grind icon</title>
+  <desc id="description">A friendly research monster leveling up.</desc>
+
+  <rect width="512" height="512" rx="112" fill="#173F34"/>
+
+  <!-- Level-up arrow, kept broad enough to read at favicon size. -->
+  <path
+    d="M256 48 334 132h-43v76h-70v-76h-43L256 48Z"
+    fill="#E79A78"
+  />
+
+  <!-- Monster silhouette. The side points read as tiny horns at small sizes. -->
+  <path
+    d="M117 221 82 165l72 20c27-22 62-34 102-34s75 12 102 34l72-20-35 56c18 28 27 61 27 99v67c0 32-26 58-58 58h-22c-17 0-32-8-42-21-10 13-25 21-42 21h-4c-17 0-32-8-42-21-10 13-25 21-42 21h-22c-32 0-58-26-58-58v-67c0-38 9-71 27-99Z"
+    fill="#C75C35"
+  />
+
+  <!-- Face doubles as a clean research card. -->
+  <rect x="135" y="224" width="242" height="150" rx="60" fill="#F4F1E8"/>
+
+  <circle cx="205" cy="287" r="22" fill="#173F34"/>
+  <circle cx="307" cy="287" r="22" fill="#173F34"/>
+  <circle cx="198" cy="280" r="6" fill="#F4F1E8"/>
+  <circle cx="300" cy="280" r="6" fill="#F4F1E8"/>
+
+  <path
+    d="M224 330c9 12 20 18 32 18s23-6 32-18"
+    fill="none"
+    stroke="#173F34"
+    stroke-width="13"
+    stroke-linecap="round"
+  />
+
+  <!-- Small XP sparks. -->
+  <circle cx="105" cy="112" r="12" fill="#F4F1E8"/>
+  <circle cx="407" cy="112" r="12" fill="#F4F1E8"/>
+</svg>

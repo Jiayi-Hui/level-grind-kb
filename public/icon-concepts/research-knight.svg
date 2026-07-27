@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Research Knight</title>
+  <desc id="desc">A tiny research adventurer with a book shield and pencil sword.</desc>
+  <rect width="512" height="512" rx="116" fill="#173F34"/>
+
+  <path d="m378 62 10 27 27 10-27 10-10 27-10-27-27-10 27-10 10-27Z" fill="#F0A07E"/>
+  <path d="m421 151 6 16 16 6-16 6-6 16-6-16-16-6 16-6 6-16Z" fill="#F4F1E8"/>
+
+  <!-- Pencil sword -->
+  <g transform="rotate(31 355 235)">
+    <path d="M335 91h40v237h-40z" fill="#E58A62" stroke="#0E2B24" stroke-width="14" stroke-linejoin="round"/>
+    <path d="m335 91 20-46 20 46Z" fill="#F4F1E8" stroke="#0E2B24" stroke-width="14" stroke-linejoin="round"/>
+    <path d="m349 58 6-13 6 13Z" fill="#0E2B24"/>
+    <path d="M335 294h40v34h-40z" fill="#F2C769" stroke="#0E2B24" stroke-width="14"/>
+  </g>
+
+  <!-- Wobbly bean-shaped adventurer -->
+  <path
+    d="M113 284c-6-82 35-142 112-151 69-8 129 35 145 110 17 80-9 175-86 201-76 26-164-12-171-160Z"
+    fill="#BFD7C7"
+    stroke="#0E2B24"
+    stroke-width="17"
+    stroke-linejoin="round"
+  />
+  <path d="m143 189 9-75 60 37M322 171l40-60 19 82" fill="#BFD7C7" stroke="#0E2B24" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M150 250c10-48 45-76 92-75 52 1 87 31 94 82 6 49-29 89-92 91-64 1-105-43-94-98Z" fill="#F4F1E8"/>
+  <ellipse cx="208" cy="249" rx="15" ry="20" fill="#173F34" transform="rotate(-8 208 249)"/>
+  <ellipse cx="282" cy="243" rx="17" ry="22" fill="#173F34" transform="rotate(8 282 243)"/>
+  <circle cx="203" cy="243" r="5" fill="#F4F1E8"/>
+  <circle cx="276" cy="236" r="6" fill="#F4F1E8"/>
+  <path d="M221 293c15 15 34 14 49-3" fill="none" stroke="#173F34" stroke-width="12" stroke-linecap="round"/>
+  <path d="M175 324c-17 7-29 20-32 39M320 315c18 6 31 18 37 34" fill="none" stroke="#0E2B24" stroke-width="17" stroke-linecap="round"/>
+
+  <!-- Open-book shield -->
+  <path d="M80 330c46-5 83 10 109 38 26-28 65-43 111-38v105c-43-8-80 2-111 31-31-29-67-39-109-31V330Z" fill="#F4F1E8" stroke="#0E2B24" stroke-width="17" stroke-linejoin="round"/>
+  <path d="M189 368v98" fill="none" stroke="#0E2B24" stroke-width="13" stroke-linecap="round"/>
+  <path d="M111 364c25 0 45 6 59 18M111 397c23 0 42 5 56 15M268 364c-25 0-45 6-59 18M268 397c-23 0-42 5-56 15" fill="none" stroke="#D06A43" stroke-width="9" stroke-linecap="round"/>
+</svg>
