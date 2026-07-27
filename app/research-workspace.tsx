@@ -11,8 +11,9 @@ import {
 } from "react";
 import { copy, Language } from "./i18n";
 import { MarkdownAnswer } from "./markdown-answer";
+import { ModelWorkbench } from "./model-workbench";
 
-type View = "inbox" | "library" | "events" | "assistant" | "settings";
+type View = "inbox" | "library" | "events" | "models" | "assistant" | "settings";
 type EvidenceMode = "reports" | "web" | "hybrid";
 
 type DocumentRecord = {
@@ -137,6 +138,8 @@ type ResearchEvent = {
   latest_claim_speaker?: string;
   latest_claimed_at?: string;
   latest_claim_source_system?: string;
+  latest_claim_source_title?: string;
+  latest_claim_verification_status?: string;
 };
 
 type EventsPayload = {
@@ -192,6 +195,16 @@ type WebCitation = {
   publishedAt?: string;
 };
 
+type InternalCitation = {
+  kind: "knowledge" | "event";
+  index: number;
+  id: string;
+  title: string;
+  source: string;
+  excerpt: string;
+  sourceUrl?: string;
+};
+
 type WebResult = {
   index: number;
   title: string;
@@ -214,7 +227,7 @@ type AskResult = {
     model: string;
     provider: string;
   };
-  citations: Array<ReportCitation | WebCitation>;
+  citations: Array<ReportCitation | WebCitation | InternalCitation>;
   webResults: WebResult[];
 };
 
@@ -239,7 +252,7 @@ type ChatMessage = {
   chatId: string;
   role: "user" | "assistant";
   content: string;
-  citations: Array<ReportCitation | WebCitation>;
+  citations: Array<ReportCitation | WebCitation | InternalCitation>;
   webResults: WebResult[];
   usage?: AskResult["usage"];
   createdAt: string;
@@ -272,6 +285,7 @@ const navIcons: Record<View, string> = {
   inbox: "⌂",
   library: "▤",
   events: "◇",
+  models: "▦",
   assistant: "✦",
   settings: "⚙",
 };
@@ -370,10 +384,16 @@ function claimVerificationLabel(status: ResearchClaim["verification_status"], la
   return labels[language][status];
 }
 
-function speakerLabel(value: string | undefined, language: Language) {
+function speakerLabel(value: string | undefined) {
   if (!value) return "";
-  if (language === "zh" && value === "Team") return "团队";
-  if (language === "zh" && value === "Verification pass") return "验证记录";
+  if (value === "Team" || value === "Verification pass") return "";
+  return value;
+}
+
+function sourceSystemLabel(value: string | undefined) {
+  if (!value) return "";
+  if (/^(team|wechat|wechat-group)$/i.test(value)) return "WeChat Group";
+  if (/^(bbg|bloomberg)$/i.test(value)) return "Bloomberg";
   return value;
 }
 
@@ -404,7 +424,11 @@ ${doc.body || ""}
 function answerMarkdown(result: AskResult) {
   const sourceLines = result.citations.map((citation) => {
     if (citation.kind === "web") return `${citation.index}. [${citation.title}](${citation.url})`;
-    return `${citation.index}. ${citation.company} · ${citation.title} · p.${citation.page}`;
+    if (citation.kind === "report") return `${citation.index}. ${citation.company} · ${citation.title} · p.${citation.page}`;
+    if (citation.kind === "knowledge" || citation.kind === "event") {
+      return `${citation.index}. ${citation.kind === "knowledge" ? "Knowledge" : "Event"} · ${citation.title} · ${citation.source}`;
+    }
+    return "";
   }).join("\n");
   return `---
 type: level-grind-research
@@ -462,8 +486,16 @@ export function ResearchWorkspace() {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<EvidenceMode>("hybrid");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
+  const [eventDimension, setEventDimension] = useState<"type" | "company" | "quarter" | "sector">("type");
+  const [eventDimensionFilter, setEventDimensionFilter] = useState("");
   const [claimTypeFilter, setClaimTypeFilter] = useState("");
   const [eventView, setEventView] = useState<"events" | "claims">("events");
+  const [reportCompanyFilter, setReportCompanyFilter] = useState("");
+  const [reportSectorFilter, setReportSectorFilter] = useState("");
+  const [reportTypeFilter, setReportTypeFilter] = useState("");
+  const [reportYearFilter, setReportYearFilter] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [questionDraft, setQuestionDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -663,6 +695,40 @@ export function ResearchWorkspace() {
     }
   }
 
+  async function renameProject(project: ResearchProject) {
+    const title = window.prompt(language === "zh" ? "重命名研究项目" : "Rename research project", project.title);
+    if (!title?.trim() || title.trim() === project.title) return;
+    try {
+      const response = await authorizedFetch("/api/research-sessions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "project", id: project.id, title }),
+      });
+      const payload = await response.json() as { title?: string; updatedAt?: string; error?: string };
+      if (!response.ok || !payload.title) throw new Error(payload.error || "Rename failed.");
+      setProjects((current) => current.map((item) =>
+        item.id === project.id ? { ...item, title: payload.title!, updatedAt: payload.updatedAt || item.updatedAt } : item
+      ));
+      setToast(language === "zh" ? "项目已重命名" : "Project renamed");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Rename failed.");
+    }
+  }
+
+  function askAbout(kind: "knowledge" | "report" | "event", title: string, detail = "") {
+    const label = kind === "knowledge"
+      ? (language === "zh" ? "个人知识" : "personal knowledge")
+      : kind === "report"
+        ? (language === "zh" ? "报告" : "report")
+        : (language === "zh" ? "事件" : "event");
+    setQuestionDraft(language === "zh"
+      ? `请围绕这条${label}进行分析，并结合个人知识库、事件库、报告库和公开网络交叉验证：${title}${detail ? `；${detail}` : ""}`
+      : `Analyze this ${label} and cross-check it against Personal Knowledge, Event DB, Report Library, and the public web: ${title}${detail ? `; ${detail}` : ""}`);
+    setMode("hybrid");
+    setActive("assistant");
+    window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".chat-composer textarea")?.focus(), 0);
+  }
+
   const filteredDocuments = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return documents;
@@ -672,20 +738,34 @@ export function ResearchWorkspace() {
     );
   }, [documents, query]);
 
+  const events = useMemo(() => eventsPayload?.events ?? [], [eventsPayload?.events]);
   const filteredCorpus = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) return corpus?.documents ?? [];
     return (corpus?.documents ?? []).filter((doc) =>
-      [doc.company_name, doc.security_code, doc.title, doc.document_type]
-        .some((value) => value.toLowerCase().includes(term)),
+      (!term || [doc.company_name, doc.security_code, doc.title, doc.document_type]
+        .some((value) => value.toLowerCase().includes(term))) &&
+      (!reportCompanyFilter || doc.company_name === reportCompanyFilter) &&
+      (!reportTypeFilter || doc.document_type === reportTypeFilter) &&
+      (!reportYearFilter || doc.published_at.slice(0, 4) === reportYearFilter) &&
+      (!reportSectorFilter || events.some((event) => event.company === doc.company_name && event.sector === reportSectorFilter)),
     );
-  }, [corpus?.documents, query]);
+  }, [corpus?.documents, events, query, reportCompanyFilter, reportSectorFilter, reportTypeFilter, reportYearFilter]);
 
-  const events = useMemo(() => eventsPayload?.events ?? [], [eventsPayload?.events]);
+  const eventDimensionValue = useCallback((event: ResearchEvent) => {
+    if (eventDimension === "company") return event.company || "";
+    if (eventDimension === "sector") return event.sector || "";
+    if (eventDimension === "quarter") {
+      const date = exactDate(event.event_date);
+      if (!date) return "";
+      return `${date.slice(0, 4)} Q${Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1}`;
+    }
+    return event.event_type;
+  }, [eventDimension]);
   const filteredEvents = useMemo(() => {
     const term = query.trim().toLowerCase();
     return events.filter((event) => {
       const matchesType = !eventTypeFilter || event.event_type === eventTypeFilter;
+      const matchesDimension = !eventDimensionFilter || eventDimensionValue(event) === eventDimensionFilter;
       const matchesTerm = !term || [
         event.title,
         event.company,
@@ -698,9 +778,33 @@ export function ResearchWorkspace() {
         event.customer,
         event.supplier,
       ].some((value) => String(value || "").toLowerCase().includes(term));
-      return matchesType && matchesTerm;
+      return matchesType && matchesDimension && matchesTerm;
     });
-  }, [events, eventTypeFilter, query]);
+  }, [events, eventDimensionFilter, eventDimensionValue, eventTypeFilter, query]);
+
+  const eventDimensionStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const event of events) {
+      const value = eventDimensionValue(event);
+      if (value) counts.set(value, (counts.get(value) || 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [events, eventDimensionValue]);
+
+  const reportCompanies = useMemo(() => [...new Set((corpus?.documents ?? []).map((doc) => doc.company_name))].sort(), [corpus?.documents]);
+  const reportYears = useMemo(() => [...new Set((corpus?.documents ?? []).map((doc) => doc.published_at.slice(0, 4)))].sort().reverse(), [corpus?.documents]);
+  const reportTypes = useMemo(() => [...new Set((corpus?.documents ?? []).map((doc) => doc.document_type))].sort(), [corpus?.documents]);
+  const reportSectors = useMemo(() => [...new Set(events.map((event) => event.sector).filter(Boolean) as string[])].sort(), [events]);
+
+  const globalSearchResults = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return [];
+    return [
+      ...documents.filter((item) => [item.title, item.body, item.project, item.topics].some((value) => String(value || "").toLowerCase().includes(term))).slice(0, 4).map((item) => ({ id: item.id, kind: "knowledge" as const, title: item.title, detail: item.project })),
+      ...(corpus?.documents ?? []).filter((item) => [item.company_name, item.security_code, item.title].some((value) => value.toLowerCase().includes(term))).slice(0, 4).map((item) => ({ id: item.id, kind: "report" as const, title: item.company_name, detail: item.title })),
+      ...events.filter((item) => [item.title, item.company, item.ticker, item.summary].some((value) => String(value || "").toLowerCase().includes(term))).slice(0, 4).map((item) => ({ id: item.id, kind: "event" as const, title: item.title, detail: item.company || item.ticker || "" })),
+    ];
+  }, [corpus?.documents, documents, events, query]);
 
   const p0Events = events.filter((event) => event.priority === "P0").length;
   const unverifiedEvents = events.filter((event) => event.verification_status === "unverified").length;
@@ -838,6 +942,7 @@ export function ResearchWorkspace() {
       createdAt: new Date().toISOString(),
     };
     setChatMessages((current) => [...current, optimisticMessage]);
+    setQuestionDraft("");
     formElement.reset();
     try {
       const response = await authorizedFetch("/api/ask", {
@@ -1094,10 +1199,46 @@ export function ResearchWorkspace() {
       <section className="workspace">
         <header className="topbar">
           <button className="mobile-menu" aria-label="Open menu" onClick={() => setMobileNav(!mobileNav)}>☰</button>
-          <div className="search">
+          <div className="search global-search">
             <span>⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={c.search} />
+            <input
+              value={query}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={c.search}
+            />
             <kbd>⌘ K</kbd>
+            {searchFocused && query.trim() && (
+              <div className="global-search-results">
+                <header><strong>{language === "zh" ? "跨库搜索" : "Search across libraries"}</strong><span>{globalSearchResults.length}</span></header>
+                {globalSearchResults.map((result) => (
+                  <button
+                    key={`${result.kind}-${result.id}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setSearchFocused(false);
+                      if (result.kind === "knowledge") {
+                        setActive("inbox");
+                        setSelected(documents.find((item) => item.id === result.id) || null);
+                      } else if (result.kind === "report") {
+                        setActive("library");
+                        setReportCompanyFilter(result.title);
+                      } else {
+                        setActive("events");
+                        setEventView("events");
+                        setEventDimension("company");
+                        setEventDimensionFilter(result.detail);
+                      }
+                    }}
+                  >
+                    <span>{result.kind === "knowledge" ? (language === "zh" ? "个人知识" : "Knowledge") : result.kind === "report" ? (language === "zh" ? "报告" : "Report") : (language === "zh" ? "事件" : "Event")}</span>
+                    <strong>{result.title}</strong><small>{result.detail}</small>
+                  </button>
+                ))}
+                {!globalSearchResults.length && <p>{language === "zh" ? "没有匹配的知识、报告或事件。" : "No matching knowledge, reports, or events."}</p>}
+              </div>
+            )}
           </div>
           <div className="language-switch" aria-label="Language">
             <button className={language === "en" ? "active" : ""} onClick={() => void switchLanguage("en")}>EN</button>
@@ -1143,6 +1284,7 @@ export function ResearchWorkspace() {
                 setSelected={setSelected}
                 onExport={(doc) => downloadText(materialMarkdown(doc), doc.title)}
                 onObsidian={(doc) => void sendToObsidian(materialMarkdown(doc), doc.title)}
+                onAsk={(doc) => askAbout("knowledge", doc.title, doc.body.slice(0, 240))}
                 openCapture={() => setComposer(true)}
               />
             </>
@@ -1162,6 +1304,13 @@ export function ResearchWorkspace() {
                   <button className="upload-button" disabled={saving}>{saving ? c.importing : c.importBatch}</button>
                 </form>
               )}
+              <div className="library-filters" aria-label={language === "zh" ? "报告筛选" : "Report filters"}>
+                <select value={reportCompanyFilter} onChange={(event) => setReportCompanyFilter(event.target.value)}><option value="">{language === "zh" ? "全部公司" : "All companies"}</option>{reportCompanies.map((company) => <option key={company}>{company}</option>)}</select>
+                <select value={reportSectorFilter} onChange={(event) => setReportSectorFilter(event.target.value)}><option value="">{language === "zh" ? "全部行业" : "All sectors"}</option>{reportSectors.map((sector) => <option key={sector}>{sector}</option>)}</select>
+                <select value={reportTypeFilter} onChange={(event) => setReportTypeFilter(event.target.value)}><option value="">{language === "zh" ? "全部报告类型" : "All report types"}</option>{reportTypes.map((type) => <option key={type}>{type.replaceAll("-", " ")}</option>)}</select>
+                <select value={reportYearFilter} onChange={(event) => setReportYearFilter(event.target.value)}><option value="">{language === "zh" ? "全部年份" : "All years"}</option>{reportYears.map((year) => <option key={year}>{year}</option>)}</select>
+                {(reportCompanyFilter || reportSectorFilter || reportTypeFilter || reportYearFilter) && <button className="quiet-button" onClick={() => { setReportCompanyFilter(""); setReportSectorFilter(""); setReportTypeFilter(""); setReportYearFilter(""); }}>{language === "zh" ? "清除" : "Clear"}</button>}
+              </div>
               {!filteredCorpus.length ? (
                 <div className="empty-state"><h3>{c.noReports}</h3><p>{c.noReportsBody}</p></div>
               ) : (
@@ -1176,6 +1325,7 @@ export function ResearchWorkspace() {
                         {openingReportId === document.id && <i className="button-spinner" />}
                         {openingReportId === document.id ? c.opening : c.openReport}
                       </button>
+                      <button className="ask-context-button" onClick={() => askAbout("report", document.title, `${document.company_name} · ${document.published_at}`)}>✦ {language === "zh" ? "询问此报告" : "Ask about this"}</button>
                       {openingReportId === document.id && <div className="report-card-progress" aria-live="polite"><i /></div>}
                     </article>
                   ))}
@@ -1211,18 +1361,29 @@ export function ResearchWorkspace() {
 
               {eventView === "events" ? <div className="event-workbench">
                 <aside className="event-filter-panel">
-                  <div className="section-title"><h2>{language === "zh" ? "事件类型" : "Event types"}</h2><span>{eventsPayload?.stats.length || 0}</span></div>
-                  <button className={!eventTypeFilter ? "event-filter active" : "event-filter"} onClick={() => setEventTypeFilter("")}>
+                  <div className="event-dimension-tabs">
+                    {([
+                      ["type", language === "zh" ? "事件类型" : "Type"],
+                      ["company", language === "zh" ? "公司" : "Company"],
+                      ["quarter", language === "zh" ? "季度" : "Quarter"],
+                      ["sector", language === "zh" ? "行业" : "Sector"],
+                    ] as const).map(([id, label]) => <button key={id} className={eventDimension === id ? "active" : ""} onClick={() => { setEventDimension(id); setEventDimensionFilter(""); setEventTypeFilter(""); }}>{label}</button>)}
+                  </div>
+                  <div className="section-title"><h2>{language === "zh" ? "多维分类" : "Explore by"}</h2><span>{eventDimensionStats.length}</span></div>
+                  <button className={!eventDimensionFilter ? "event-filter active" : "event-filter"} onClick={() => { setEventDimensionFilter(""); setEventTypeFilter(""); }}>
                     <strong>{language === "zh" ? "全部" : "All"}</strong><span>{events.length}</span>
                   </button>
-                  {(eventsPayload?.stats ?? []).map((stat) => (
+                  {eventDimensionStats.map(([value, count]) => (
                     <button
-                      key={stat.event_type}
-                      className={eventTypeFilter === stat.event_type ? "event-filter active" : "event-filter"}
-                      onClick={() => setEventTypeFilter(stat.event_type)}
+                      key={value}
+                      className={eventDimensionFilter === value ? "event-filter active" : "event-filter"}
+                      onClick={() => {
+                        setEventDimensionFilter(value);
+                        setEventTypeFilter(eventDimension === "type" ? value : "");
+                      }}
                     >
-                      <strong>{eventTypeLabels[language][stat.event_type] || stat.event_type}</strong>
-                      <span>{stat.count}</span>
+                      <strong>{eventDimension === "type" ? eventTypeLabels[language][value] || value : value}</strong>
+                      <span>{count}</span>
                     </button>
                   ))}
                   <div className="event-method-note">
@@ -1256,11 +1417,16 @@ export function ResearchWorkspace() {
                         {summary && <p className="event-summary">{summary}</p>}
                         {event.latest_claim_text && (
                           <p className="event-provenance">
-                            <span>{event.latest_claim_speaker || event.latest_claim_source_system || (language === "zh" ? "来源" : "Source")}</span>
+                            <span>{language === "zh" ? "来源" : "Source"} · {sourceSystemLabel(event.latest_claim_source_system) || (language === "zh" ? "未标注" : "Not supplied")}</span>
+                            {speakerLabel(event.latest_claim_speaker) && <span>{language === "zh" ? "发言人" : "Speaker"} · {speakerLabel(event.latest_claim_speaker)}</span>}
                             {claimDate && <time dateTime={claimDate}>{claimDate}</time>}
                             <q>{event.latest_claim_text}</q>
+                            {event.latest_claim_verification_status === "source_verified" && sourceSystemLabel(event.latest_claim_source_title || event.latest_claim_source_system) && (
+                              <small>{language === "zh" ? "核验来源" : "Verified with"} · {sourceSystemLabel(event.latest_claim_source_title || event.latest_claim_source_system)}</small>
+                            )}
                           </p>
                         )}
+                        <button className="ask-context-button" onClick={() => askAbout("event", event.title, `${event.company || ""} ${summary}`.trim())}>✦ {language === "zh" ? "询问此事件" : "Ask about this"}</button>
                       </article>
                     );
                   })}
@@ -1302,7 +1468,8 @@ export function ResearchWorkspace() {
                         </div>
                         <blockquote>{claim.claim_text}</blockquote>
                         <div className="event-meta-line">
-                          <span>{speakerLabel(claim.speaker, language) || claim.source_system}</span>
+                          <span>{language === "zh" ? "来源" : "Source"} · {sourceSystemLabel(claim.source_system)}</span>
+                          {speakerLabel(claim.speaker) && <span>{language === "zh" ? "发言人" : "Speaker"} · {speakerLabel(claim.speaker)}</span>}
                           {claim.company && <span>{claim.company}</span>}
                           {claim.ticker && <span>{claim.ticker}</span>}
                           {claimDate && <time dateTime={claimDate}>{claimDate}</time>}
@@ -1315,6 +1482,15 @@ export function ResearchWorkspace() {
                 </div>
               </div>}
             </section>
+          )}
+
+          {active === "models" && (
+            <ModelWorkbench
+              language={language}
+              authorizedFetch={authorizedFetch}
+              onError={setError}
+              onToast={setToast}
+            />
           )}
 
           {active === "assistant" && (
@@ -1333,10 +1509,10 @@ export function ResearchWorkspace() {
                   </div>
                   <div className="project-list">
                     {projects.map((project) => (
-                      <button
-                        key={project.id}
-                        className={project.id === activeProjectId ? "project-row active" : "project-row"}
-                        onClick={() => {
+                      <div key={project.id} className={project.id === activeProjectId ? "project-row-wrap active" : "project-row-wrap"}>
+                        <button
+                          className="project-row"
+                          onClick={() => {
                           setActiveProjectId(project.id);
                           const firstChat = chats.find((chat) => chat.projectId === project.id);
                           if (firstChat) void openChat(firstChat.id);
@@ -1344,11 +1520,13 @@ export function ResearchWorkspace() {
                             setActiveChatId("");
                             setChatMessages([]);
                           }
-                        }}
-                      >
-                        <strong>{project.title}</strong>
-                        <small>{chats.filter((chat) => chat.projectId === project.id).length} chats</small>
-                      </button>
+                          }}
+                        >
+                          <strong>{project.title}</strong>
+                          <small>{chats.filter((chat) => chat.projectId === project.id).length} chats</small>
+                        </button>
+                        <button className="project-rename" aria-label={language === "zh" ? "重命名项目" : "Rename project"} title={language === "zh" ? "重命名" : "Rename"} onClick={() => void renameProject(project)}>✎</button>
+                      </div>
                     ))}
                   </div>
                   <div className="chat-sidebar-head compact">
@@ -1438,7 +1616,7 @@ export function ResearchWorkspace() {
                         </button>
                       ))}
                     </fieldset>
-                    <textarea name="question" required rows={3} placeholder={c.askPlaceholder} />
+                    <textarea name="question" required rows={3} value={questionDraft} onChange={(event) => setQuestionDraft(event.target.value)} placeholder={c.askPlaceholder} />
                     <div className="composer-foot">
                       <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
                       <button className="upload-button" disabled={asking || (mode === "reports" && !corpus?.documents.length)}>
@@ -1574,6 +1752,7 @@ function DocumentDesk({
   setSelected,
   onExport,
   onObsidian,
+  onAsk,
   openCapture,
 }: {
   language: Language;
@@ -1583,6 +1762,7 @@ function DocumentDesk({
   setSelected: (doc: DocumentRecord) => void;
   onExport: (doc: DocumentRecord) => void;
   onObsidian: (doc: DocumentRecord) => void;
+  onAsk: (doc: DocumentRecord) => void;
   openCapture: () => void;
 }) {
   const c = copy[language];
@@ -1608,7 +1788,7 @@ function DocumentDesk({
             <p className="detail-meta">{selected.source_system} · {selected.author_name} · {new Date(selected.created_at).toLocaleDateString()}</p>
             <div className="detail-body">{selected.body || (language === "zh" ? "此资料包含附件或外部来源。" : "This item contains an attachment or external source.")}</div>
             {selected.source_url && <a className="source-link" href={selected.source_url} target="_blank" rel="noreferrer">{c.originalSource} ↗</a>}
-            <div className="detail-actions"><button onClick={() => onExport(selected)}>↓ {c.downloadMarkdown}</button><button className="obsidian-button" onClick={() => onObsidian(selected)}>{c.openObsidian} ↗</button></div>
+            <div className="detail-actions"><button className="ask-context-button" onClick={() => onAsk(selected)}>✦ {language === "zh" ? "询问此内容" : "Ask about this"}</button><button onClick={() => onExport(selected)}>↓ {c.downloadMarkdown}</button><button className="obsidian-button" onClick={() => onObsidian(selected)}>{c.openObsidian} ↗</button></div>
           </>
         ) : <div className="detail-placeholder">{c.selectItem}</div>}
       </aside>
@@ -1652,18 +1832,24 @@ function AnswerCard({
       <div className="answer-actions"><button className="quiet-button" onClick={onExport}>↓ {c.downloadMarkdown}</button><button className="quiet-button obsidian-button" onClick={onObsidian}>{c.openObsidian} ↗</button></div>
       <div className="citation-list">
         <h3>{c.sources}</h3>
-        {result.citations.map((citation) => citation.kind === "report" ? (
-          <button key={`report-${citation.index}`} onClick={() => {
-            const document = corpus.find((item) => item.id === citation.documentId);
-            if (document) openReport(document);
-          }}>
-            <span>[{citation.index}]</span><strong>{citation.company} · {citation.title}</strong><small>p.{citation.page}</small>
-          </button>
-        ) : (
-          <a key={`web-${citation.index}`} href={citation.url} target="_blank" rel="noreferrer">
-            <span>[{citation.index}]</span><strong>{citation.title}</strong><small>{new URL(citation.url).hostname} ↗</small>
-          </a>
-        ))}
+        {result.citations.map((citation) => {
+          if (citation.kind === "report") {
+            return <button key={`report-${citation.index}`} onClick={() => {
+              const document = corpus.find((item) => item.id === citation.documentId);
+              if (document) openReport(document);
+            }}>
+              <span>[{citation.index}]</span><strong>{citation.company} · {citation.title}</strong><small>p.{citation.page}</small>
+            </button>;
+          }
+          if (citation.kind === "web") {
+            return <a key={`web-${citation.index}`} href={citation.url} target="_blank" rel="noreferrer">
+              <span>[{citation.index}]</span><strong>{citation.title}</strong><small>{new URL(citation.url).hostname} ↗</small>
+            </a>;
+          }
+          return citation.sourceUrl
+            ? <a key={`${citation.kind}-${citation.index}`} href={citation.sourceUrl} target="_blank" rel="noreferrer"><span>[{citation.index}]</span><strong>{citation.title}</strong><small>{citation.kind} · {citation.source} ↗</small></a>
+            : <div className="citation-static" key={`${citation.kind}-${citation.index}`}><span>[{citation.index}]</span><strong>{citation.title}</strong><small>{citation.kind} · {citation.source}</small></div>;
+        })}
       </div>
       {result.webResults.length > 0 && (
         <section className="web-results">

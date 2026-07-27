@@ -85,6 +85,20 @@ export async function GET(request: NextRequest) {
              ORDER BY CASE c.verification_status WHEN 'source_verified' THEN 0 ELSE 1 END,
                       COALESCE(c.claimed_at, c.created_at) DESC
              LIMIT 1) AS latest_claim_source_system
+            ,(SELECT c.source_title
+             FROM research_claims c
+             JOIN research_event_claims ec ON ec.claim_id = c.id
+             WHERE ec.event_id = research_events.id
+             ORDER BY CASE c.verification_status WHEN 'source_verified' THEN 0 ELSE 1 END,
+                      COALESCE(c.claimed_at, c.created_at) DESC
+             LIMIT 1) AS latest_claim_source_title
+            ,(SELECT c.verification_status
+             FROM research_claims c
+             JOIN research_event_claims ec ON ec.claim_id = c.id
+             WHERE ec.event_id = research_events.id
+             ORDER BY CASE c.verification_status WHEN 'source_verified' THEN 0 ELSE 1 END,
+                      COALESCE(c.claimed_at, c.created_at) DESC
+             LIMIT 1) AS latest_claim_verification_status
      FROM research_events
      ${whereSql}
      ORDER BY

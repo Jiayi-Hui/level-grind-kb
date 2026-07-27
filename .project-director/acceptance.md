@@ -42,10 +42,27 @@
 - [ ] Hybrid semantic/vector retrieval is production-ready.
 - [ ] Company Azure gateway is approved and reachable from the public app.
 - [ ] Additional filing-source adapters are validated.
-- [ ] Model Workbench phase one registers existing Excel models, source-linked
+- [x] Model Workbench phase one registers existing Excel models, source-linked
   inputs, owners, versions, freshness, review state, and comparable outputs.
-- [ ] Contextual “Ask about this” launchers hand Personal Knowledge, Report, and
+- [x] Contextual “Ask about this” launchers hand Personal Knowledge, Report, and
   Event scope to the canonical Research Q&A history.
+
+## V4.8 Unified Research and Model Operations
+
+- [x] Research Q&A has fixed-height Projects, Chats, and message scroll regions.
+- [x] Existing research projects can be renamed through the authenticated API.
+- [x] Global search categorizes matching Personal Knowledge, reports, and events.
+- [x] Report Library filters by company, sector, report type, and year.
+- [x] Event DB pivots by event type, company, quarter, and sector.
+- [x] Event provenance displays WeChat Group, actual speaker, and supplied
+  verification provider without invented labels.
+- [x] “Ask about this” launchers converge into one Research Q&A history.
+- [x] Model Workbench uploads, registers, maps, reviews, audits, and exports
+  Excel workbooks.
+- [x] The sample Excel contains readable input, formula, output, source,
+  update-queue, and change-log sheets.
+- [x] Mobile breakpoints keep navigation, filters, cards, chat, and model tables
+  usable without allowing long content to stretch the page.
 
 ## Event knowledge increment
 

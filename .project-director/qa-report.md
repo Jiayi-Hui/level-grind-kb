@@ -119,3 +119,24 @@ dependent on the user's Clerk session after deployment.
 | Personal Knowledge label | Pending release | Chinese navigation and heading use “个人知识库” |
 | Pilot access boundary | Pass | Hosted allowlist contains one company-email pilot; no team invitations were sent |
 | Model Workbench direction | Pass | Decision is hybrid Excel-first; no empty navigation shell was added |
+
+## V4.8 Unified Research and Model Operations Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Chat containment | Pass | Desktop and phone CSS bound the shell; Projects, Chats, and messages scroll independently |
+| Project rename | Pass | Owner-scoped PATCH updates project title without changing conversation ids |
+| Cross-library search | Pass | Knowledge, report, and event results are categorized and route to the owning surface |
+| Library filters | Pass | Reports filter by company, sector, type, and year; Events pivot by type, company, quarter, and sector |
+| Provenance honesty | Pass | WeChat Group is a source label; speaker and verification provider render only from stored data |
+| Unified Q&A | Pass | Context launchers prefill one Research Q&A; hybrid retrieval includes knowledge, report pages, events, and web |
+| Workbook template | Pass | Seven rendered sheets inspected; formulas calculate revenue, EBIT, margin, EPS, equity value, and per-share value |
+| Workbook formula scan | Pass | No formula-error tokens found in the generated workbook |
+| Model persistence | Pass | Workbook bytes use R2; registry, variables, review queue, and change history use D1 |
+| Update safety | Pass | Source scans create review candidates with blank proposed values; analyst confirmation is required before writeback |
+| Dependency boundary | Pass | Narrow `fflate` parser avoids adding a vulnerable full spreadsheet runtime to the browser bundle |
+| Automated validation | Pass | ESLint, strict TypeScript, production build, and 8/8 tests |
+
+Pending release check: authenticated desktop and phone walkthrough requires the
+hosted Clerk environment; localhost intentionally fails closed without its
+public key.

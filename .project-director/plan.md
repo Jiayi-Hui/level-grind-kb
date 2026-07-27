@@ -87,7 +87,22 @@
 - [x] Show elapsed seconds while Research Q&A is waiting.
 - [x] Research institutional model-maintenance patterns and define an
   Excel-first hybrid Model Workbench boundary.
-- [ ] Design the Model Registry schema and Microsoft 365 permission contract.
-- [ ] Add contextual cross-library Q&A launchers after retrieval-scope contracts
+- [x] Design and implement the Excel-first Model Registry schema.
+- [x] Add contextual cross-library Q&A launchers after retrieval-scope contracts
   are specified.
 - [ ] Validate the pilot company-email Clerk login in the user's browser.
+
+## V4.8 — Unified Research and Model Operations
+
+- [x] Bound the Research Q&A viewport and add independent internal scrolling.
+- [x] Add persistent project renaming.
+- [x] Add categorized cross-library search.
+- [x] Add report and multidimensional event filters.
+- [x] Clarify event speaker, WeChat Group, and verification-source provenance.
+- [x] Extend hybrid Q&A retrieval to knowledge, reports, events, and web.
+- [x] Add contextual “Ask about this” launchers.
+- [x] Add D1/R2 Model Workbench data and file contracts.
+- [x] Add safe template mapping, reviewed input updates, and Excel export.
+- [x] Generate and visually validate a formula-backed sample workbook.
+- [x] Add responsive desktop/tablet/mobile layouts.
+- [ ] Publish the validated source, attach `level-grind.com`, and verify production.

@@ -52,6 +52,30 @@ test("persists preferences, private history, storage visibility, and governed ac
   assert.match(schema, /researchQueries/);
 });
 
+test("ships bounded research chats, project rename, multidimensional filters, and model operations", async () => {
+  const [workspace, css, sessions, models, modelMigration, modelTemplate] = await Promise.all([
+    readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/research-sessions/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/models/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0012_model_workbench.sql", import.meta.url), "utf8"),
+    readFile(new URL("../public/level-grind-model-template.xlsx", import.meta.url)),
+  ]);
+  assert.match(css, /height: min\(820px, calc\(100dvh - 255px\)\)/);
+  assert.match(css, /\.chat-thread \{ min-height: 0/);
+  assert.match(workspace, /renameProject/);
+  assert.match(sessions, /export async function PATCH/);
+  assert.match(workspace, /eventDimension/);
+  assert.match(workspace, /reportCompanyFilter/);
+  assert.match(workspace, /globalSearchResults/);
+  assert.match(workspace, /<ModelWorkbench/);
+  assert.match(models, /scan-updates/);
+  assert.match(models, /accept-update/);
+  assert.match(modelMigration, /CREATE TABLE IF NOT EXISTS model_workbooks/);
+  assert.match(modelMigration, /CREATE TABLE IF NOT EXISTS model_update_queue/);
+  assert.equal(modelTemplate.subarray(0, 2).toString(), "PK");
+});
+
 test("ships report, web, and hybrid evidence with safe Markdown rendering", async () => {
   const [workspace, markdown, corpusRoute, corpusImport, askRoute, research, corpusLib, schema] = await Promise.all([
     readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),

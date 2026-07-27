@@ -38,6 +38,14 @@ attachments and report bytes.
 - `research_event_claims`: typed many-to-many Claim–Event relations.
 - `research_event_notices`: who surfaced, questioned, challenged, escalated, or
   acted on an Event, with time and channel.
+- `model_workbooks`: model registry, company, ticker, sector, owner, version,
+  R2 workbook key, source notes, and timestamps.
+- `model_variables`: typed input/calculation/output map with sheet/cell address,
+  value/formula, period, source lineage, and stale state.
+- `model_update_queue`: report/event-derived review candidates, proposed value,
+  analyst decision, and review timestamps.
+- `model_change_log`: immutable user-facing audit trail for uploads, input edits,
+  and approved source updates.
 
 ## API / Contract
 
@@ -57,14 +65,21 @@ attachments and report bytes.
 | Events | `GET/POST /api/events` | filters / admin event input | Event timeline with Claim/Notice counts | 400, 401, 403 |
 | Claims | `GET/POST /api/claims` | filters / admin claim input | Claims inbox with Event links | 400, 401, 403 |
 | Notices | `GET/POST /api/event-notices` | event filter / admin notice input | Team attention records | 400, 401, 403 |
+| Model registry | `GET/POST /api/models` | selected id / workbook multipart form | model list, variable map, queue, history / created model | 400, 401, 404 |
+| Model operations | `PATCH /api/models` | update input, scan sources, or approve update | saved state or pending count | 400, 401, 404 |
+| Model file | `GET /api/models/files/:id` | authorized model id | original `.xlsx` from R2 | 401, 404 |
 
 ## Frontend Flow
 
 1. Capture material with provenance and personal/team scope.
 2. Ask from indexed reports, the public web, or both.
 3. Review source-separated citations and deliberately save useful web evidence.
-4. Reopen prior work from History or export it to Obsidian.
-5. Maintain language, research profile, storage, and team access in Settings.
+4. Reopen prior work from the Research Q&A Chats list or export it to Obsidian.
+5. Launch a scoped question from any knowledge, report, or event item; the
+   resulting conversation remains in Research Q&A.
+6. Register a workbook, review mapped inputs and outputs, scan newer company
+   evidence, approve values, and export an updated Excel file.
+7. Maintain language, research profile, storage, and team access in Settings.
 
 ## Security / Privacy
 
@@ -92,3 +107,8 @@ attachments and report bytes.
 - Claim and Team Notice tables are additive. The legacy `raw_claim` Event
   column remains readable for compatibility but is no longer the canonical
   Claim store.
+- Model Workbench tables are additive. Workbook bytes remain in R2; the browser
+  parser reads only the template mapping and never evaluates arbitrary formulas.
+- Export rewrites mapped input cells and enables full recalculation in Excel.
+  This preserves Excel as the authoritative calculation engine while the web
+  application governs metadata, review, and lineage.

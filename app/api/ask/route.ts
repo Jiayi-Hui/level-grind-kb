@@ -39,7 +39,17 @@ type WebCitation = {
   publishedAt?: string;
 };
 
-type Citation = ReportCitation | WebCitation;
+type InternalCitation = {
+  kind: "knowledge" | "event";
+  index: number;
+  id: string;
+  title: string;
+  source: string;
+  excerpt: string;
+  sourceUrl?: string;
+};
+
+type Citation = ReportCitation | WebCitation | InternalCitation;
 
 type ResearchProject = {
   id: string;
@@ -328,6 +338,14 @@ export async function POST(request: NextRequest) {
   ).bind(userMessageId, chat.id, user.email, question, askedAt).run();
 
   let ranked: Array<SearchRow & { score: number }> = [];
+  let internalEvidence: Array<{
+    kind: "knowledge" | "event";
+    id: string;
+    title: string;
+    source: string;
+    excerpt: string;
+    sourceUrl?: string;
+  }> = [];
   if (mode !== "web") {
     const terms = searchTerms(question);
     if (terms.length) {
@@ -347,6 +365,50 @@ export async function POST(request: NextRequest) {
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 8);
+    }
+    if (mode === "hybrid" && terms.length) {
+      const likeTerms = terms.slice(0, 5);
+      const documentWhere = likeTerms.map((_, index) =>
+        `(LOWER(d.title) LIKE ?${index + 2} OR LOWER(d.body) LIKE ?${index + 2} OR LOWER(c.topics) LIKE ?${index + 2})`
+      ).join(" OR ");
+      const eventWhere = likeTerms.map((_, index) =>
+        `(LOWER(title) LIKE ?${index + 1} OR LOWER(summary) LIKE ?${index + 1} OR LOWER(company) LIKE ?${index + 1})`
+      ).join(" OR ");
+      const [knowledgeRows, eventRows] = await Promise.all([
+        env.DB.prepare(
+          `SELECT d.id, d.title, d.body, d.source_url, d.author_name,
+                  COALESCE(c.source_system, 'manual') AS source_system
+           FROM documents d LEFT JOIN document_context c ON c.document_id = d.id
+           WHERE (d.visibility = 'team' OR d.author_email = ?1) AND (${documentWhere})
+           ORDER BY d.updated_at DESC LIMIT 5`
+        ).bind(user.email, ...likeTerms.map((term) => `%${term}%`)).all<{
+          id: string; title: string; body: string; source_url?: string; author_name: string; source_system: string;
+        }>(),
+        env.DB.prepare(
+          `SELECT id, title, summary, company, event_date, source_system, source_title
+           FROM research_events WHERE ${eventWhere}
+           ORDER BY COALESCE(event_date, updated_at) DESC LIMIT 5`
+        ).bind(...likeTerms.map((term) => `%${term}%`)).all<{
+          id: string; title: string; summary: string; company?: string; event_date?: string; source_system: string; source_title?: string;
+        }>(),
+      ]);
+      internalEvidence = [
+        ...knowledgeRows.results.map((row) => ({
+          kind: "knowledge" as const,
+          id: row.id,
+          title: row.title,
+          source: `${row.source_system} · ${row.author_name}`,
+          excerpt: row.body.slice(0, 2400),
+          sourceUrl: row.source_url,
+        })),
+        ...eventRows.results.map((row) => ({
+          kind: "event" as const,
+          id: row.id,
+          title: row.title,
+          source: [row.company, row.event_date, row.source_title || row.source_system].filter(Boolean).join(" · "),
+          excerpt: row.summary.slice(0, 2400),
+        })),
+      ].slice(0, 8);
     }
   }
 
@@ -372,6 +434,10 @@ export async function POST(request: NextRequest) {
   }));
   const webResults = rawWebResults.map((result, index) => ({
     ...result,
+    index: ranked.length + internalEvidence.length + index + 1,
+  }));
+  const internalCitations: InternalCitation[] = internalEvidence.map((result, index) => ({
+    ...result,
     index: ranked.length + index + 1,
   }));
   const webCitations: WebCitation[] = webResults.map((result) => ({
@@ -382,7 +448,7 @@ export async function POST(request: NextRequest) {
     snippet: result.snippet,
     publishedAt: result.publishedAt,
   }));
-  const citations: Citation[] = [...reportCitations, ...webCitations];
+  const citations: Citation[] = [...reportCitations, ...internalCitations, ...webCitations];
   if (!citations.length) {
     const answer = "I could not find relevant evidence for this question.";
     const createdAt = new Date().toISOString();
@@ -439,10 +505,13 @@ export async function POST(request: NextRequest) {
   const reportSources = ranked.map((row, index) =>
     `[${index + 1}] REPORT · ${row.company_name} (${row.security_code}) · ${row.title} · p.${row.page_number}\n${row.content.slice(0, 5000)}`,
   );
+  const internalSources = internalCitations.map((result) =>
+    `[${result.index}] ${result.kind.toUpperCase()} · ${result.title}\nSource: ${result.source}${result.sourceUrl ? `\nURL: ${result.sourceUrl}` : ""}\n${result.excerpt}`,
+  );
   const externalSources = webResults.map((result) =>
     `[${result.index}] WEB · ${result.title}\nURL: ${result.url}${result.publishedAt ? `\nPublished: ${result.publishedAt}` : ""}\n${result.snippet}`,
   );
-  const sources = [...reportSources, ...externalSources].join("\n\n");
+  const sources = [...reportSources, ...internalSources, ...externalSources].join("\n\n");
   const priorMessages = await env.DB.prepare(
     `SELECT role, content
      FROM research_messages
@@ -475,7 +544,7 @@ export async function POST(request: NextRequest) {
           {
             role: "system",
             content:
-              "You are a financial research chatbot for equity analysts. Use the conversation only to understand follow-up intent. Use the supplied report and web evidence for factual claims. Distinguish report evidence from public-web evidence, cite every material claim with [n], and say clearly when evidence is insufficient or conflicting. Use clean Markdown and reply in the user's language.",
+              "You are a financial research chatbot for equity analysts. Use the conversation only to understand follow-up intent. Use the supplied personal/team knowledge, event, report, and public-web evidence for factual claims. Distinguish evidence types, cite every material claim with [n], and say clearly when evidence is insufficient or conflicting. Use clean Markdown and reply in the user's language.",
           },
           {
             role: "user",

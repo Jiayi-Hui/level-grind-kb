@@ -108,3 +108,20 @@ and explicit Report/Web/Hybrid evidence modes.
 - Model research supports an Excel-first Model Workbench: govern and automate
   existing workbooks first, then extract typed inputs, outputs, and repeatable
   calculations for later quantitative workflows.
+
+## V4.8 Release Candidate
+
+- Research Q&A is a bounded workspace: Projects, Chats, and the conversation
+  scroll independently, and projects can be renamed.
+- Global search spans Personal Knowledge, Report Library, and Event DB.
+- Reports and Events can be filtered from multiple investment-research
+  dimensions without changing the underlying records.
+- Event cards identify WeChat Group, the actual speaker, and the verification
+  source only when those values exist.
+- “Ask about this” from a knowledge item, report, or event hands context into a
+  single Research Q&A history.
+- Model Workbench registers Excel files, maps standard inputs/calculations/
+  outputs, records owners and versions, surfaces stale inputs and source-linked
+  review candidates, preserves a change log, and exports approved values.
+- Excel remains the authoritative formula engine. The web application does not
+  pretend to execute arbitrary workbook logic.

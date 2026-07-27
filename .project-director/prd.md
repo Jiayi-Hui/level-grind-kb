@@ -51,6 +51,9 @@ are treated as delivered.
 | Semantic/vector retrieval | Planned | Current report retrieval is keyword ranked |
 | Company Azure gateway | Planned | Depends on company network approval |
 | HK/US/JP/TW/KR filing adapters | Planned | CNINFO is the first source adapter |
+| Cross-library search | This increment | Searches Personal Knowledge, reports, and events from one entry |
+| Contextual “Ask about this” | This increment | Hands selected material into the canonical Research Q&A |
+| Model Workbench | This increment | Excel-first registry, variable review, lineage, change log, and export |
 
 ## Functional Requirements
 
@@ -201,3 +204,41 @@ Acceptance:
 - FR-32: Quant transition is enabled by turning workbook inputs and outputs into
   typed, versioned datasets and reproducible jobs—not by cloning the spreadsheet
   grid alone.
+
+## V4.8 — Unified Research and Model Operations
+
+- FR-33: Research Q&A has a viewport-bounded shell. Projects, Chats, and messages
+  scroll independently so a long answer never lengthens the whole page.
+- FR-34: Existing research projects can be renamed without losing their chats.
+- FR-35: Global search returns categorized matches from Personal Knowledge,
+  reports, and events; selecting a result opens the correct workspace context.
+- FR-36: Report Library supports company, sector, report-type, and year filters.
+- FR-37: Event DB supports event-type, company, quarter, and sector dimensions.
+- FR-38: Event provenance is human-readable: `来源 · WeChat Group`, an actual
+  speaker only when present, and a verification source only when supplied.
+- FR-39: Personal Knowledge, Report Library, and Event DB expose “Ask about this”
+  launchers that prefill scope in one canonical Research Q&A history.
+- FR-40: Model Workbench stores an Excel model registry with company, owner,
+  version, update time, stale-variable count, sources, and change history.
+- FR-41: A standard `.xlsx` template maps Inputs, Calculations, and Outputs for
+  browser review. Arbitrary `.xlsx` files remain versionable, while unmapped
+  workbook logic continues to run in Excel.
+- FR-42: Newer company reports and events create review candidates, never
+  automatic numeric writes. An analyst supplies or confirms the value before
+  it is written to the managed variable and exported workbook.
+- FR-43: The primary workspace is usable at phone widths, with stacked controls,
+  horizontally scrollable compact tabs, and bounded content regions.
+
+Acceptance:
+
+- AC-16: Research Q&A message output cannot push Projects or Chats below the
+  viewport; each list and the message thread has its own scroll region.
+- AC-17: A project rename persists through the authenticated API.
+- AC-18: Search and filter controls return only real records already available
+  to the signed-in user.
+- AC-19: Source and verification labels never invent a speaker, date, or data
+  provider.
+- AC-20: The sample workbook opens with formula-backed calculations, mapped
+  inputs/outputs, source lineage, an update queue, and a change-log sheet.
+- AC-21: Export applies reviewed input values to their mapped cells and tells
+  Excel to recalculate formulas on open.

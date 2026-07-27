@@ -389,3 +389,90 @@ export const researchEventNotices = sqliteTable(
     index("research_event_notices_type_idx").on(table.noticeType),
   ],
 );
+
+export const modelWorkbooks = sqliteTable(
+  "model_workbooks",
+  {
+    id: text("id").primaryKey(),
+    modelName: text("model_name").notNull(),
+    company: text("company").notNull(),
+    ticker: text("ticker").notNull().default(""),
+    sector: text("sector").notNull().default(""),
+    ownerEmail: text("owner_email").notNull(),
+    ownerName: text("owner_name").notNull().default(""),
+    version: text("version").notNull().default("v1"),
+    status: text("status").notNull().default("active"),
+    fileKey: text("file_key").notNull(),
+    fileName: text("file_name").notNull(),
+    fileSize: integer("file_size").notNull(),
+    sourceNotes: text("source_notes").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("model_workbooks_company_idx").on(table.company),
+    index("model_workbooks_owner_idx").on(table.ownerEmail),
+    index("model_workbooks_updated_idx").on(table.updatedAt),
+  ],
+);
+
+export const modelVariables = sqliteTable(
+  "model_variables",
+  {
+    id: text("id").primaryKey(),
+    modelId: text("model_id").notNull().references(() => modelWorkbooks.id, { onDelete: "cascade" }),
+    variableKey: text("variable_key").notNull(),
+    label: text("label").notNull(),
+    kind: text("kind").notNull(),
+    sheetName: text("sheet_name").notNull(),
+    cellRef: text("cell_ref").notNull(),
+    value: text("value").notNull().default(""),
+    formula: text("formula").notNull().default(""),
+    unit: text("unit").notNull().default(""),
+    period: text("period").notNull().default(""),
+    sourceSystem: text("source_system").notNull().default(""),
+    sourceUrl: text("source_url").notNull().default(""),
+    sourceDate: text("source_date"),
+    isStale: integer("is_stale", { mode: "boolean" }).notNull().default(false),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("model_variables_key_idx").on(table.modelId, table.variableKey),
+    index("model_variables_kind_idx").on(table.modelId, table.kind),
+  ],
+);
+
+export const modelUpdateQueue = sqliteTable(
+  "model_update_queue",
+  {
+    id: text("id").primaryKey(),
+    modelId: text("model_id").notNull().references(() => modelWorkbooks.id, { onDelete: "cascade" }),
+    variableId: text("variable_id").notNull().references(() => modelVariables.id, { onDelete: "cascade" }),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id").notNull(),
+    sourceLabel: text("source_label").notNull(),
+    sourceDate: text("source_date"),
+    proposedValue: text("proposed_value").notNull().default(""),
+    status: text("status").notNull().default("pending"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: text("reviewed_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("model_update_queue_source_idx").on(table.modelId, table.variableId, table.sourceType, table.sourceId),
+    index("model_update_queue_status_idx").on(table.modelId, table.status),
+  ],
+);
+
+export const modelChangeLog = sqliteTable(
+  "model_change_log",
+  {
+    id: text("id").primaryKey(),
+    modelId: text("model_id").notNull().references(() => modelWorkbooks.id, { onDelete: "cascade" }),
+    actorEmail: text("actor_email").notNull(),
+    action: text("action").notNull(),
+    summary: text("summary").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("model_change_log_model_idx").on(table.modelId, table.createdAt)],
+);
