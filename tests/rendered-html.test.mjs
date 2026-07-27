@@ -93,22 +93,28 @@ test("ships bounded research chats, project rename, multidimensional filters, an
   assert.match(modelWorkbench, /Simple_Valuation_Model_Demo\.xlsx/);
 });
 
-test("ships the selected logo and honest provider quota snapshots", async () => {
-  const [layout, workspace, manifest, logo] = await Promise.all([
+test("ships the selected logo and dynamically estimated provider usage", async () => {
+  const [layout, workspace, manifest, logo, corpusRoute, research] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../public/level-grind-logo.png", import.meta.url)),
+    readFile(new URL("../app/api/corpus/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/research.ts", import.meta.url), "utf8"),
   ]);
   assert.match(layout, /level-grind-logo\.png/);
   assert.match(manifest, /level-grind-logo\.png/);
   assert.equal(logo.subarray(1, 4).toString(), "PNG");
-  assert.match(workspace, /DeepSeek 控制台快照/);
-  assert.match(workspace, /¥99\.78/);
-  assert.match(workspace, /16,469/);
+  assert.match(workspace, /DeepSeek 用量估算/);
+  assert.match(workspace, /estimatedDeepSeekBalance/);
+  assert.match(workspace, /trackedDeepSeekTokens/);
+  assert.match(workspace, /trackedTavilySearches/);
   assert.match(workspace, /1,000 credits/);
-  assert.match(workspace, /手动同步/);
+  assert.doesNotMatch(workspace, /手动同步|控制台快照|manual sync|console snapshot/);
   assert.match(workspace, /Pay-as-you-go off/);
+  assert.match(corpusRoute, /web_search_credits/);
+  assert.match(research, /CREATE TABLE IF NOT EXISTS web_usage_events/);
+  assert.match(research, /credits_estimated/);
 });
 
 test("ships report, web, and hybrid evidence with safe Markdown rendering", async () => {
@@ -135,7 +141,7 @@ test("ships report, web, and hybrid evidence with safe Markdown rendering", asyn
   assert.match(askRoute, /AI_API_KEY/);
   assert.match(askRoute, /deepseek-v4-flash/);
   assert.match(askRoute, /cite every material claim/i);
-  assert.match(askRoute, /webSearch\(question\)/);
+  assert.match(askRoute, /webSearch\(question, user\.email\)/);
   assert.match(research, /WEB_SEARCH_API_KEY/);
   assert.match(research, /api\.tavily\.com\/search/);
   assert.match(corpusLib, /CREATE TABLE IF NOT EXISTS corpus_chunks/);

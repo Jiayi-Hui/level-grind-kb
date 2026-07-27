@@ -183,6 +183,21 @@ export const aiUsageEvents = sqliteTable(
   ],
 );
 
+export const webUsageEvents = sqliteTable(
+  "web_usage_events",
+  {
+    id: text("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
+    provider: text("provider").notNull(),
+    searchDepth: text("search_depth").notNull(),
+    creditsEstimated: integer("credits_estimated").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("web_usage_user_created_idx").on(table.userEmail, table.createdAt),
+  ],
+);
+
 export const userPreferences = sqliteTable("user_preferences", {
   email: text("email").primaryKey(),
   language: text("language").notNull().default("en"),

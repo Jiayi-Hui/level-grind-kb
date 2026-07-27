@@ -16,6 +16,17 @@ import { ModelWorkbench } from "./model-workbench";
 type View = "inbox" | "library" | "events" | "models" | "assistant" | "settings";
 type EvidenceMode = "reports" | "web" | "hybrid";
 
+const deepSeekEstimateBaseline = {
+  balanceCny: 99.78,
+  lifetimeSpendCny: 0.21,
+  periodSpendCny: 0.01,
+  requests: 3,
+  tokens: 16_469,
+  trackedCostUsd: 0.0022,
+};
+const tavilyEstimateBaseline = { credits: 3, allowance: 1_000 };
+const usdToCnyEstimate = 7.2;
+
 type DocumentRecord = {
   id: string;
   title: string;
@@ -81,6 +92,8 @@ type CorpusPayload = {
     input_tokens: number;
     output_tokens: number;
     estimated_cost_usd: number;
+    web_search_count: number;
+    web_search_credits: number;
   };
   memberUsage: Array<{
     user_email: string;
@@ -617,6 +630,22 @@ export function ResearchWorkspace() {
     const timer = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    const canViewTeamUsage =
+      context?.user.role === "owner" || context?.user.role === "admin";
+    if (active !== "settings" || !canViewTeamUsage) return;
+    const refreshUsage = async () => {
+      try {
+        const response = await authorizedFetch("/api/corpus");
+        if (response.ok) setCorpus(await response.json() as CorpusPayload);
+      } catch {
+        // Keep the last known estimate when a background refresh is unavailable.
+      }
+    };
+    const timer = window.setInterval(() => void refreshUsage(), 30_000);
+    return () => window.clearInterval(timer);
+  }, [active, authorizedFetch, context?.user.role]);
 
   useEffect(() => {
     if (!asking) return;
@@ -1190,6 +1219,40 @@ export function ResearchWorkspace() {
   const activeProjectChats = chats.filter((chat) => chat.projectId === activeProjectId);
   const activeProject = projects.find((project) => project.id === activeProjectId);
   const activeChat = chats.find((chat) => chat.id === activeChatId);
+  const trackedDeepSeekTokens =
+    Number(corpus?.usage.input_tokens || 0) + Number(corpus?.usage.output_tokens || 0);
+  const trackedDeepSeekCostUsd = Number(corpus?.usage.estimated_cost_usd || 0);
+  const incrementalDeepSeekCostCny = Math.max(
+    0,
+    trackedDeepSeekCostUsd - deepSeekEstimateBaseline.trackedCostUsd,
+  ) * usdToCnyEstimate;
+  const estimatedDeepSeekBalance = Math.max(
+    0,
+    deepSeekEstimateBaseline.balanceCny - incrementalDeepSeekCostCny,
+  );
+  const estimatedDeepSeekLifetimeSpend =
+    deepSeekEstimateBaseline.lifetimeSpendCny + incrementalDeepSeekCostCny;
+  const estimatedDeepSeekPeriodSpend =
+    deepSeekEstimateBaseline.periodSpendCny + incrementalDeepSeekCostCny;
+  const estimatedDeepSeekRequests = Math.max(
+    deepSeekEstimateBaseline.requests,
+    Number(corpus?.usage.query_count || 0),
+  );
+  const estimatedDeepSeekTokens = Math.max(
+    deepSeekEstimateBaseline.tokens,
+    trackedDeepSeekTokens,
+  );
+  const trackedTavilySearches = Number(corpus?.usage.web_search_count || 0);
+  const estimatedTavilyCredits = Math.min(
+    tavilyEstimateBaseline.allowance,
+    tavilyEstimateBaseline.credits + Number(corpus?.usage.web_search_credits || 0),
+  );
+  const estimatedTavilyRemaining = Math.max(
+    0,
+    tavilyEstimateBaseline.allowance - estimatedTavilyCredits,
+  );
+  const estimatedTavilyPercent =
+    (estimatedTavilyCredits / tavilyEstimateBaseline.allowance) * 100;
 
   if (accessDenied) {
     return (
@@ -1737,18 +1800,20 @@ export function ResearchWorkspace() {
                 {isAdmin && (
                   <div className="provider-quota">
                     <div className="provider-quota-head">
-                      <strong>{language === "zh" ? "DeepSeek 控制台快照" : "DeepSeek console snapshot"}</strong>
-                      <span>2026-07-28 · {language === "zh" ? "手动同步" : "manual sync"}</span>
+                      <strong>{language === "zh" ? "DeepSeek 用量估算" : "DeepSeek usage estimate"}</strong>
+                      <span>{language === "zh" ? "随本站 token 用量自动更新" : "Updates from workspace token usage"}</span>
                     </div>
                     <div className="provider-metrics">
-                      <div><span>{language === "zh" ? "充值余额" : "Balance"}</span><strong>¥99.78</strong><small>CNY</small></div>
-                      <div><span>{language === "zh" ? "累计消费" : "Lifetime spend"}</span><strong>¥0.21</strong><small>CNY</small></div>
-                      <div><span>{language === "zh" ? "所选周期消费" : "Period spend"}</span><strong>¥0.01</strong><small>CNY</small></div>
-                      <div><span>{language === "zh" ? "API 请求" : "API requests"}</span><strong>3</strong><small>{language === "zh" ? "次" : "requests"}</small></div>
-                      <div><span>Tokens</span><strong>16,469</strong><small>{language === "zh" ? "控制台" : "console"}</small></div>
+                      <div><span>{language === "zh" ? "估算余额" : "Estimated balance"}</span><strong>¥{estimatedDeepSeekBalance.toFixed(2)}</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "估算累计消费" : "Estimated lifetime spend"}</span><strong>¥{estimatedDeepSeekLifetimeSpend.toFixed(2)}</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "本期估算" : "Period estimate"}</span><strong>¥{estimatedDeepSeekPeriodSpend.toFixed(2)}</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "API 请求" : "API requests"}</span><strong>{estimatedDeepSeekRequests.toLocaleString()}</strong><small>{language === "zh" ? "次" : "requests"}</small></div>
+                      <div><span>Tokens</span><strong>{estimatedDeepSeekTokens.toLocaleString()}</strong><small>{language === "zh" ? "本站累计" : "workspace total"}</small></div>
                     </div>
                     <p className="tracked-usage">
-                      {language === "zh" ? "本站记录" : "Tracked by this workspace"} · {Number(corpus?.usage.query_count || 0).toLocaleString()} {language === "zh" ? "次请求" : "requests"} · {(Number(corpus?.usage.input_tokens || 0) + Number(corpus?.usage.output_tokens || 0)).toLocaleString()} tokens · ${Number(corpus?.usage.estimated_cost_usd || 0).toFixed(4)} {language === "zh" ? "估算" : "estimated"}
+                      {language === "zh"
+                        ? "按本站实际输入/输出 token 与当前模型计价估算；可能与控制台最终账单略有差异。"
+                        : "Estimated from actual workspace input/output tokens and current model rates; the final console bill may differ slightly."}
                     </p>
                   </div>
                 )}
@@ -1759,12 +1824,16 @@ export function ResearchWorkspace() {
                 {isAdmin && (
                   <div className="provider-quota tavily-quota">
                     <div className="provider-quota-head">
-                      <strong>{language === "zh" ? "Tavily 免费额度" : "Tavily free credits"}</strong>
-                      <span>{language === "zh" ? "未开启按量付费" : "Pay-as-you-go off"}</span>
+                      <strong>{language === "zh" ? "Tavily 用量估算" : "Tavily usage estimate"}</strong>
+                      <span>{language === "zh" ? "未开启按量付费 · 自动累计" : "Pay-as-you-go off · auto-tracked"}</span>
                     </div>
-                    <div className="credit-line"><strong>3</strong><span>/ 1,000 credits</span><em>997 {language === "zh" ? "剩余" : "remaining"}</em></div>
-                    <div className="provider-meter"><i style={{ width: "0.3%" }} /></div>
-                    <small>{language === "zh" ? "控制台快照 · 2026-07-28" : "Console snapshot · 2026-07-28"}</small>
+                    <div className="credit-line"><strong>{estimatedTavilyCredits.toLocaleString()}</strong><span>/ 1,000 credits</span><em>{estimatedTavilyRemaining.toLocaleString()} {language === "zh" ? "剩余" : "remaining"}</em></div>
+                    <div className="provider-meter"><i style={{ width: `${estimatedTavilyPercent}%` }} /></div>
+                    <small>
+                      {language === "zh"
+                        ? `以 3 credits 为起点；本站新增 ${trackedTavilySearches.toLocaleString()} 次 Advanced Search，按 2 credits / 次估算`
+                        : `Starts from 3 credits; ${trackedTavilySearches.toLocaleString()} new Advanced searches tracked at 2 credits each`}
+                    </small>
                   </div>
                 )}
               </article>

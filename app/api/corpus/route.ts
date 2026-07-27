@@ -6,13 +6,14 @@ import {
   importCorpusPdf,
 } from "../../../lib/corpus-import";
 import { prepareCorpusDb } from "../../../lib/corpus";
+import { prepareResearchDb } from "../../../lib/research";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const { user, response } = await requireAppUser(request);
   if (!user) return response;
-  await prepareCorpusDb();
+  await Promise.all([prepareCorpusDb(), prepareResearchDb()]);
   const usageWhere = user.role === "owner" || user.role === "admin" ? "" : "WHERE user_email = ?1";
   const usageQuery = env.DB.prepare(
     `SELECT COUNT(*) AS query_count,
@@ -21,7 +22,12 @@ export async function GET(request: NextRequest) {
             COALESCE(SUM(CAST(estimated_cost_usd AS REAL)), 0) AS estimated_cost_usd
      FROM ai_usage_events ${usageWhere}`
   );
-  const [documents, usage, memberUsage] = await Promise.all([
+  const webUsageQuery = env.DB.prepare(
+    `SELECT COUNT(*) AS search_count,
+            COALESCE(SUM(credits_estimated), 0) AS credits_estimated
+     FROM web_usage_events ${usageWhere}`
+  );
+  const [documents, usage, memberUsage, webUsage] = await Promise.all([
     env.DB.prepare(
       `SELECT id, security_code, company_name, title, document_type, published_at,
               source_url, file_name, file_size, page_count, created_at
@@ -36,10 +42,15 @@ export async function GET(request: NextRequest) {
            FROM ai_usage_events GROUP BY user_email ORDER BY total_tokens DESC`
         ).all()
       : Promise.resolve({ results: [] }),
+    (usageWhere ? webUsageQuery.bind(user.email) : webUsageQuery).first(),
   ]);
   return NextResponse.json({
     documents: documents.results,
-    usage: usage ?? { query_count: 0, input_tokens: 0, output_tokens: 0, estimated_cost_usd: 0 },
+    usage: {
+      ...(usage ?? { query_count: 0, input_tokens: 0, output_tokens: 0, estimated_cost_usd: 0 }),
+      web_search_count: Number(webUsage?.search_count || 0),
+      web_search_credits: Number(webUsage?.credits_estimated || 0),
+    },
     memberUsage: memberUsage.results,
   });
 }

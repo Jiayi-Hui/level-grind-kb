@@ -415,7 +415,7 @@ export async function POST(request: NextRequest) {
   let rawWebResults: WebSearchResult[] = [];
   if (mode !== "reports") {
     try {
-      rawWebResults = await webSearch(question);
+      rawWebResults = await webSearch(question, user.email);
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : "Web search failed." },

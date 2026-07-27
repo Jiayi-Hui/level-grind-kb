@@ -79,6 +79,17 @@ const researchMessagesSchema = `
   )
 `;
 
+const webUsageEventsSchema = `
+  CREATE TABLE IF NOT EXISTS web_usage_events (
+    id TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    search_depth TEXT NOT NULL,
+    credits_estimated INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  )
+`;
+
 export async function prepareResearchDb() {
   await env.DB.batch([
     env.DB.prepare(preferencesSchema),
@@ -86,6 +97,7 @@ export async function prepareResearchDb() {
     env.DB.prepare(researchProjectsSchema),
     env.DB.prepare(researchChatsSchema),
     env.DB.prepare(researchMessagesSchema),
+    env.DB.prepare(webUsageEventsSchema),
     env.DB.prepare(
       "CREATE INDEX IF NOT EXISTS research_queries_user_created_idx ON research_queries(user_email, created_at)",
     ),
@@ -98,10 +110,13 @@ export async function prepareResearchDb() {
     env.DB.prepare(
       "CREATE INDEX IF NOT EXISTS research_messages_chat_created_idx ON research_messages(chat_id, created_at)",
     ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS web_usage_user_created_idx ON web_usage_events(user_email, created_at)",
+    ),
   ]);
 }
 
-export async function webSearch(question: string): Promise<WebSearchResult[]> {
+export async function webSearch(question: string, userEmail?: string): Promise<WebSearchResult[]> {
   const provider = (runtimeEnv("WEB_SEARCH_PROVIDER") || "tavily").trim().toLowerCase();
   const apiKey = (
     runtimeEnv("TAVILY_API_KEY") ||
@@ -138,11 +153,30 @@ export async function webSearch(question: string): Promise<WebSearchResult[]> {
       published_date?: string;
       score?: number;
     }>;
+    usage?: { credits?: number };
     detail?: string;
     error?: string;
   };
   if (!response.ok) {
     throw new Error(payload.detail || payload.error || "The web search provider returned an error.");
+  }
+  if (userEmail) {
+    try {
+      await env.DB.prepare(
+        `INSERT INTO web_usage_events (
+          id, user_email, provider, search_depth, credits_estimated, created_at
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+      ).bind(
+        crypto.randomUUID(),
+        userEmail,
+        provider,
+        "advanced",
+        Math.max(0, Number(payload.usage?.credits || 2)),
+        new Date().toISOString(),
+      ).run();
+    } catch {
+      // Usage telemetry must never turn a successful research search into a failed answer.
+    }
   }
   return (payload.results ?? [])
     .filter((result) => result.title && result.url)
