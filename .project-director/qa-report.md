@@ -107,3 +107,15 @@
 
 Residual release check: authenticated owner-session interaction remains
 dependent on the user's Clerk session after deployment.
+
+## V4.7 Experience Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Obsidian current-vault handoff | Pending release | Blank vault omits the URI `vault` parameter; legacy invented default is migrated away |
+| Vault-setting clarity | Pending release | Copy distinguishes saving a local preference from opening Obsidian |
+| Report opening feedback | Pending release | Source card and immediately opened destination tab show indeterminate progress |
+| Research waiting feedback | Pending release | Spinner and elapsed seconds appear; hidden model reasoning is not rendered |
+| Personal Knowledge label | Pending release | Chinese navigation and heading use “个人知识库” |
+| Pilot access boundary | Pass | Hosted allowlist contains one company-email pilot; no team invitations were sent |
+| Model Workbench direction | Pass | Decision is hybrid Excel-first; no empty navigation shell was added |

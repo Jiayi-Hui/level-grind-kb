@@ -467,6 +467,7 @@ export function ResearchWorkspace() {
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [askingSeconds, setAskingSeconds] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -477,8 +478,9 @@ export function ResearchWorkspace() {
   const [importProgress, setImportProgress] = useState("");
   const [savedWebUrls, setSavedWebUrls] = useState<Set<string>>(new Set());
   const [vaultName, setVaultName] = useState(() => {
-    if (typeof window === "undefined") return "Research";
-    return window.localStorage.getItem("lg-obsidian-vault") || "Research";
+    if (typeof window === "undefined") return "";
+    const saved = window.localStorage.getItem("lg-obsidian-vault") || "";
+    return saved === "Research" ? "" : saved;
   });
   const fileRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -581,6 +583,16 @@ export function ResearchWorkspace() {
     const timer = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (!asking) return;
+    const startedAt = Date.now();
+    const timer = window.setInterval(
+      () => setAskingSeconds(Math.floor((Date.now() - startedAt) / 1_000)),
+      1_000,
+    );
+    return () => window.clearInterval(timer);
+  }, [asking]);
 
   useEffect(() => {
     chatScrollRef.current?.scrollTo({
@@ -813,6 +825,7 @@ export function ResearchWorkspace() {
     const form = new FormData(formElement);
     const question = String(form.get("question") ?? "").trim();
     if (!question) return;
+    setAskingSeconds(0);
     setAsking(true);
     setError("");
     const optimisticMessage: ChatMessage = {
@@ -868,16 +881,46 @@ export function ResearchWorkspace() {
       setError(caught instanceof Error ? caught.message : "The research assistant could not answer.");
     } finally {
       setAsking(false);
+      setAskingSeconds(0);
     }
   }
 
-  function openReport(document: CorpusDocument) {
+  async function openReport(document: CorpusDocument) {
     setOpeningReportId(document.id);
-    const popup = window.open(`/api/corpus/files/${document.id}`, "_blank", "noopener,noreferrer");
+    const popup = window.open("", "_blank");
     if (!popup) {
       setError(language === "zh" ? "浏览器阻止了新窗口，请允许弹窗后重试。" : "The browser blocked the report tab. Allow pop-ups and try again.");
+      setOpeningReportId("");
+      return;
     }
-    window.setTimeout(() => setOpeningReportId(""), 1800);
+    const openingLabel = language === "zh" ? "正在打开报告…" : "Opening report…";
+    const waitingLabel = language === "zh" ? "文件准备好后会在这里显示" : "The file will appear here when it is ready";
+    popup.document.open();
+    popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${openingLabel}</title><style>
+      body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f2f0e9;color:#17231f;font-family:Arial,"PingFang SC",sans-serif}
+      main{width:min(420px,calc(100% - 48px));text-align:center}.spinner{width:38px;height:38px;margin:0 auto 20px;border:4px solid #d6ddd8;border-top-color:#285f4c;border-radius:50%;animation:spin .7s linear infinite}
+      h1{font-size:21px;margin:0 0 8px}p{margin:0;color:#6d766f;font-size:13px}.bar{height:4px;margin-top:24px;overflow:hidden;border-radius:4px;background:#dfe4df}.bar:after{content:"";display:block;width:40%;height:100%;background:#d5683d;animation:load 1.1s ease-in-out infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}@keyframes load{from{transform:translateX(-120%)}to{transform:translateX(350%)}}
+    </style></head><body><main><div class="spinner"></div><h1>${openingLabel}</h1><p>${waitingLabel}</p><div class="bar"></div></main></body></html>`);
+    popup.document.close();
+    setToast(openingLabel);
+    try {
+      const response = await authorizedFetch(`/api/corpus/files/${document.id}`);
+      if (!response.ok) throw new Error(openingLabel);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      popup.location.replace(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      if (!popup.closed) {
+        popup.document.body.textContent = language === "zh"
+          ? "报告打开失败，请关闭此页后重试。"
+          : "The report could not be opened. Close this tab and try again.";
+      }
+      setError(language === "zh" ? "报告打开失败，请重试。" : "The report could not be opened. Try again.");
+    } finally {
+      setOpeningReportId("");
+    }
   }
 
   async function saveWebResult(result: WebResult, scope: "personal" | "team") {
@@ -965,13 +1008,27 @@ export function ResearchWorkspace() {
   async function sendToObsidian(markdown: string, title: string) {
     await navigator.clipboard.writeText(markdown);
     const file = `Level Grind/${title}`;
-    window.location.href = `obsidian://new?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(file)}&clipboard=true`;
+    const params = new URLSearchParams({ file, clipboard: "true" });
+    const selectedVault = vaultName.trim();
+    if (selectedVault) params.set("vault", selectedVault);
+    window.location.href = `obsidian://new?${params.toString()}`;
     setToast(language === "zh" ? "已复制并发送至 Obsidian" : "Copied and sent to Obsidian");
   }
 
   function saveVault() {
-    window.localStorage.setItem("lg-obsidian-vault", vaultName.trim() || "Research");
-    setToast(language === "zh" ? "Vault 名称已保存在本设备" : "Vault name saved on this device");
+    const selectedVault = vaultName.trim();
+    if (selectedVault) window.localStorage.setItem("lg-obsidian-vault", selectedVault);
+    else window.localStorage.removeItem("lg-obsidian-vault");
+    setVaultName(selectedVault);
+    setToast(language === "zh"
+      ? selectedVault ? "Vault 设置已保存；导出时才会打开 Obsidian" : "将使用 Obsidian 当前打开的 Vault"
+      : selectedVault ? "Vault setting saved; Obsidian opens only when you export" : "The currently open Obsidian vault will be used");
+  }
+
+  function useCurrentVault() {
+    setVaultName("");
+    window.localStorage.removeItem("lg-obsidian-vault");
+    setToast(language === "zh" ? "已改为使用 Obsidian 当前打开的 Vault" : "The currently open Obsidian vault will be used");
   }
 
   const heading = c.heading[active];
@@ -1115,10 +1172,11 @@ export function ResearchWorkspace() {
                       <h3>{document.company_name}</h3>
                       <p>{document.title}</p>
                       <small>{document.page_count} {language === "zh" ? "页" : "pages"} · {(document.file_size / 1_048_576).toFixed(1)} MB</small>
-                      <button className="quiet-button report-open" disabled={openingReportId === document.id} onClick={() => openReport(document)}>
+                      <button className="quiet-button report-open" disabled={openingReportId === document.id} onClick={() => void openReport(document)}>
                         {openingReportId === document.id && <i className="button-spinner" />}
                         {openingReportId === document.id ? c.opening : c.openReport}
                       </button>
+                      {openingReportId === document.id && <div className="report-card-progress" aria-live="polite"><i /></div>}
                     </article>
                   ))}
                 </div>
@@ -1363,7 +1421,7 @@ export function ResearchWorkspace() {
                     {asking && (
                       <article className="chat-message assistant">
                         <div className="message-avatar">AI</div>
-                        <div className="message-bubble typing"><i className="button-spinner" /> {c.researching}</div>
+                        <div className="message-bubble typing"><i className="button-spinner" /> {c.researching} · {askingSeconds}{language === "zh" ? " 秒" : "s"}</div>
                       </article>
                     )}
                   </div>
@@ -1384,7 +1442,7 @@ export function ResearchWorkspace() {
                     <div className="composer-foot">
                       <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
                       <button className="upload-button" disabled={asking || (mode === "reports" && !corpus?.documents.length)}>
-                        {asking && <i className="button-spinner light" />}{asking ? c.researching : c.ask}
+                        {asking && <i className="button-spinner light" />}{asking ? `${c.researching} ${askingSeconds}${language === "zh" ? "秒" : "s"}` : c.ask}
                       </button>
                     </div>
                   </form>
@@ -1435,8 +1493,11 @@ export function ResearchWorkspace() {
               <article className="settings-card obsidian-settings">
                 <div className="section-title"><div><p className="eyebrow">LOCAL HANDOFF</p><h2>{c.obsidian}</h2></div></div>
                 <p>{c.obsidianNote}</p>
-                <label>{c.vaultName}<input value={vaultName} onChange={(event) => setVaultName(event.target.value)} /></label>
-                <button className="quiet-button" onClick={saveVault}>{c.saveLocal}</button>
+                <label>{c.vaultName}<input value={vaultName} placeholder={language === "zh" ? "例如：Research Notes；留空使用当前 Vault" : "e.g. Research Notes; leave blank for current vault"} onChange={(event) => setVaultName(event.target.value)} /></label>
+                <div className="obsidian-actions">
+                  <button className="quiet-button" onClick={saveVault}>{c.saveLocal}</button>
+                  <button className="quiet-button" onClick={useCurrentVault}>{c.useCurrentVault}</button>
+                </div>
               </article>
 
               <article className="settings-card integration-settings">

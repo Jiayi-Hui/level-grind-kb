@@ -75,5 +75,19 @@
 - [x] Hide W30, generated Team Notice prose, seed filenames, and internal
   Metric/PM/Evidence fields from Event cards.
 - [x] Configure Tavily without placing its key in source control.
-- [ ] Validate, publish, and verify the revised production demo.
-- [ ] Add and test the user's company email after the exact address is supplied.
+- [x] Validate, publish, and verify the revised production demo.
+- [x] Configure one company-email pilot account without inviting other members.
+
+## V4.7 — Personal Knowledge, Waiting Feedback, and Model Direction
+
+- [x] Rename the primary knowledge surface to Personal Knowledge.
+- [x] Remove the invented `Research` Obsidian vault fallback.
+- [x] Explain local vault-setting behavior and support the currently open vault.
+- [x] Show real report-opening feedback in the destination tab and source card.
+- [x] Show elapsed seconds while Research Q&A is waiting.
+- [x] Research institutional model-maintenance patterns and define an
+  Excel-first hybrid Model Workbench boundary.
+- [ ] Design the Model Registry schema and Microsoft 365 permission contract.
+- [ ] Add contextual cross-library Q&A launchers after retrieval-scope contracts
+  are specified.
+- [ ] Validate the pilot company-email Clerk login in the user's browser.

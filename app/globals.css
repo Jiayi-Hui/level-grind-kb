@@ -781,6 +781,20 @@ button { color: inherit; }
 }
 .research-os .corpus-card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(16,37,31,.08); }
 .report-open { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 106px; }
+.report-card-progress {
+  height: 3px;
+  margin-top: -5px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e1e5df;
+}
+.report-card-progress i {
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: var(--accent);
+  animation: lg-report-progress 1s ease-in-out infinite;
+}
 .button-spinner {
   width: 13px; height: 13px; display: inline-block; flex: none;
   border: 2px solid rgba(24,60,48,.2); border-top-color: #285f4c; border-radius: 50%;
@@ -788,6 +802,10 @@ button { color: inherit; }
 }
 .button-spinner.light { border-color: rgba(255,255,255,.32); border-top-color: white; }
 @keyframes lg-spin { to { transform: rotate(360deg); } }
+@keyframes lg-report-progress {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(360%); }
+}
 .ask-box-v2 {
   border-radius: 15px; padding: 27px 30px 0; box-shadow: 0 18px 45px rgba(16,37,31,.055);
 }
@@ -919,7 +937,7 @@ button { color: inherit; }
 }
 .profile-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 0 13px; }
 .profile-settings .section-title, .profile-settings > p, .profile-settings .composer-foot { grid-column: 1 / -1; }
-.obsidian-settings .quiet-button { margin-top: 12px; }
+.obsidian-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .integration-row {
   padding: 13px 0; display: flex; align-items: center; justify-content: space-between;
   gap: 16px; border-bottom: 1px solid #e7e8e1;

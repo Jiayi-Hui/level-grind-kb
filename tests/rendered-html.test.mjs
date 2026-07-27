@@ -11,8 +11,8 @@ test("ships the bilingual Research OS instead of the legacy context navigation",
   ]);
   assert.match(layout, /Level Grind Research OS/);
   assert.match(page, /<ResearchWorkspace \/>/);
-  assert.match(i18n, /Knowledge base/);
-  assert.match(i18n, /知识库/);
+  assert.match(i18n, /My knowledge/);
+  assert.match(i18n, /个人知识库/);
   assert.match(i18n, /Report library/);
   assert.match(i18n, /研究问答/);
   assert.match(i18n, /Welcome back/);
@@ -34,6 +34,10 @@ test("persists preferences, private history, storage visibility, and governed ac
   ]);
   assert.match(workspace, /storage-meter/);
   assert.match(workspace, /lg-obsidian-vault/);
+  assert.match(workspace, /URLSearchParams/);
+  assert.match(workspace, /askingSeconds/);
+  assert.match(workspace, /report-card-progress/);
+  assert.doesNotMatch(workspace, /vaultName\.trim\(\) \|\| "Research"/);
   assert.match(workspace, /answerMarkdown/);
   assert.match(preferencesRoute, /remainingBytes/);
   assert.match(preferencesRoute, /sharedCorpusBytes/);
@@ -62,7 +66,8 @@ test("ships report, web, and hybrid evidence with safe Markdown rendering", asyn
   assert.match(workspace, /modeReports/);
   assert.match(workspace, /modeWeb/);
   assert.match(workspace, /modeHybrid/);
-  assert.match(workspace, /window\.open\(`\/api\/corpus\/files/);
+  assert.match(workspace, /window\.open\("", "_blank"\)/);
+  assert.match(workspace, /authorizedFetch\(`\/api\/corpus\/files/);
   assert.match(markdown, /inlineMarkdown/);
   assert.match(markdown, /<strong/);
   assert.match(corpusImport, /extractText/);

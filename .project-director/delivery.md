@@ -94,3 +94,17 @@ and explicit Report/Web/Hybrid evidence modes.
 3. Test one Web/Hybrid question with the hosted Tavily integration.
 4. Add owner-managed quota allocation and hard quota enforcement.
 5. Build governed Obsidian and company-AVD connectors.
+
+## V4.7 Release Candidate
+
+- Personal Knowledge replaces the generic Knowledge base label.
+- Obsidian no longer assumes a vault named `Research`; a blank setting targets
+  the vault currently open in Obsidian.
+- Report opening now has visible progress in both the report card and the newly
+  opened tab.
+- Research Q&A shows elapsed waiting time without displaying hidden reasoning.
+- One company-email pilot is allowlisted for login testing; no other team
+  accounts have been added or invited.
+- Model research supports an Excel-first Model Workbench: govern and automate
+  existing workbooks first, then extract typed inputs, outputs, and repeatable
+  calculations for later quantitative workflows.

@@ -22,9 +22,13 @@
 - [x] Report Q&A history persists and reopens after refresh.
 - [x] Q&A history is contained inside Research Q&A rather than duplicated in
   the main sidebar.
-- [x] Knowledge base and Report library have distinct user-facing definitions.
+- [x] Personal Knowledge and Report library have distinct user-facing definitions.
 - [x] History exports Markdown and opens the Obsidian URI handoff.
 - [x] Reports open in a new tab immediately with visible progress feedback.
+- [x] Obsidian export can target the currently open vault without inventing a
+  default vault name.
+- [x] Research Q&A shows a spinner and elapsed waiting time without exposing
+  hidden reasoning.
 - [x] Report, Web, and Hybrid evidence modes exist.
 - [x] Unconfigured web search fails honestly with a setup message.
 - [x] Web results can be selected and saved with provenance into the knowledge base.
@@ -38,6 +42,10 @@
 - [ ] Hybrid semantic/vector retrieval is production-ready.
 - [ ] Company Azure gateway is approved and reachable from the public app.
 - [ ] Additional filing-source adapters are validated.
+- [ ] Model Workbench phase one registers existing Excel models, source-linked
+  inputs, owners, versions, freshness, review state, and comparable outputs.
+- [ ] Contextual “Ask about this” launchers hand Personal Knowledge, Report, and
+  Event scope to the canonical Research Q&A history.
 
 ## Event knowledge increment
 

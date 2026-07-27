@@ -40,7 +40,7 @@ are treated as delivered.
 | CNINFO report library | Live | 30 reports, 15 companies, 6,237 indexed pages |
 | R2 files + D1 metadata/page text | Live | Shared physical corpus |
 | DeepSeek report Q&A | Live | Server-side key, usage metering, citations |
-| Chinese / English interface | This increment | Persisted per user |
+| Chinese / English interface | Live | Persisted per user |
 | Welcome-back release banner | This increment | Shown per Clerk login session |
 | Markdown answer rendering | This increment | Bold, headings, lists, links, citations |
 | Saved Q&A history | Live | Shown inside Research Q&A by project and conversation |
@@ -73,6 +73,8 @@ are treated as delivered.
   batches use chunked ingestion.
 - FR-9: Report opening starts immediately in a new browser tab and exposes a
   visible opening state.
+- FR-9A: Long-running AI answers expose elapsed time without revealing hidden
+  chain-of-thought content.
 
 ### Research assistant
 
@@ -87,6 +89,9 @@ are treated as delivered.
   question, answer, mode, sources, model, token use, cost, and timestamp.
 - FR-16: A user can reopen and export a prior answer as Markdown or hand it to
   an Obsidian vault via the local Obsidian URI scheme.
+- FR-16A: The saved Obsidian vault name is optional. A blank value omits the
+  vault parameter so Obsidian can use the currently open vault; saving the
+  setting never implies that Obsidian will open immediately.
 
 ### Operations
 
@@ -106,6 +111,9 @@ are treated as delivered.
   opens the local Obsidian URI.
 - OCR for scanned/image-only filings.
 - Automatic purchase or storage of licensed sell-side research.
+- A web-native replacement for Excel. The first model-workbench increment will
+  register, govern, update, and compare existing workbooks before considering
+  formula-engine migration.
 
 ## Acceptance Criteria
 
@@ -120,12 +128,14 @@ are treated as delivered.
 - AC-6: Every successful answer is available in its Research Q&A conversation
   after refresh.
 - AC-7: Prior answers can export Markdown and invoke Obsidian with copied content.
-- AC-8: Report open buttons show progress and start the response in a new tab
-  without waiting for a full browser-side Blob download.
+- AC-8: Report open buttons show progress and open a feedback tab immediately;
+  the tab is replaced by the protected PDF when its download is ready.
 - AC-9: Web/Hybrid modes fail clearly when no search provider is configured.
 - AC-10: Configured web results display provenance and can be saved explicitly
   into the knowledge base.
 - AC-11: Lint, TypeScript, tests, production build, and hosted deployment pass.
+- AC-11A: The Research Q&A waiting state shows a spinner and elapsed seconds.
+- AC-11B: The primary knowledge navigation label is “个人知识库” in Chinese.
 
 ## Risks and Decisions
 
@@ -140,6 +150,9 @@ are treated as delivered.
   excerpt, capture time, and provenance but are not a licensed archival copy.
 - Existing routing/context tables remain in D1 for backwards compatibility,
   but they are removed from the product navigation.
+- Research Q&A remains the canonical conversation surface. Future contextual
+  launchers in Personal Knowledge, Report Library, and Event DB should prefill
+  scope and hand off to that surface rather than create separate chat histories.
 
 ## V4.5 — Event Knowledge Model
 
@@ -174,3 +187,17 @@ Acceptance:
   fields such as Metric, PM relevance, Evidence, Team Notice, or seed filenames.
 - FR-28: A claim timestamp is displayed only when the source data contains an
   exact calendar date; week labels such as W30 are not presented as dates.
+
+## V4.7 — Model Workbench Direction
+
+- FR-29: Treat the model workbook, source-linked inputs, assumptions, outputs,
+  version history, and review state as separate governed objects.
+- FR-30: Phase one keeps Excel as the analyst calculation surface while the web
+  product provides a model registry, freshness checks, source lineage, update
+  jobs, change review, and scenario-output comparison.
+- FR-31: A future Microsoft 365 bridge may read and write approved workbooks
+  through company-governed APIs; it must not expose licensed data outside the
+  approved boundary.
+- FR-32: Quant transition is enabled by turning workbook inputs and outputs into
+  typed, versioned datasets and reproducible jobs—not by cloning the spreadsheet
+  grid alone.
