@@ -1,7 +1,6 @@
 "use client";
 
 import { ClerkProvider, SignIn, SignInButton, SignUp, UserButton, useAuth } from "@clerk/react";
-import Image from "next/image";
 import type { ReactNode } from "react";
 
 export function AppClerkProvider({
@@ -115,7 +114,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <main className="auth-page">
         <section className="auth-card">
-          <Image className="auth-logo" src="/level-grind-logo.png" alt="" width={74} height={74} priority />
+          <span className="auth-logo" aria-hidden="true" />
           <p className="eyebrow">LOADING SESSION</p>
           <h1>Checking your workspace access…</h1>
           <p>Clerk is restoring your local session.</p>
@@ -128,7 +127,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return (
       <main className="auth-page">
         <section className="auth-card">
-          <Image className="auth-logo" src="/level-grind-logo.png" alt="Level Grind" width={74} height={74} priority />
+          <span className="auth-logo" role="img" aria-label="Level Grind" />
           <p className="eyebrow">PRIVATE ALPHA</p>
           <h1>Level Grind Research OS</h1>
           <p>

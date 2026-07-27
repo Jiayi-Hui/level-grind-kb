@@ -125,6 +125,101 @@ function parseVariableSheet(
   return parsed;
 }
 
+function slug(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+}
+
+function columnNumber(column: string) {
+  return column.split("").reduce((total, letter) => total * 26 + letter.charCodeAt(0) - 64, 0);
+}
+
+function rowMap(cells: Cell[]) {
+  const rows = new Map<number, Cell[]>();
+  for (const cell of cells) {
+    const row = rows.get(cell.row) || [];
+    row.push(cell);
+    rows.set(cell.row, row);
+  }
+  for (const row of rows.values()) row.sort((a, b) => columnNumber(a.col) - columnNumber(b.col));
+  return rows;
+}
+
+function closestLabel(cell: Cell, rows: Map<number, Cell[]>) {
+  const sameRow = rows.get(cell.row) || [];
+  const cellColumn = columnNumber(cell.col);
+  const left = sameRow
+    .filter((candidate) => columnNumber(candidate.col) < cellColumn && candidate.value && Number.isNaN(Number(candidate.value)))
+    .at(-1);
+  if (left) return left.value.trim();
+  for (let offset = 1; offset <= 3; offset += 1) {
+    const above = (rows.get(cell.row - offset) || []).find((candidate) => candidate.col === cell.col);
+    if (above?.value && Number.isNaN(Number(above.value))) return above.value.trim();
+  }
+  return "";
+}
+
+function closestPeriod(cell: Cell, rows: Map<number, Cell[]>) {
+  for (let offset = 1; offset <= 5; offset += 1) {
+    const above = (rows.get(cell.row - offset) || []).find((candidate) => candidate.col === cell.col);
+    if (above?.value && /(?:19|20)\d{2}|Q[1-4]|LTM|NTM/i.test(above.value)) return above.value.trim();
+  }
+  return "";
+}
+
+function inferUnit(label: string) {
+  if (/%|margin|growth|wacc|tax|rate|yield|multiple|turnover/i.test(label)) return "%";
+  if (/share|price/i.test(label)) return "$ / share";
+  if (/revenue|ebit|ebitda|cash|debt|capex|value|income|assets|proceeds|fcf|nopat/i.test(label)) return "USD mm";
+  return "";
+}
+
+function parseFinancialModelSheet(
+  sheetName: string,
+  cells: Cell[],
+): ParsedModelVariable[] {
+  const rows = rowMap(cells);
+  const normalizedSheet = sheetName.toLowerCase();
+  const assumptionSheet = /assump|input|driver|historical|actual/i.test(normalizedSheet);
+  const outputSheet = /cover|summary|output|valuation|dcf|sotp|sensitivity|trading|check/i.test(normalizedSheet);
+  const result: ParsedModelVariable[] = [];
+  const outputWords = /value|valuation|enterprise|equity|price|upside|downside|return|irr|multiple|wacc|terminal|fcf|revenue|ebitda|margin/i;
+
+  for (const cell of cells) {
+    if (!cell.value || !Number.isFinite(Number(cell.value))) continue;
+    const label = closestLabel(cell, rows);
+    if (!label || /^(19|20)\d{2}[AE]?$/.test(label)) continue;
+    const period = closestPeriod(cell, rows);
+    const isFormula = Boolean(cell.formula);
+    let kind: ParsedModelVariable["kind"] | null = null;
+    if (!isFormula && assumptionSheet) kind = "input";
+    else if (isFormula && outputSheet && outputWords.test(label)) kind = "output";
+    else if (isFormula && /model|forecast|calc|dcf|sotp/i.test(normalizedSheet) && outputWords.test(label)) kind = "calculation";
+    if (!kind) continue;
+
+    const key = slug(`${sheetName}_${label}_${period || cell.ref}`);
+    result.push({
+      key,
+      label: period ? `${label} · ${period}` : label,
+      kind,
+      sheetName,
+      cellRef: cell.ref,
+      value: cell.value,
+      formula: cell.formula,
+      unit: inferUnit(label),
+      period,
+      sourceSystem: assumptionSheet ? "Workbook input" : "Workbook formula",
+      sourceUrl: "",
+      sourceDate: "",
+      isStale: false,
+    });
+  }
+  return result;
+}
+
 export async function parseModelWorkbook(file: File) {
   const files = unzipSync(new Uint8Array(await file.arrayBuffer()));
   const paths = workbookSheetPaths(files);
@@ -140,7 +235,23 @@ export async function parseModelWorkbook(file: File) {
     if (!path || !files[path]) continue;
     variables.push(...parseVariableSheet(sheetName, kind, sheetCells(files[path], strings)));
   }
-  return { variables, templateCompatible: variables.some((variable) => variable.kind === "input") };
+  const standardTemplate = variables.some((variable) => variable.kind === "input");
+  if (!standardTemplate) {
+    for (const [sheetName, path] of paths) {
+      if (!files[path]) continue;
+      variables.push(...parseFinancialModelSheet(sheetName, sheetCells(files[path], strings)));
+      if (variables.length >= 500) break;
+    }
+  }
+  const deduped = Array.from(new Map(variables.slice(0, 500).map((variable) => [
+    `${variable.sheetName}!${variable.cellRef}`,
+    variable,
+  ])).values());
+  return {
+    variables: deduped,
+    templateCompatible: deduped.some((variable) => variable.kind === "input"),
+    recognitionMode: standardTemplate ? "standard" : deduped.length ? "financial-model" : "archive-only",
+  };
 }
 
 function escapeXml(value: string) {

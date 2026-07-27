@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth, useClerk } from "@clerk/react";
-import Image from "next/image";
 import {
   FormEvent,
   useCallback,
@@ -1169,7 +1168,7 @@ export function ResearchWorkspace() {
   return (
     <main className="app-shell research-os">
       <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
-        <div className="brand"><Image className="brand-mark" src="/level-grind-logo.png" alt="" width={38} height={38} priority /><span>Level Grind</span></div>
+        <div className="brand"><span className="brand-mark" aria-hidden="true" /><span>Level Grind</span></div>
         <p className="workspace-label">RESEARCH OS</p>
         <nav aria-label="Workspace navigation">
           {(Object.keys(c.nav) as View[]).map((id) => (

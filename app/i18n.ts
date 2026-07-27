@@ -4,10 +4,10 @@ export const copy = {
   en: {
     nav: {
       inbox: "My knowledge",
+      models: "Model workbench",
       library: "Report library",
       events: "Event DB",
-      models: "Model workbench",
-      assistant: "Ask research",
+      assistant: "AskAI",
       settings: "Settings",
     },
     heading: {
@@ -15,7 +15,7 @@ export const copy = {
       library: ["SOURCE DOCUMENTS", "Report library", "The source-document layer of the knowledge base: company reports stored once and indexed by page."],
       events: ["EVENT MEMORY", "Event DB", "Follow events over time and read the dated source statements behind them."],
       models: ["MODEL OPERATIONS", "Model workbench", "Manage Excel models, governed inputs, source-linked updates, versions, and exports."],
-      assistant: ["EVIDENCE WORKBENCH", "Ask research", "Combine company reports and current public-web evidence with traceable sources."],
+      assistant: ["EVIDENCE WORKBENCH", "AskAI", "Combine personal knowledge, reports, events, and current public-web evidence with traceable sources."],
       settings: ["WORKSPACE CONTROL", "Settings", "Language, research profile, storage, integrations, and team access."],
     },
     search: "Search companies, reports, notes, or projects…",
@@ -115,10 +115,10 @@ export const copy = {
   zh: {
     nav: {
       inbox: "个人知识库",
+      models: "模型工作台",
       library: "报告库",
       events: "事件库",
-      models: "模型工作台",
-      assistant: "研究问答",
+      assistant: "AskAI",
       settings: "设置",
     },
     heading: {
@@ -126,7 +126,7 @@ export const copy = {
       library: ["原始资料", "报告库", "知识库的原始资料层：公司报告统一存储并逐页索引。"],
       events: ["事件记忆", "事件库", "沿时间查看事件，并阅读背后带日期的来源原话。"],
       models: ["模型运营", "模型工作台", "线上管理 Excel 模型、输入输出、来源、版本、待更新变量和导出。"],
-      assistant: ["证据工作台", "研究问答", "结合公司报告与最新公开网络资料，并保留可追溯来源。"],
+      assistant: ["证据工作台", "AskAI", "联动个人知识、报告、事件与最新公开网络资料，并保留可追溯来源。"],
       settings: ["工作区控制", "设置", "语言、研究偏好、存储、集成和团队权限。"],
     },
     search: "搜索公司、报告、笔记或项目…",

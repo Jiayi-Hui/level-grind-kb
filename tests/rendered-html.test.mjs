@@ -61,7 +61,7 @@ test("ships bounded research chats, project rename, multidimensional filters, an
     readFile(new URL("../drizzle/0012_model_workbench.sql", import.meta.url), "utf8"),
     readFile(new URL("../public/level-grind-model-template.xlsx", import.meta.url)),
   ]);
-  assert.match(css, /height: min\(820px, calc\(100dvh - 255px\)\)/);
+  assert.match(css, /height: min\(980px, calc\(100dvh - 160px\)\)/);
   assert.match(css, /\.chat-thread \{ min-height: 0/);
   assert.match(workspace, /renameProject/);
   assert.match(sessions, /export async function PATCH/);

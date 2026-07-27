@@ -85,6 +85,8 @@ export function ModelWorkbench({
   const [uploading, setUploading] = useState(false);
   const [parsedVariables, setParsedVariables] = useState<ParsedModelVariable[]>([]);
   const [templateCompatible, setTemplateCompatible] = useState(false);
+  const [recognitionMode, setRecognitionMode] = useState<"standard" | "financial-model" | "archive-only">("archive-only");
+  const [primaryTab, setPrimaryTab] = useState<"upload" | "registry">("upload");
   const [tab, setTab] = useState<"inputs" | "logic" | "updates" | "history">("inputs");
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [selectedFileName, setSelectedFileName] = useState("");
@@ -113,12 +115,14 @@ export function ModelWorkbench({
   async function chooseFile(file?: File) {
     setParsedVariables([]);
     setTemplateCompatible(false);
+    setRecognitionMode("archive-only");
     setSelectedFileName(file?.name || "");
     if (!file) return;
     try {
       const parsed = await parseModelWorkbook(file);
       setParsedVariables(parsed.variables);
       setTemplateCompatible(parsed.templateCompatible);
+      setRecognitionMode(parsed.recognitionMode);
     } catch {
       onError(language === "zh"
         ? "无法读取该工作簿。仍可上传保存，但在线变量编辑需要使用标准模板。"
@@ -139,8 +143,10 @@ export function ModelWorkbench({
       event.currentTarget.reset();
       setParsedVariables([]);
       setTemplateCompatible(false);
+      setRecognitionMode("archive-only");
       setSelectedFileName("");
       await load(result.id);
+      setPrimaryTab("registry");
       onToast(language === "zh" ? "模型已进入线上目录" : "Model added to the online registry");
     } catch (error) {
       onError(error instanceof Error ? error.message : "Upload failed.");
@@ -216,42 +222,46 @@ export function ModelWorkbench({
 
   return (
     <section className="model-board">
-      <div className="model-toolbar">
-        <div>
-          <p className="eyebrow">EXCEL-FIRST MODEL OPERATIONS</p>
-          <h2>{language === "zh" ? "线上管理版本、输入、来源和待更新变量" : "Manage versions, inputs, sources, and pending updates online"}</h2>
-          <p>{language === "zh"
-            ? "网站负责治理与审核；Excel 保留完整计算逻辑。标准模板可在线映射变量并导出更新后的工作簿。"
-            : "The website governs and reviews models; Excel retains the full calculation engine. Standard templates map variables online and export updated workbooks."}</p>
-        </div>
-        <a className="quiet-button" href="/level-grind-model-template.xlsx" download>
-          ↓ {language === "zh" ? "下载样例 Excel" : "Sample Excel"}
-        </a>
-      </div>
+      <nav className="model-primary-tabs" aria-label={language === "zh" ? "模型工作台" : "Model workbench"}>
+        <button className={primaryTab === "upload" ? "active" : ""} onClick={() => setPrimaryTab("upload")}>
+          ↑ {language === "zh" ? "上传 Excel" : "Upload Excel"}
+        </button>
+        <button className={primaryTab === "registry" ? "active" : ""} onClick={() => setPrimaryTab("registry")}>
+          {language === "zh" ? "模型目录" : "Model registry"} <span>{payload.models.length}</span>
+        </button>
+      </nav>
 
-      <form className="model-upload" onSubmit={upload}>
-        <input name="modelName" placeholder={language === "zh" ? "模型名称" : "Model name"} required />
-        <input name="company" placeholder={language === "zh" ? "公司" : "Company"} required />
-        <input name="ticker" placeholder={language === "zh" ? "股票代码" : "Ticker"} />
-        <input name="sector" placeholder={language === "zh" ? "行业" : "Sector"} />
-        <input name="ownerName" placeholder={language === "zh" ? "负责人" : "Owner"} />
-        <input name="version" placeholder="v1.0" defaultValue="v1.0" />
-        <input name="sourceNotes" placeholder={language === "zh" ? "主要数据来源" : "Primary sources"} />
-        <label className="model-file">
-          <span>{selectedFileName || (language === "zh" ? "选择 .xlsx" : "Choose .xlsx")}</span>
-          <input name="file" type="file" accept=".xlsx" required onChange={(event) => void chooseFile(event.target.files?.[0])} />
-        </label>
-        <button className="upload-button" disabled={uploading}>{uploading ? (language === "zh" ? "上传中…" : "Uploading…") : (language === "zh" ? "加入模型目录" : "Add model")}</button>
-        {selectedFileName && (
-          <small className={templateCompatible ? "mapping-ok" : "mapping-note"}>
-            {templateCompatible
-              ? (language === "zh" ? `已识别 ${parsedVariables.length} 个变量` : `${parsedVariables.length} variables mapped`)
-              : (language === "zh" ? "可保存原文件；在线编辑需要标准模板" : "Original can be stored; online editing needs the standard template")}
-          </small>
-        )}
-      </form>
+      {primaryTab === "upload" && <section className="model-upload-panel">
+        <header>
+          <div><p className="eyebrow">AI-ASSISTED WORKBOOK MAPPING</p><h2>{language === "zh" ? "上传现有 Excel 模型" : "Upload an existing Excel model"}</h2><p>{language === "zh" ? "系统会识别假设、历史数据、计算和估值输出；识别结果由 analyst 审核后再写回。" : "The system maps assumptions, historical data, calculations, and valuation outputs for analyst review."}</p></div>
+          <a className="quiet-button" href="/SpaceX_BuySide_Valuation_Model_Demo.xlsx" download>↓ {language === "zh" ? "下载 SpaceX Demo" : "Download SpaceX demo"}</a>
+        </header>
+        <form className="model-upload" onSubmit={upload}>
+          <input name="modelName" placeholder={language === "zh" ? "模型名称" : "Model name"} required />
+          <input name="company" placeholder={language === "zh" ? "公司" : "Company"} required />
+          <input name="ticker" placeholder={language === "zh" ? "股票代码" : "Ticker"} />
+          <input name="sector" placeholder={language === "zh" ? "行业" : "Sector"} />
+          <input name="ownerName" placeholder={language === "zh" ? "负责人" : "Owner"} />
+          <input name="version" placeholder="v1.0" defaultValue="v1.0" />
+          <input name="sourceNotes" placeholder={language === "zh" ? "主要数据来源" : "Primary sources"} />
+          <label className="model-file">
+            <span>{selectedFileName || (language === "zh" ? "选择 .xlsx" : "Choose .xlsx")}</span>
+            <input name="file" type="file" accept=".xlsx" required onChange={(event) => void chooseFile(event.target.files?.[0])} />
+          </label>
+          <button className="upload-button" disabled={uploading}>{uploading ? (language === "zh" ? "上传中…" : "Uploading…") : (language === "zh" ? "识别并加入目录" : "Map & add model")}</button>
+          {selectedFileName && (
+            <small className={templateCompatible ? "mapping-ok" : "mapping-note"}>
+              {templateCompatible
+                ? (language === "zh"
+                  ? `已识别 ${parsedVariables.length} 个变量 · ${recognitionMode === "financial-model" ? "通用财务模型" : "标准模板"}`
+                  : `${parsedVariables.length} variables mapped · ${recognitionMode === "financial-model" ? "financial model" : "standard template"}`)
+                : (language === "zh" ? "未找到可编辑变量；仍可作为原始模型归档" : "No editable variables found; the original can still be archived")}
+            </small>
+          )}
+        </form>
+      </section>}
 
-      <div className="model-layout">
+      {primaryTab === "registry" && <div className="model-layout">
         <aside className="model-list">
           <div className="section-title"><h2>{language === "zh" ? "模型目录" : "Model registry"}</h2><span>{payload.models.length}</span></div>
           {payload.models.map((model) => (
@@ -307,7 +317,7 @@ export function ModelWorkbench({
             </>
           )}
         </div>
-      </div>
+      </div>}
     </section>
   );
 }
