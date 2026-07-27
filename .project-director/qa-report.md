@@ -140,6 +140,17 @@ dependent on the user's Clerk session after deployment.
 | Anonymous access boundary | Pass | Published site renders its Clerk sign-in gate without exposing workspace content |
 | Custom domain attachment | Pending DNS | `level-grind.com` is registered with the site; apex and validation records still need to be added at the DNS provider |
 
+## V4.9 Brand and Provider Operations Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Logo extraction | Pass | Transparent RGBA logo has transparent corners, preserved green/gold mark, and no source watermark |
+| Brand surfaces | Pass | Sidebar, auth gate, favicon metadata, Apple icon, and PWA manifest use the PNG asset |
+| Snapshot honesty | Pass | DeepSeek/Tavily figures are dated and labeled manual console snapshots |
+| Live usage boundary | Pass | Workspace query/token/cost totals still come from authenticated D1 aggregates |
+| Admin boundary | Pass | Provider balances and quota snapshots render only for owner/admin users |
+| Responsive quota layout | Pass | Five DeepSeek metrics collapse to two columns at phone widths |
+
 Pending release check: authenticated desktop and phone walkthrough requires the
 user's Clerk session. Localhost intentionally fails closed without its public
 key, and the shared in-app browser correctly reached the production sign-in

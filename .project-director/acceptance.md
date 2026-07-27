@@ -64,6 +64,18 @@
 - [x] Mobile breakpoints keep navigation, filters, cards, chat, and model tables
   usable without allowing long content to stretch the page.
 
+## V4.9 Brand and Provider Operations
+
+- [x] The user-selected rising-arrow mark is cleaned into a transparent,
+  watermark-free project asset and used in navigation, authentication, favicon,
+  Apple icon, and PWA metadata.
+- [x] DeepSeek and Tavily retain honest live connection states.
+- [x] Owner/admin settings show the supplied 2026-07-28 provider-console
+  snapshots without presenting them as real-time API data.
+- [x] DeepSeek workspace-recorded requests, tokens, and estimated cost remain
+  live D1 aggregates and are visibly separated from the console snapshot.
+- [x] Tavily shows 3 / 1,000 free credits, 997 remaining, and pay-as-you-go off.
+
 ## Event knowledge increment
 
 - [x] Events, Claims, Claim–Event relations, and Team Notices are separate D1

@@ -128,3 +128,12 @@ and explicit Report/Web/Hybrid evidence modes.
 - Sites version 15 was published from validated commit `82e8f21`.
 - `level-grind.com` is attached to the site and awaits apex/ownership DNS
   validation before it can route traffic.
+
+## V4.9 Release Candidate
+
+- Replaces the lettermark with the supplied rising-arrow and gold-spark logo
+  across the authenticated workspace, sign-in gate, favicon, and PWA.
+- Adds owner/admin operational snapshots for DeepSeek balance and consumption
+  plus Tavily free-credit usage.
+- Keeps dated console snapshots separate from the application's live D1 usage
+  ledger so stale provider numbers are never presented as real-time readings.

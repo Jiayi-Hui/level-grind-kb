@@ -39,9 +39,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    icon: "/level-grind-icon.svg",
-    shortcut: "/level-grind-icon.svg",
-    apple: "/level-grind-icon.svg",
+    icon: "/level-grind-logo.png",
+    shortcut: "/level-grind-logo.png",
+    apple: "/level-grind-logo.png",
   },
 };
 

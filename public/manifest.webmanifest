@@ -8,9 +8,9 @@
   "theme_color": "#17231f",
   "icons": [
     {
-      "src": "/level-grind-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/level-grind-logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useClerk } from "@clerk/react";
+import Image from "next/image";
 import {
   FormEvent,
   useCallback,
@@ -1168,7 +1169,7 @@ export function ResearchWorkspace() {
   return (
     <main className="app-shell research-os">
       <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
-        <div className="brand"><span className="brand-mark">LG</span><span>Level Grind</span></div>
+        <div className="brand"><Image className="brand-mark" src="/level-grind-logo.png" alt="" width={38} height={38} priority /><span>Level Grind</span></div>
         <p className="workspace-label">RESEARCH OS</p>
         <nav aria-label="Workspace navigation">
           {(Object.keys(c.nav) as View[]).map((id) => (
@@ -1684,10 +1685,39 @@ export function ResearchWorkspace() {
                   <div><strong>DeepSeek</strong><small>{language === "zh" ? "回答生成与证据综合" : "Answer generation and evidence synthesis"}</small></div>
                   <span className={preferences?.integrations.aiConfigured ? "status-ready" : "status-setup"}>{preferences?.integrations.aiConfigured ? (language === "zh" ? "已连接" : "Connected") : (language === "zh" ? "待配置" : "Setup required")}</span>
                 </div>
+                {isAdmin && (
+                  <div className="provider-quota">
+                    <div className="provider-quota-head">
+                      <strong>{language === "zh" ? "DeepSeek 控制台快照" : "DeepSeek console snapshot"}</strong>
+                      <span>2026-07-28 · {language === "zh" ? "手动同步" : "manual sync"}</span>
+                    </div>
+                    <div className="provider-metrics">
+                      <div><span>{language === "zh" ? "充值余额" : "Balance"}</span><strong>¥99.78</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "累计消费" : "Lifetime spend"}</span><strong>¥0.21</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "所选周期消费" : "Period spend"}</span><strong>¥0.01</strong><small>CNY</small></div>
+                      <div><span>{language === "zh" ? "API 请求" : "API requests"}</span><strong>3</strong><small>{language === "zh" ? "次" : "requests"}</small></div>
+                      <div><span>Tokens</span><strong>16,469</strong><small>{language === "zh" ? "控制台" : "console"}</small></div>
+                    </div>
+                    <p className="tracked-usage">
+                      {language === "zh" ? "本站记录" : "Tracked by this workspace"} · {Number(corpus?.usage.query_count || 0).toLocaleString()} {language === "zh" ? "次请求" : "requests"} · {(Number(corpus?.usage.input_tokens || 0) + Number(corpus?.usage.output_tokens || 0)).toLocaleString()} tokens · ${Number(corpus?.usage.estimated_cost_usd || 0).toFixed(4)} {language === "zh" ? "估算" : "estimated"}
+                    </p>
+                  </div>
+                )}
                 <div className="integration-row">
-                  <div><strong>{preferences?.integrations.webSearchProvider || "Tavily"} Web Search</strong><small>{language === "zh" ? "为联网和混合模式提供公开搜索结果" : "Supplies public results for Web and Hybrid modes"}</small></div>
+                  <div><strong>{preferences?.integrations.webSearchProvider === "tavily" ? "Tavily" : (preferences?.integrations.webSearchProvider || "Tavily")} Web Search</strong><small>{language === "zh" ? "为联网和混合模式提供公开搜索结果" : "Supplies public results for Web and Hybrid modes"}</small></div>
                   <span className={preferences?.integrations.webSearchConfigured ? "status-ready" : "status-setup"}>{preferences?.integrations.webSearchConfigured ? (language === "zh" ? "已连接" : "Connected") : (language === "zh" ? "待配置 API Key" : "API key required")}</span>
                 </div>
+                {isAdmin && (
+                  <div className="provider-quota tavily-quota">
+                    <div className="provider-quota-head">
+                      <strong>{language === "zh" ? "Tavily 免费额度" : "Tavily free credits"}</strong>
+                      <span>{language === "zh" ? "未开启按量付费" : "Pay-as-you-go off"}</span>
+                    </div>
+                    <div className="credit-line"><strong>3</strong><span>/ 1,000 credits</span><em>997 {language === "zh" ? "剩余" : "remaining"}</em></div>
+                    <div className="provider-meter"><i style={{ width: "0.3%" }} /></div>
+                    <small>{language === "zh" ? "控制台快照 · 2026-07-28" : "Console snapshot · 2026-07-28"}</small>
+                  </div>
+                )}
               </article>
 
               {isAdmin && (

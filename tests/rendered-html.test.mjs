@@ -76,6 +76,24 @@ test("ships bounded research chats, project rename, multidimensional filters, an
   assert.equal(modelTemplate.subarray(0, 2).toString(), "PK");
 });
 
+test("ships the selected logo and honest provider quota snapshots", async () => {
+  const [layout, workspace, manifest, logo] = await Promise.all([
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
+    readFile(new URL("../public/level-grind-logo.png", import.meta.url)),
+  ]);
+  assert.match(layout, /level-grind-logo\.png/);
+  assert.match(manifest, /level-grind-logo\.png/);
+  assert.equal(logo.subarray(1, 4).toString(), "PNG");
+  assert.match(workspace, /DeepSeek 控制台快照/);
+  assert.match(workspace, /¥99\.78/);
+  assert.match(workspace, /16,469/);
+  assert.match(workspace, /1,000 credits/);
+  assert.match(workspace, /手动同步/);
+  assert.match(workspace, /Pay-as-you-go off/);
+});
+
 test("ships report, web, and hybrid evidence with safe Markdown rendering", async () => {
   const [workspace, markdown, corpusRoute, corpusImport, askRoute, research, corpusLib, schema] = await Promise.all([
     readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
