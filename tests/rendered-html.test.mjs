@@ -142,3 +142,21 @@ test("ships report, web, and hybrid evidence with safe Markdown rendering", asyn
   assert.match(schema, /corpusDocuments/);
   assert.match(schema, /aiUsageEvents/);
 });
+
+test("merges personal and team knowledge entries and lets owners manage them", async () => {
+  const workspace = await readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8");
+  const documentsApi = await readFile(new URL("../app/api/documents/route.ts", import.meta.url), "utf8");
+
+  assert.match(documentsApi, /type ContextScope = "personal" \| "team" \| "personal\+team"/);
+  assert.match(documentsApi, /function mergeDuplicateRows/);
+  assert.match(documentsApi, /duplicate_ids/);
+  assert.match(documentsApi, /export async function PATCH/);
+  assert.match(documentsApi, /export async function DELETE/);
+  assert.match(documentsApi, /record\.author_email === user\.email \|\| user\.role === "owner" \|\| user\.role === "admin"/);
+
+  assert.match(workspace, /个人 \+ 团队/);
+  assert.match(workspace, /doc\.context_scope\.split\("\+"\)/);
+  assert.match(workspace, /duplicateIds/);
+  assert.match(workspace, /onEdit\(selected\)/);
+  assert.match(workspace, /onDelete\(selected\)/);
+});

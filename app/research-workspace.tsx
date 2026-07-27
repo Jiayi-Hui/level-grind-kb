@@ -30,7 +30,8 @@ type DocumentRecord = {
   file_name?: string;
   file_size?: number;
   created_at: string;
-  context_scope: "personal" | "team";
+  context_scope: "personal" | "team" | "personal+team";
+  duplicate_ids?: string[];
   source_system: string;
   topics: string;
   event_date?: string;
@@ -504,6 +505,7 @@ export function ResearchWorkspace() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [composer, setComposer] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<DocumentRecord | null>(null);
   const [mobileNav, setMobileNav] = useState(false);
   const [welcome, setWelcome] = useState(false);
   const [openingReportId, setOpeningReportId] = useState("");
@@ -849,21 +851,65 @@ export function ResearchWorkspace() {
 
   async function submitMaterial(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
+    setSaving(true);
+    setError("");
+    try {
+      const form = new FormData(formElement);
+      if (editingDocument) {
+        form.set("id", editingDocument.id);
+        form.set("duplicateIds", JSON.stringify(editingDocument.duplicate_ids ?? [editingDocument.id]));
+      }
+      const response = await authorizedFetch("/api/documents", {
+        method: editingDocument ? "PATCH" : "POST",
+        body: form,
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Capture failed.");
+      formElement.reset();
+      setComposer(false);
+      setEditingDocument(null);
+      setToast(editingDocument
+        ? (language === "zh" ? "资料已更新" : "Material updated")
+        : (language === "zh" ? "资料已保存" : "Material saved"));
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Capture failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openCapture() {
+    setEditingDocument(null);
+    setComposer(true);
+  }
+
+  function editMaterial(document: DocumentRecord) {
+    setEditingDocument(document);
+    setComposer(true);
+  }
+
+  async function deleteMaterial(document: DocumentRecord) {
+    const confirmed = window.confirm(language === "zh"
+      ? `删除“${document.title}”？此操作会同时删除它的个人/团队重复项。`
+      : `Delete “${document.title}”? Any merged personal/team duplicates will also be removed.`);
+    if (!confirmed) return;
     setSaving(true);
     setError("");
     try {
       const response = await authorizedFetch("/api/documents", {
-        method: "POST",
-        body: new FormData(event.currentTarget),
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: document.duplicate_ids ?? [document.id] }),
       });
       const payload = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "Capture failed.");
-      event.currentTarget.reset();
-      setComposer(false);
-      setToast(language === "zh" ? "资料已保存" : "Material saved");
+      if (!response.ok) throw new Error(payload.error || "Delete failed.");
+      setSelected(null);
+      setToast(language === "zh" ? "资料已删除" : "Material deleted");
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Capture failed.");
+      setError(caught instanceof Error ? caught.message : "Delete failed.");
     } finally {
       setSaving(false);
     }
@@ -1028,7 +1074,7 @@ export function ResearchWorkspace() {
     }
   }
 
-  async function saveWebResult(result: WebResult, scope: "personal" | "team") {
+  async function saveWebResult(result: WebResult, scope: "personal" | "team" | "personal+team") {
     setSaving(true);
     setError("");
     try {
@@ -1245,7 +1291,7 @@ export function ResearchWorkspace() {
             <button className={language === "zh" ? "active" : ""} onClick={() => void switchLanguage("zh")}>中</button>
           </div>
           {active !== "assistant" && (
-            <button className="upload-button" onClick={() => setComposer(true)}>＋ {c.capture}</button>
+            <button className="upload-button" onClick={openCapture}>＋ {c.capture}</button>
           )}
         </header>
 
@@ -1285,7 +1331,11 @@ export function ResearchWorkspace() {
                 onExport={(doc) => downloadText(materialMarkdown(doc), doc.title)}
                 onObsidian={(doc) => void sendToObsidian(materialMarkdown(doc), doc.title)}
                 onAsk={(doc) => askAbout("knowledge", doc.title, doc.body.slice(0, 240))}
-                openCapture={() => setComposer(true)}
+                onEdit={editMaterial}
+                onDelete={(doc) => void deleteMaterial(doc)}
+                currentUserEmail={context?.user.email || ""}
+                isAdmin={isAdmin}
+                openCapture={openCapture}
               />
             </>
           )}
@@ -1760,26 +1810,56 @@ export function ResearchWorkspace() {
       </section>
 
       {composer && (
-        <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setComposer(false)}>
-          <form className="composer" onSubmit={submitMaterial}>
-            <div className="composer-head"><div><p className="eyebrow">RESEARCH CAPTURE</p><h2>{language === "zh" ? "添加研究资料" : "Add research material"}</h2></div><button type="button" onClick={() => setComposer(false)}>×</button></div>
-            <label>{language === "zh" ? "标题" : "Title"}<input name="title" required maxLength={180} autoFocus /></label>
-            <label>{language === "zh" ? "笔记" : "Notes"}<textarea name="body" rows={4} /></label>
+        <div className="modal-backdrop" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            setComposer(false);
+            setEditingDocument(null);
+          }
+        }}>
+          <form key={editingDocument?.id ?? "new-material"} className="composer" onSubmit={submitMaterial}>
+            <div className="composer-head">
+              <div>
+                <p className="eyebrow">{editingDocument ? "RESEARCH EDIT" : "RESEARCH CAPTURE"}</p>
+                <h2>{editingDocument
+                  ? (language === "zh" ? "编辑研究资料" : "Edit research material")
+                  : (language === "zh" ? "添加研究资料" : "Add research material")}</h2>
+              </div>
+              <button type="button" onClick={() => {
+                setComposer(false);
+                setEditingDocument(null);
+              }}>×</button>
+            </div>
+            <label>{language === "zh" ? "标题" : "Title"}<input name="title" required maxLength={180} autoFocus defaultValue={editingDocument?.title ?? ""} /></label>
+            <label>{language === "zh" ? "笔记" : "Notes"}<textarea name="body" rows={4} defaultValue={editingDocument?.body ?? ""} /></label>
             <div className="form-grid">
-              <label>{language === "zh" ? "主题 / 项目" : "Topic / project"}<input name="project" /></label>
-              <label>{language === "zh" ? "可见范围" : "Scope"}<select name="contextScope"><option value="personal">{language === "zh" ? "个人" : "Personal"}</option><option value="team">{language === "zh" ? "团队" : "Team"}</option></select></label>
+              <label>{language === "zh" ? "主题 / 项目" : "Topic / project"}<input name="project" defaultValue={editingDocument?.project ?? ""} /></label>
+              <label>
+                {language === "zh" ? "可见范围" : "Scope"}
+                <select name="contextScope" defaultValue={editingDocument?.context_scope ?? "personal"}>
+                  <option value="personal">{language === "zh" ? "个人" : "Personal"}</option>
+                  <option value="team">{language === "zh" ? "团队" : "Team"}</option>
+                  <option value="personal+team">{language === "zh" ? "个人 + 团队" : "Personal + Team"}</option>
+                </select>
+              </label>
             </div>
             <div className="form-grid">
-              <label>{language === "zh" ? "来源类型" : "Source type"}<select name="sourceSystem"><option value="manual">Manual</option><option value="wechat">WeChat</option><option value="meeting">Meeting</option><option value="filing">Company filing</option><option value="obsidian">Obsidian</option><option value="web-search">Web search</option></select></label>
-              <label>{language === "zh" ? "资料日期" : "Event date"}<input name="eventDate" type="date" /></label>
+              <label>{language === "zh" ? "来源类型" : "Source type"}<select name="sourceSystem" defaultValue={editingDocument?.source_system ?? "manual"}><option value="manual">Manual</option><option value="wechat">WeChat</option><option value="meeting">Meeting</option><option value="filing">Company filing</option><option value="obsidian">Obsidian</option><option value="web-search">Web search</option></select></label>
+              <label>{language === "zh" ? "资料日期" : "Event date"}<input name="eventDate" type="date" defaultValue={editingDocument?.event_date?.slice(0, 10) ?? ""} /></label>
             </div>
-            <label>{language === "zh" ? "来源链接" : "Source link"}<input name="sourceUrl" type="url" placeholder="https://…" /></label>
-            <input type="hidden" name="topics" value="" />
+            <label>{language === "zh" ? "来源链接" : "Source link"}<input name="sourceUrl" type="url" placeholder="https://…" defaultValue={editingDocument?.source_url ?? ""} /></label>
+            <input type="hidden" name="topics" value={editingDocument?.topics ?? ""} />
             <input type="hidden" name="confidence" value="medium" />
             <input type="hidden" name="importance" value="normal" />
-            <input ref={fileRef} name="file" type="file" className="file-input" />
-            <button className="file-drop" type="button" onClick={() => fileRef.current?.click()}>＋ {language === "zh" ? "附加 PDF、表格、图片或文档" : "Attach PDF, spreadsheet, image, or document"} <small>Up to 25 MB</small></button>
-            <div className="composer-foot"><span>{language === "zh" ? "来源和范围会始终跟随资料" : "Source and scope stay attached"}</span><button className="upload-button" disabled={saving}>{saving ? c.saving : c.capture}</button></div>
+            {!editingDocument && (
+              <>
+                <input ref={fileRef} name="file" type="file" className="file-input" />
+                <button className="file-drop" type="button" onClick={() => fileRef.current?.click()}>＋ {language === "zh" ? "附加 PDF、表格、图片或文档" : "Attach PDF, spreadsheet, image, or document"} <small>Up to 25 MB</small></button>
+              </>
+            )}
+            <div className="composer-foot">
+              <span>{language === "zh" ? "来源和范围会始终跟随资料" : "Source and scope stay attached"}</span>
+              <button className="upload-button" disabled={saving}>{saving ? c.saving : editingDocument ? (language === "zh" ? "保存修改" : "Save changes") : c.capture}</button>
+            </div>
           </form>
         </div>
       )}
@@ -1797,6 +1877,10 @@ function DocumentDesk({
   onExport,
   onObsidian,
   onAsk,
+  onEdit,
+  onDelete,
+  currentUserEmail,
+  isAdmin,
   openCapture,
 }: {
   language: Language;
@@ -1807,6 +1891,10 @@ function DocumentDesk({
   onExport: (doc: DocumentRecord) => void;
   onObsidian: (doc: DocumentRecord) => void;
   onAsk: (doc: DocumentRecord) => void;
+  onEdit: (doc: DocumentRecord) => void;
+  onDelete: (doc: DocumentRecord) => void;
+  currentUserEmail: string;
+  isAdmin: boolean;
   openCapture: () => void;
 }) {
   const c = copy[language];
@@ -1820,7 +1908,11 @@ function DocumentDesk({
           <button key={doc.id} className={selected?.id === doc.id ? "feed-item selected" : "feed-item"} onClick={() => setSelected(doc)}>
             <span className={`kind-icon kind-${doc.kind}`}>{doc.kind === "file" ? "F" : doc.kind === "link" ? "↗" : "N"}</span>
             <span className="feed-main"><strong>{doc.title}</strong><small>{doc.body || doc.file_name || doc.source_url || "No preview"}</small><span className="meta"><b>{doc.topics || doc.project}</b> · {doc.source_system}</span></span>
-            <span className={`scope-pill scope-${doc.context_scope}`}>{doc.context_scope}</span>
+            <span className="scope-list">
+              {doc.context_scope.split("+").map((scope) => (
+                <span key={scope} className={`scope-pill scope-${scope}`}>{scope}</span>
+              ))}
+            </span>
           </button>
         ))}
       </section>
@@ -1833,6 +1925,12 @@ function DocumentDesk({
             <div className="detail-body">{selected.body || (language === "zh" ? "此资料包含附件或外部来源。" : "This item contains an attachment or external source.")}</div>
             {selected.source_url && <a className="source-link" href={selected.source_url} target="_blank" rel="noreferrer">{c.originalSource} ↗</a>}
             <div className="detail-actions"><button className="ask-context-button" onClick={() => onAsk(selected)}>✦ {language === "zh" ? "询问此内容" : "Ask about this"}</button><button onClick={() => onExport(selected)}>↓ {c.downloadMarkdown}</button><button className="obsidian-button" onClick={() => onObsidian(selected)}>{c.openObsidian} ↗</button></div>
+            {(selected.author_email === currentUserEmail || isAdmin) && (
+              <div className="detail-manage-actions">
+                <button onClick={() => onEdit(selected)}>{language === "zh" ? "编辑" : "Edit"}</button>
+                <button className="danger-button" onClick={() => onDelete(selected)}>{language === "zh" ? "删除" : "Delete"}</button>
+              </div>
+            )}
           </>
         ) : <div className="detail-placeholder">{c.selectItem}</div>}
       </aside>
@@ -1859,7 +1957,7 @@ function AnswerCard({
   savedWebUrls: Set<string>;
   saving: boolean;
   openReport: (document: CorpusDocument) => void;
-  saveWebResult: (result: WebResult, scope: "personal" | "team") => Promise<void>;
+  saveWebResult: (result: WebResult, scope: "personal" | "team" | "personal+team") => Promise<void>;
   onExport: () => void;
   onObsidian: () => void;
   isAdmin: boolean;
@@ -1907,6 +2005,7 @@ function AnswerCard({
                 <div className="web-result-actions">
                   <button className="quiet-button" disabled={saving || saved} onClick={() => void saveWebResult(webResult, "personal")}>{saved ? c.saved : c.savePersonal}</button>
                   {isAdmin && <button className="quiet-button" disabled={saving || saved} onClick={() => void saveWebResult(webResult, "team")}>{c.saveTeam}</button>}
+                  {isAdmin && <button className="quiet-button" disabled={saving || saved} onClick={() => void saveWebResult(webResult, "personal+team")}>{language === "zh" ? "个人 + 团队" : "Personal + Team"}</button>}
                 </div>
               </article>
             );

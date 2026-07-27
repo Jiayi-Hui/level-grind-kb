@@ -166,6 +166,7 @@ button { color: inherit; }
 .meta b { color: var(--green); }
 .signal { background: #f2d8cb; color: #a44a28; padding: 3px 6px; border-radius: 4px; font-size: 8px; font-weight: 800; }
 .scope-pill { padding: 3px 6px; border-radius: 10px; font-size: 8px; text-transform: uppercase; font-weight: 800; }
+.scope-list { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; gap: 5px; max-width: 94px; }
 .scope-personal { color: #945829; background: #f1e2d4; }
 .scope-team { color: #285745; background: #deebe3; }
 
@@ -185,6 +186,10 @@ button { color: inherit; }
 .detail-actions { display: flex; gap: 8px; margin-top: 24px; }
 .detail-actions button { flex: 1; border: 1px solid var(--line); background: white; border-radius: 6px; padding: 9px 8px; cursor: pointer; font-size: 10px; }
 .detail-actions .obsidian-button { background: #5a3f75; border-color: #5a3f75; color: white; }
+.detail-manage-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.detail-manage-actions button { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 10px; }
+.detail-manage-actions .danger-button { color: #9b402b; border-color: #ddb8ad; }
+.detail-manage-actions .danger-button:hover { background: #f8e7e1; }
 .freshness { display: flex; align-items: center; gap: 10px; margin-top: 22px; background: #eef2ec; padding: 11px; border-radius: 6px; color: var(--green); font-size: 10px; }
 .freshness div { display: grid; gap: 2px; }
 .freshness small { color: var(--muted); }
