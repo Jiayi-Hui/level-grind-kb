@@ -5,6 +5,7 @@ export const copy = {
     nav: {
       inbox: "Research inbox",
       library: "Report library",
+      events: "Event DB",
       assistant: "Ask research",
       history: "History",
       settings: "Settings",
@@ -12,6 +13,7 @@ export const copy = {
     heading: {
       inbox: ["RESEARCH FLOW", "Research inbox", "Capture material once and keep source, scope, and context attached."],
       library: ["SEARCHABLE FILINGS", "Report library", "Company filings stored once, indexed by page, and available from any device."],
+      events: ["EVENT MEMORY", "Event DB", "Track earnings-sensitive events, verification status, and PM-relevant implications."],
       assistant: ["EVIDENCE WORKBENCH", "Ask research", "Combine company reports and current public-web evidence with traceable sources."],
       history: ["RESEARCH MEMORY", "Question history", "Reopen, export, and continue your previous research questions."],
       settings: ["WORKSPACE CONTROL", "Settings", "Language, research profile, storage, integrations, and team access."],
@@ -113,6 +115,7 @@ export const copy = {
     nav: {
       inbox: "研究收件箱",
       library: "报告库",
+      events: "事件库",
       assistant: "研究问答",
       history: "问答历史",
       settings: "设置",
@@ -120,6 +123,7 @@ export const copy = {
     heading: {
       inbox: ["研究工作流", "研究收件箱", "资料只需保存一次，来源、范围和上下文会始终跟随。"],
       library: ["可检索公告", "报告库", "公司报告统一存储、逐页索引，并可从任何设备访问。"],
+      events: ["事件记忆", "事件库", "跟踪可能影响盈利预测、仓位判断和后续验证的关键事件。"],
       assistant: ["证据工作台", "研究问答", "结合公司报告与最新公开网络资料，并保留可追溯来源。"],
       history: ["研究记忆", "问答历史", "重新查看、导出并继续以前的研究问题。"],
       settings: ["工作区控制", "设置", "语言、研究偏好、存储、集成和团队权限。"],

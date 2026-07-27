@@ -1,0 +1,61 @@
+{
+  "eventTypes": [
+    "EARNINGS",
+    "GUIDANCE",
+    "CAPITAL_ALLOCATION",
+    "OPERATING_KPI",
+    "PRODUCT_TECH_MILESTONE",
+    "ORDER_SUPPLY",
+    "POLICY_REGULATION",
+    "MARKET_STRUCTURE"
+  ],
+  "verificationStatuses": [
+    "unverified",
+    "partially_verified",
+    "confirmed",
+    "denied",
+    "expired"
+  ],
+  "verificationKinds": [
+    "candidate",
+    "internal",
+    "public",
+    "mixed"
+  ],
+  "tagGroups": {
+    "priority": [
+      "P0",
+      "P1",
+      "P2"
+    ],
+    "eventNature": [
+      "actual",
+      "forecast",
+      "rumor"
+    ],
+    "impactType": [
+      "fundamental",
+      "market"
+    ],
+    "impactDirection": [
+      "positive",
+      "negative",
+      "mixed",
+      "neutral"
+    ],
+    "source": [
+      "source:seed-list",
+      "source:dymon-marketview",
+      "source:dymon-sellside",
+      "source:bbg-desktop",
+      "source:company-disclosure",
+      "source:internal-analyst"
+    ]
+  },
+  "rules": [
+    "Candidate events can come from analyst discussion / seed list and remain unverified.",
+    "Internal verified events require analyst/channel/supply-chain verification recorded in verificationSources.",
+    "Public verified events require Dymon MCP, BBG Desktop API, company disclosure, exchange filing, sell-side/bank research, or public source evidence.",
+    "Do not treat seed-list wording as the canonical event definition."
+  ]
+}

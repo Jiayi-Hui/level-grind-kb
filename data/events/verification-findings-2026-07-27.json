@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-07-27T09:00:23.163160+00:00",
+  "findings": [
+    {
+      "findingId": "VF-2026-07-27-001",
+      "eventIds": [
+        "EVT-0026",
+        "EVT-0027",
+        "EVT-0028",
+        "EVT-0029"
+      ],
+      "verificationKind": "public",
+      "verificationStatus": "partially_verified",
+      "summary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
+      "bbgEvidence": [
+        {
+          "ticker": "GOOGL US Equity",
+          "date": "2026-07-23",
+          "field": "CHG_PCT_1D",
+          "value": "-7.1326"
+        },
+        {
+          "ticker": "GOOG US Equity",
+          "date": "2026-07-23",
+          "field": "CHG_PCT_1D",
+          "value": "-6.8936"
+        }
+      ],
+      "dymonEvidence": [
+        {
+          "sourceType": "marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "date": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "sourceType": "marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "date": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "sourceType": "sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "date": "2026-07-20",
+          "publisher": "JPM",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
+      "recommendedEventDefinition": "Alphabet Q2 2026 results triggered investor focus on whether cloud/services acceleration and AI-related capex can translate into margins and FCF; market reaction was negative despite positive AI/cloud read-through.",
+      "nextEvidenceNeeded": [
+        "Company results/transcript",
+        "BBG financial fields for Search/GCP/OP/capex actual vs consensus"
+      ]
+    },
+    {
+      "findingId": "VF-2026-07-27-002",
+      "eventIds": [
+        "EVT-0031"
+      ],
+      "verificationKind": "public",
+      "verificationStatus": "partially_verified",
+      "summary": "BBG price reaction supports ServiceNow as an earnings/guidance event candidate; cRPO/revenue/guidance details still need source tie-out.",
+      "bbgEvidence": [
+        {
+          "ticker": "NOW US Equity",
+          "date": "2026-07-24",
+          "field": "CHG_PCT_1D",
+          "value": "7.4396"
+        }
+      ],
+      "dymonEvidence": [],
+      "recommendedEventDefinition": "ServiceNow Q2 2026 result/guidance window produced a positive market reaction; canonical event requires revenue/cRPO/guidance values from company disclosure or BBG financial fields.",
+      "nextEvidenceNeeded": [
+        "Company release/transcript",
+        "BBG revenue/cRPO/guidance/consensus fields"
+      ]
+    },
+    {
+      "findingId": "VF-2026-07-27-003",
+      "eventIds": [
+        "EVT-0016",
+        "EVT-0017",
+        "EVT-0018",
+        "EVT-0019"
+      ],
+      "verificationKind": "public",
+      "verificationStatus": "partially_verified",
+      "summary": "BBG price reaction and Dymon marketview evidence support TSMC Q2/Q3 guide/capex-spending concern as a canonical event family; exact revenue, margin, and capex values still need primary/company or BBG financial tie-out.",
+      "bbgEvidence": [
+        {
+          "ticker": "TSM US Equity",
+          "date": "2026-07-16",
+          "field": "CHG_PCT_1D",
+          "value": "-2.3219"
+        },
+        {
+          "ticker": "2330 TT Equity",
+          "date": "2026-07-17",
+          "field": "CHG_PCT_1D",
+          "value": "-7.2874"
+        }
+      ],
+      "dymonEvidence": [
+        {
+          "sourceType": "marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "date": "2026-07-24",
+          "note": "Links TSMC and Google post-earnings reactions to higher spending, margins, and free cash flow worries."
+        },
+        {
+          "sourceType": "marketview",
+          "title": "UBS TW Recap: Lost 44K/QMA w semis dragging on AI spending/FCF woes.",
+          "date": "2026-07-24",
+          "note": "Describes Taiwan semis weakness under AI spending/FCF worries and TSMC underperformance."
+        }
+      ],
+      "recommendedEventDefinition": "TSMC Q2 2026 and forward guide/capex discussion became a market event because investors focused on spending, margins, and FCF despite the AI infrastructure demand backdrop.",
+      "nextEvidenceNeeded": [
+        "TSMC company release/transcript",
+        "BBG Q3 revenue guidance, gross margin guidance, capex values"
+      ]
+    },
+    {
+      "findingId": "VF-2026-07-27-004",
+      "eventIds": [
+        "EVT-0009",
+        "EVT-0015",
+        "EVT-0010"
+      ],
+      "verificationKind": "public",
+      "verificationStatus": "partially_verified",
+      "summary": "BBG validates HK ticker identities after removing leading zeroes and shows event-window price reactions; official profit-alert/occupancy source evidence still required.",
+      "bbgEvidence": [
+        {
+          "ticker": "268 HK Equity",
+          "name": "KINGDEE INTERNATIONAL SFTWR",
+          "date": "2026-07-08",
+          "field": "CHG_PCT_1D",
+          "value": "14.9842"
+        },
+        {
+          "ticker": "2556 HK Equity",
+          "name": "MARKETINGFORCE MANAGEMENT LT",
+          "date": "2026-07-16",
+          "field": "CHG_PCT_1D",
+          "value": "30.5732"
+        },
+        {
+          "ticker": "1686 HK Equity",
+          "name": "SUNEVISION HOLDINGS",
+          "date": "2026-07-08",
+          "field": "CHG_PCT_1D",
+          "value": "4.3299"
+        }
+      ],
+      "dymonEvidence": [],
+      "recommendedEventDefinition": "HK software/IDC candidates show meaningful price reactions and valid BBG identities, but exact profit-alert/occupancy events require official announcement or Dymon source evidence.",
+      "nextEvidenceNeeded": [
+        "HKEX/company announcement",
+        "Dymon Marketview or sell-side detail for profit alert / MEGA IDC customer move-in"
+      ]
+    }
+  ]
+}

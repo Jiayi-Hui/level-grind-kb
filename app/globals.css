@@ -282,6 +282,158 @@ button { color: inherit; }
 .member-usage article { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto auto; gap: 18px; padding: 13px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
 .member-usage article b { color: var(--ink); }
 
+.events-board { margin-top: 30px; }
+.event-workbench {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.event-filter-panel,
+.event-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(16,37,31,.035);
+}
+.event-filter-panel { position: sticky; top: 90px; }
+.event-filter {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid #e7e5de;
+  background: transparent;
+  padding: 13px 16px;
+  color: #52625b;
+  cursor: pointer;
+  text-align: left;
+}
+.event-filter:hover,
+.event-filter.active {
+  background: #eef2ec;
+  color: var(--green);
+}
+.event-filter strong { font-size: 10px; }
+.event-filter span {
+  min-width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e1e7e1;
+  font-size: 9px;
+}
+.event-method-note { padding: 17px; border-top: 1px solid var(--line); }
+.event-method-note p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.event-list { display: grid; gap: 12px; }
+.event-card { padding: 19px 20px; }
+.event-card.priority-p0 { border-left: 4px solid var(--accent); }
+.event-card.priority-p1 { border-left: 4px solid #8aa696; }
+.event-card-top,
+.event-meta-line,
+.event-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.event-card h3 {
+  margin: 14px 0 8px;
+  font: 500 20px/1.25 Georgia, serif;
+  letter-spacing: -.2px;
+}
+.muted-tag { background: #e9ece6; color: #51635a; }
+.verify-pill {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.verify-kind {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.verify-kind-candidate { color: #8a642a; background: #f2ead6; }
+.verify-kind-internal { color: #624d77; background: #e7e1ec; }
+.verify-kind-public { color: #285745; background: #deebe3; }
+.verify-kind-mixed { color: #1f4f62; background: #dbe9ee; }
+.verify-unverified { color: #8a642a; background: #eee7d2; }
+.verify-partially_verified { color: #624d77; background: #e7e1ec; }
+.verify-confirmed { color: #326245; background: #dceadf; }
+.verify-denied,
+.verify-expired { color: #93472e; background: #f8e7e1; }
+.event-meta-line {
+  color: var(--muted);
+  font-size: 10px;
+}
+.event-meta-line span:not(:last-child)::after {
+  content: "·";
+  margin-left: 7px;
+  color: #a5aca6;
+}
+.event-summary {
+  margin: 13px 0 0;
+  color: #35453e;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.event-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+}
+.event-fields div {
+  min-width: 0;
+  padding: 11px 12px;
+  background: #f3f4ef;
+  border: 1px solid #e5e5df;
+  border-radius: 9px;
+}
+.event-fields dt {
+  margin-bottom: 5px;
+  color: #7b877f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+}
+.event-fields dd {
+  margin: 0;
+  color: #32433c;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.event-card-foot {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid #e7e5de;
+  color: var(--muted);
+  font-size: 9px;
+}
+.event-card-foot em {
+  padding: 3px 6px;
+  border-radius: 10px;
+  background: #eef2ec;
+  color: var(--green);
+  font-style: normal;
+  font-weight: 700;
+}
+
 .task-board { margin-top: 30px; }
 .task-principle { padding: 28px; background: #e7ece5; border-bottom: 1px solid var(--line); }
 .task-equation { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 20px; }

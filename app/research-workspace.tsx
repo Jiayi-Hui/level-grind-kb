@@ -12,7 +12,7 @@ import {
 import { copy, Language } from "./i18n";
 import { MarkdownAnswer } from "./markdown-answer";
 
-type View = "inbox" | "library" | "assistant" | "history" | "settings";
+type View = "inbox" | "library" | "events" | "assistant" | "history" | "settings";
 type EvidenceMode = "reports" | "web" | "hybrid";
 
 type DocumentRecord = {
@@ -86,6 +86,54 @@ type CorpusPayload = {
     total_tokens: number;
     estimated_cost_usd: number;
   }>;
+};
+
+type ResearchEvent = {
+  id: string;
+  title: string;
+  event_type: string;
+  event_date?: string;
+  effective_period?: string;
+  company?: string;
+  ticker?: string;
+  sector?: string;
+  geography?: string;
+  summary: string;
+  event_nature: "actual" | "forecast" | "rumor";
+  impact_type: "fundamental" | "market";
+  impact_direction: "positive" | "negative" | "mixed" | "neutral";
+  priority: "P0" | "P1" | "P2";
+  verification_status: "unverified" | "partially_verified" | "confirmed" | "denied" | "expired";
+  verification_kind: "candidate" | "internal" | "public" | "mixed";
+  verification_summary?: string;
+  confidence: "low" | "medium" | "high";
+  metric_name?: string;
+  metric_object?: string;
+  expected_value?: string;
+  actual_value?: string;
+  unit?: string;
+  supplier?: string;
+  customer?: string;
+  product?: string;
+  date_precision?: string;
+  source_class?: string;
+  source_week?: string;
+  source_locator?: string;
+  raw_claim?: string;
+  verification_plan?: string;
+  pm_relevance?: string;
+  analyst_notes?: string;
+  source_system: string;
+  source_title?: string;
+  source_url?: string;
+  source_excerpt?: string;
+  verification_sources_json: string;
+  tags_json: string;
+};
+
+type EventsPayload = {
+  events: ResearchEvent[];
+  stats: Array<{ event_type: string; count: number }>;
 };
 
 type ReportCitation = {
@@ -185,10 +233,31 @@ type PreferencesPayload = {
 const navIcons: Record<View, string> = {
   inbox: "⌂",
   library: "▤",
+  events: "◇",
   assistant: "✦",
   history: "↺",
   settings: "⚙",
 };
+
+const eventTypeLabels: Record<string, string> = {
+  EARNINGS: "Earnings",
+  GUIDANCE: "Guidance",
+  CAPITAL_ALLOCATION: "Capex / FCF",
+  OPERATING_KPI: "Operating KPI",
+  PRODUCT_TECH_MILESTONE: "Product / tech",
+  ORDER_SUPPLY: "Orders / supply",
+  POLICY_REGULATION: "Policy",
+  MARKET_STRUCTURE: "Market structure",
+};
+
+function parseTags(value?: string) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed.map((item) => String(item)).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
 
 function bytes(value: number) {
   if (value >= 1_073_741_824) return `${(value / 1_073_741_824).toFixed(1)} GB`;
@@ -263,6 +332,7 @@ export function ResearchWorkspace() {
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [corpus, setCorpus] = useState<CorpusPayload | null>(null);
+  const [eventsPayload, setEventsPayload] = useState<EventsPayload | null>(null);
   const [preferences, setPreferences] = useState<PreferencesPayload | null>(null);
   const [history, setHistory] = useState<AskResult[]>([]);
   const [projects, setProjects] = useState<ResearchProject[]>([]);
@@ -274,6 +344,7 @@ export function ResearchWorkspace() {
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<EvidenceMode>("hybrid");
+  const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -313,6 +384,7 @@ export function ResearchWorkspace() {
         authorizedFetch("/api/context"),
         authorizedFetch("/api/members"),
         authorizedFetch("/api/corpus"),
+        authorizedFetch("/api/events"),
         authorizedFetch("/api/preferences"),
         authorizedFetch("/api/ask"),
       ]);
@@ -323,12 +395,13 @@ export function ResearchWorkspace() {
       if (responses.some((response) => !response.ok)) {
         throw new Error("The research workspace could not be loaded.");
       }
-      const [documentsData, contextData, membersData, corpusData, preferenceData, askData] =
+      const [documentsData, contextData, membersData, corpusData, eventsData, preferenceData, askData] =
         await Promise.all(responses.map((response) => response.json())) as [
           { documents: DocumentRecord[] },
           ContextPayload,
           { members: TeamMember[] },
           CorpusPayload,
+          EventsPayload,
           PreferencesPayload,
           AskPayload,
         ];
@@ -336,6 +409,7 @@ export function ResearchWorkspace() {
       setContext(contextData);
       setMembers(membersData.members ?? []);
       setCorpus(corpusData);
+      setEventsPayload(eventsData);
       setPreferences(preferenceData);
       setHistory(askData.history ?? []);
       setProjects(askData.projects ?? []);
@@ -473,6 +547,30 @@ export function ResearchWorkspace() {
         .some((value) => value.toLowerCase().includes(term)),
     );
   }, [corpus?.documents, query]);
+
+  const events = useMemo(() => eventsPayload?.events ?? [], [eventsPayload?.events]);
+  const filteredEvents = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return events.filter((event) => {
+      const matchesType = !eventTypeFilter || event.event_type === eventTypeFilter;
+      const matchesTerm = !term || [
+        event.title,
+        event.company,
+        event.ticker,
+        event.summary,
+        event.raw_claim,
+        event.pm_relevance,
+        event.verification_plan,
+        event.product,
+        event.customer,
+        event.supplier,
+      ].some((value) => String(value || "").toLowerCase().includes(term));
+      return matchesType && matchesTerm;
+    });
+  }, [events, eventTypeFilter, query]);
+
+  const p0Events = events.filter((event) => event.priority === "P0").length;
+  const unverifiedEvents = events.filter((event) => event.verification_status === "unverified").length;
 
   async function switchLanguage(next: Language) {
     setLanguage(next);
@@ -891,6 +989,76 @@ export function ResearchWorkspace() {
                   ))}
                 </div>
               )}
+            </section>
+          )}
+
+          {active === "events" && (
+            <section className="events-board">
+              <div className="metrics">
+                <article><span>Event candidates</span><strong>{events.length}</strong><small>from cold-start list</small></article>
+                <article><span>P0 events</span><strong>{p0Events}</strong><small>verify first</small></article>
+                <article><span>Unverified</span><strong>{unverifiedEvents}</strong><small>need Dymon / BBG</small></article>
+              </div>
+
+              <div className="event-workbench">
+                <aside className="event-filter-panel">
+                  <div className="section-title"><h2>Event types</h2><span>{eventsPayload?.stats.length || 0}</span></div>
+                  <button className={!eventTypeFilter ? "event-filter active" : "event-filter"} onClick={() => setEventTypeFilter("")}>
+                    <strong>All</strong><span>{events.length}</span>
+                  </button>
+                  {(eventsPayload?.stats ?? []).map((stat) => (
+                    <button
+                      key={stat.event_type}
+                      className={eventTypeFilter === stat.event_type ? "event-filter active" : "event-filter"}
+                      onClick={() => setEventTypeFilter(stat.event_type)}
+                    >
+                      <strong>{eventTypeLabels[stat.event_type] || stat.event_type}</strong>
+                      <span>{stat.count}</span>
+                    </button>
+                  ))}
+                  <div className="event-method-note">
+                    <p className="eyebrow">METHOD</p>
+                    <p>These are candidate events, not confirmed facts. Use Dymon / BBG later to verify source evidence, actuals, consensus, and market reaction.</p>
+                  </div>
+                </aside>
+
+                <div className="event-list">
+                  {!filteredEvents.length ? (
+                    <div className="empty-state"><h3>No matching events</h3><p>Try a different search term or event-type filter.</p></div>
+                  ) : filteredEvents.map((event) => {
+                    const tags = parseTags(event.tags_json).slice(0, 5);
+                    return (
+                      <article className={`event-card priority-${event.priority.toLowerCase()}`} key={event.id}>
+                        <div className="event-card-top">
+                          <span className="tag">{event.priority}</span>
+                          <span className="tag muted-tag">{eventTypeLabels[event.event_type] || event.event_type}</span>
+                          <span className={`verify-kind verify-kind-${event.verification_kind || "candidate"}`}>{event.verification_kind || "candidate"}</span>
+                          <span className={`verify-pill verify-${event.verification_status}`}>{event.verification_status.replaceAll("_", " ")}</span>
+                        </div>
+                        <h3>{event.title}</h3>
+                        <div className="event-meta-line">
+                          <span>{event.company || "Sector / macro"}</span>
+                          {event.ticker && <span>{event.ticker}</span>}
+                          {event.event_date && <span>{event.event_date}</span>}
+                          {event.source_week && <span>{event.source_week}</span>}
+                        </div>
+                        <p className="event-summary">{event.summary || event.raw_claim || event.source_excerpt}</p>
+                        <dl className="event-fields">
+                          {(event.metric_object || event.metric_name) && <div><dt>Metric</dt><dd>{event.metric_object || event.metric_name}</dd></div>}
+                          {event.pm_relevance && <div><dt>PM relevance</dt><dd>{event.pm_relevance}</dd></div>}
+                          {(event.verification_summary || event.verification_plan) && <div><dt>Verification</dt><dd>{event.verification_summary || event.verification_plan}</dd></div>}
+                          {(event.raw_claim || event.source_excerpt) && <div><dt>Raw claim</dt><dd>{event.raw_claim || event.source_excerpt}</dd></div>}
+                        </dl>
+                        <div className="event-card-foot">
+                          <span>{event.source_class || event.source_system}</span>
+                          <span>{event.source_locator || event.source_title}</span>
+                          {tags.map((tag) => <em key={tag}>{tag}</em>)}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
             </section>
           )}
 
