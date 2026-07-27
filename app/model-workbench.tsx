@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Language } from "./i18n";
 import { exportUpdatedWorkbook, parseModelWorkbook, type ParsedModelVariable } from "./xlsx-model";
+import simpleModelDemoUrl from "./assets/Simple_Valuation_Model_Demo.xlsx?url";
 
 type ModelSummary = {
   id: string;
@@ -235,7 +236,7 @@ export function ModelWorkbench({
       {primaryTab === "upload" && <section className="model-upload-panel">
         <header>
           <div><p className="eyebrow">AI-ASSISTED WORKBOOK MAPPING</p><h2>{language === "zh" ? "上传现有 Excel 模型" : "Upload an existing Excel model"}</h2><p>{language === "zh" ? "系统会识别假设、历史数据、计算和估值输出；识别结果由 analyst 审核后再写回。" : "The system maps assumptions, historical data, calculations, and valuation outputs for analyst review."}</p></div>
-          <a className="quiet-button" href="/Simple_Valuation_Model_Demo.xlsx" download>↓ {language === "zh" ? "下载简单示例" : "Download simple demo"}</a>
+          <a className="quiet-button" href={simpleModelDemoUrl} download="Simple_Valuation_Model_Demo.xlsx">↓ {language === "zh" ? "下载简单示例" : "Download simple demo"}</a>
         </header>
         <form className="model-upload" onSubmit={upload}>
           <input name="modelName" placeholder={language === "zh" ? "模型名称" : "Model name"} required />
