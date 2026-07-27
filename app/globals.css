@@ -249,6 +249,9 @@ button { color: inherit; }
 .role-owner { color: #8a4b34; background: #eee0d9; }
 .role-admin { color: #624d77; background: #e7e1ec; }
 .role-member { color: #326245; background: #dceadf; }
+.role-analyst { color: #326245; background: #dceadf; }
+.role-pm { color: #624d77; background: #e7e1ec; }
+.role-gem_pm { color: #8a4b34; background: #eee0d9; }
 .status-active { color: #326245; background: #edf3ee; }
 .status-suspended { color: #93472e; background: #f8e7e1; }
 .member-form { display: grid; grid-template-columns: .8fr 1.3fr .55fr auto; gap: 10px; align-items: end; padding: 18px; border-top: 1px solid var(--line); background: #f6f4ee; }

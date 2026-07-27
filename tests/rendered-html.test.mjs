@@ -44,6 +44,7 @@ test("persists preferences, private history, storage visibility, and governed ac
   assert.match(askRoute, /WHERE user_email = \?1/);
   assert.match(askRoute, /INSERT INTO research_queries/);
   assert.match(membersRoute, /Admin access required/);
+  assert.match(membersRoute, /"analyst", "pm", "gem_pm"/);
   assert.match(access, /team_members/);
   assert.match(access, /LEVEL_GRIND_OWNER_EMAIL/);
   assert.match(research, /CREATE TABLE IF NOT EXISTS user_preferences/);

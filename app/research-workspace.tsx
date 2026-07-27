@@ -56,7 +56,7 @@ type ContextPayload = {
 type TeamMember = {
   email: string;
   display_name: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "member" | "analyst" | "pm" | "gem_pm";
   status: "active" | "suspended";
 };
 
@@ -1727,14 +1727,29 @@ export function ResearchWorkspace() {
                       <div className="member-row" key={member.email}>
                         <span className="avatar">{(member.display_name || member.email).slice(0, 2).toUpperCase()}</span>
                         <div><strong>{member.display_name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
-                        <span className={`member-role role-${member.role}`}>{member.role}</span>
+                        <span className={`member-role role-${member.role}`}>
+                          {member.role === "gem_pm"
+                            ? "GEM PM"
+                            : member.role === "pm"
+                              ? "PM"
+                              : member.role === "analyst"
+                                ? "Analyst"
+                                : member.role}
+                        </span>
                       </div>
                     ))}
                   </div>
                   <form className="member-form" onSubmit={saveMember}>
                     <label>{c.name}<input name="displayName" maxLength={120} /></label>
                     <label>{c.email}<input name="email" type="email" required /></label>
-                    <label>{c.role}<select name="role"><option value="member">Member</option><option value="admin">Admin</option></select></label>
+                    <label>
+                      {c.role}
+                      <select name="role" defaultValue="analyst">
+                        <option value="analyst">Analyst</option>
+                        <option value="pm">PM</option>
+                        <option value="gem_pm">GEM PM</option>
+                      </select>
+                    </label>
                     <button className="upload-button" disabled={saving}>{saving ? c.saving : c.addUpdate}</button>
                   </form>
                 </article>

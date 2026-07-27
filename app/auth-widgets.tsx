@@ -130,10 +130,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           <span className="auth-logo" role="img" aria-label="Level Grind" />
           <p className="eyebrow">PRIVATE ALPHA</p>
           <h1>Level Grind Research OS</h1>
-          <p>
-            Sign in to your invited account to open the bilingual report and
-            research workspace.
-          </p>
+          <p>Sign in to your invited account</p>
           <SignInAction />
         </section>
       </main>

@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
     status?: string;
   };
   const email = String(payload.email ?? "").trim().toLowerCase();
-  const role = payload.role === "admin" ? "admin" : "member";
+  const teamRoles = new Set(["analyst", "pm", "gem_pm"]);
+  const role = teamRoles.has(String(payload.role)) ? String(payload.role) : "analyst";
   const status = payload.status === "suspended" ? "suspended" : "active";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
