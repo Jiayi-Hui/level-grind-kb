@@ -11,10 +11,12 @@ Level Grind is a private context infrastructure for fundamental research teams. 
 - Task context packs with objective, allowed context, output format, and guardrails.
 - Conversation-routing rules and durable handoffs between chats or projects.
 - Search across titles, notes, projects, topics, and source systems.
-- Event-first research timeline with independent Claims, typed Claim–Event
-  relations, and privacy-preserving Team Notices.
-- Claims verification inbox that separates source verification from whether a
-  real-world Event has occurred.
+- A Knowledge base for notes, links, conclusions, and saved evidence, plus a
+  Report library for indexed source documents.
+- Event-first research timeline with attributed, dated source statements; the
+  underlying Claim–Event model remains available without crowding the cards.
+- Research Q&A organized by project and conversation, with history contained
+  inside the Q&A workspace.
 - Markdown download and one-click Obsidian handoff.
 - Explicit system-boundary view for Obsidian, company AVD, Excel, and Quant research.
 - Responsive desktop and mobile interface.

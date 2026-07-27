@@ -26,8 +26,8 @@ are treated as delivered.
    status.
 3. Separate report evidence, public-web evidence, and model inference.
 4. Let users deliberately promote useful web results into the knowledge base.
-5. Keep frequently used research actions in the main navigation; move
-   low-frequency profile/context controls into Settings.
+5. Keep one navigation entry per research workflow. Question history belongs
+   inside Research Q&A; low-frequency profile/context controls belong in Settings.
 6. Make waiting visible through loading, progress, success, and error states.
 7. Never claim a connector or search capability that is not configured.
 8. Preserve source URLs, dates, ownership, scope, and provenance when exporting.
@@ -43,7 +43,7 @@ are treated as delivered.
 | Chinese / English interface | This increment | Persisted per user |
 | Welcome-back release banner | This increment | Shown per Clerk login session |
 | Markdown answer rendering | This increment | Bold, headings, lists, links, citations |
-| Saved Q&A history | This increment | Reopen, Markdown export, Obsidian URI handoff |
+| Saved Q&A history | Live | Shown inside Research Q&A by project and conversation |
 | Web / report / hybrid research modes | This increment | DeepSeek synthesizes supplied evidence |
 | Select web result into knowledge base | This increment | Explicit user action and provenance |
 | Personal storage quota view | This increment | Personal uploads only; shared corpus separate |
@@ -113,12 +113,13 @@ are treated as delivered.
 - AC-2: Chinese/English switching updates the primary interface and survives
   refresh on another device for the same account.
 - AC-3: New Clerk login sessions show Welcome back and current release notes.
-- AC-4: The sidebar contains research actions only; Conversation routing and
-  the three context pages are not exposed.
+- AC-4: The sidebar contains one entry per research workflow; question history
+  is inside Research Q&A rather than a separate sidebar tab.
 - AC-5: Settings contains language, research profile, storage remaining,
   Obsidian vault, and role-appropriate team access controls.
-- AC-6: Every successful answer is available in History after refresh.
-- AC-7: History can export Markdown and invoke Obsidian with copied content.
+- AC-6: Every successful answer is available in its Research Q&A conversation
+  after refresh.
+- AC-7: Prior answers can export Markdown and invoke Obsidian with copied content.
 - AC-8: Report open buttons show progress and start the response in a new tab
   without waiting for a full browser-side Blob download.
 - AC-9: Web/Hybrid modes fail clearly when no search provider is configured.
@@ -159,5 +160,17 @@ Acceptance:
 - AC-13: Dymon/BBG findings appear as source-verified Claims linked to the
   relevant partially verified Events.
 - AC-14: Every cold-start Event has a privacy-preserving Team Notice.
-- AC-15: Event cards show Claim and Notice counts; Claims show source,
-  verification status, relation, and linked Event ids.
+- AC-15: Event cards show only the event, company/ticker, exact known date,
+  verification status, and the latest attributed source statement. Coarse week
+  labels and seed filenames stay out of the card.
+
+## V4.6 — Demo Information Architecture and Readability
+
+- FR-25: “Knowledge base” contains saved notes, links, conclusions, and selected
+  evidence; “Report library” is its source-document layer.
+- FR-26: Research Q&A owns its conversation history. No separate History
+  navigation entry is shown.
+- FR-27: Event cards use Chinese-readable type sizing and do not expose internal
+  fields such as Metric, PM relevance, Evidence, Team Notice, or seed filenames.
+- FR-28: A claim timestamp is displayed only when the source data contains an
+  exact calendar date; week labels such as W30 are not presented as dates.

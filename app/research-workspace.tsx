@@ -12,7 +12,7 @@ import {
 import { copy, Language } from "./i18n";
 import { MarkdownAnswer } from "./markdown-answer";
 
-type View = "inbox" | "library" | "events" | "assistant" | "history" | "settings";
+type View = "inbox" | "library" | "events" | "assistant" | "settings";
 type EvidenceMode = "reports" | "web" | "hybrid";
 
 type DocumentRecord = {
@@ -133,6 +133,10 @@ type ResearchEvent = {
   notice_count: number;
   latest_notice_type?: string;
   latest_notice_summary?: string;
+  latest_claim_text?: string;
+  latest_claim_speaker?: string;
+  latest_claimed_at?: string;
+  latest_claim_source_system?: string;
 };
 
 type EventsPayload = {
@@ -269,28 +273,108 @@ const navIcons: Record<View, string> = {
   library: "▤",
   events: "◇",
   assistant: "✦",
-  history: "↺",
   settings: "⚙",
 };
 
-const eventTypeLabels: Record<string, string> = {
-  EARNINGS: "Earnings",
-  GUIDANCE: "Guidance",
-  CAPITAL_ALLOCATION: "Capex / FCF",
-  OPERATING_KPI: "Operating KPI",
-  PRODUCT_TECH_MILESTONE: "Product / tech",
-  ORDER_SUPPLY: "Orders / supply",
-  POLICY_REGULATION: "Policy",
-  MARKET_STRUCTURE: "Market structure",
+const eventTypeLabels: Record<Language, Record<string, string>> = {
+  en: {
+    EARNINGS: "Earnings",
+    GUIDANCE: "Guidance",
+    CAPITAL_ALLOCATION: "Capex / FCF",
+    OPERATING_KPI: "Operating KPI",
+    PRODUCT_TECH_MILESTONE: "Product / tech",
+    ORDER_SUPPLY: "Orders / supply",
+    POLICY_REGULATION: "Policy",
+    MARKET_STRUCTURE: "Market structure",
+  },
+  zh: {
+    EARNINGS: "业绩",
+    GUIDANCE: "指引",
+    CAPITAL_ALLOCATION: "资本开支 / 现金流",
+    OPERATING_KPI: "经营数据",
+    PRODUCT_TECH_MILESTONE: "产品 / 技术",
+    ORDER_SUPPLY: "订单 / 供应",
+    POLICY_REGULATION: "政策",
+    MARKET_STRUCTURE: "市场变化",
+  },
 };
 
-function parseTags(value?: string) {
-  try {
-    const parsed = JSON.parse(value || "[]");
-    return Array.isArray(parsed) ? parsed.map((item) => String(item)).filter(Boolean) : [];
-  } catch {
-    return [];
-  }
+function exactDate(value?: string) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(value)) return "";
+  return value.slice(0, 10);
+}
+
+function cleanEventSummary(event: ResearchEvent) {
+  const summary = event.source_excerpt || event.raw_claim || event.summary || "";
+  if (/^Candidate event:.*Requires .* verification/i.test(summary)) return "";
+  return summary;
+}
+
+function verificationLabel(status: ResearchEvent["verification_status"], language: Language) {
+  const labels = {
+    en: {
+      unverified: "Unverified",
+      partially_verified: "Partially verified",
+      confirmed: "Confirmed",
+      denied: "Denied",
+      expired: "Expired",
+    },
+    zh: {
+      unverified: "待验证",
+      partially_verified: "部分验证",
+      confirmed: "已确认",
+      denied: "已否定",
+      expired: "已失效",
+    },
+  } as const;
+  return labels[language][status];
+}
+
+function claimTypeLabel(type: ResearchClaim["claim_type"], language: Language) {
+  const labels = {
+    en: {
+      fact: "Statement",
+      forecast: "Forecast",
+      rumor: "Rumor",
+      estimate: "Estimate",
+      interpretation: "Interpretation",
+      denial: "Denial",
+    },
+    zh: {
+      fact: "事实陈述",
+      forecast: "预测",
+      rumor: "传闻",
+      estimate: "估算",
+      interpretation: "解读",
+      denial: "否认",
+    },
+  } as const;
+  return labels[language][type];
+}
+
+function claimVerificationLabel(status: ResearchClaim["verification_status"], language: Language) {
+  const labels = {
+    en: {
+      unverified: "Unverified",
+      source_verified: "Source checked",
+      misquoted: "Misquoted",
+      retracted: "Retracted",
+    },
+    zh: {
+      unverified: "待核实",
+      source_verified: "来源已核对",
+      misquoted: "转述有误",
+      retracted: "已撤回",
+    },
+  } as const;
+  return labels[language][status];
+}
+
+function speakerLabel(value: string | undefined, language: Language) {
+  if (!value) return "";
+  if (language === "zh" && value === "Team") return "团队";
+  if (language === "zh" && value === "Verification pass") return "验证记录";
+  return value;
 }
 
 function bytes(value: number) {
@@ -369,13 +453,11 @@ export function ResearchWorkspace() {
   const [eventsPayload, setEventsPayload] = useState<EventsPayload | null>(null);
   const [claimsPayload, setClaimsPayload] = useState<ClaimsPayload | null>(null);
   const [preferences, setPreferences] = useState<PreferencesPayload | null>(null);
-  const [history, setHistory] = useState<AskResult[]>([]);
   const [projects, setProjects] = useState<ResearchProject[]>([]);
   const [chats, setChats] = useState<ResearchChat[]>([]);
   const [activeProjectId, setActiveProjectId] = useState("");
   const [activeChatId, setActiveChatId] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [askResult, setAskResult] = useState<AskResult | null>(null);
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<EvidenceMode>("hybrid");
@@ -451,7 +533,6 @@ export function ResearchWorkspace() {
       setEventsPayload(eventsData);
       setClaimsPayload(claimsData);
       setPreferences(preferenceData);
-      setHistory(askData.history ?? []);
       setProjects(askData.projects ?? []);
       setChats(askData.chats ?? []);
       setActiveProjectId((current) =>
@@ -734,7 +815,6 @@ export function ResearchWorkspace() {
     if (!question) return;
     setAsking(true);
     setError("");
-    setAskResult(null);
     const optimisticMessage: ChatMessage = {
       id: `local-${Date.now()}`,
       chatId: activeChatId || "pending",
@@ -765,7 +845,6 @@ export function ResearchWorkspace() {
         assistantMessage?: ChatMessage;
       };
       if (!response.ok) throw new Error(payload.error || "The research assistant could not answer.");
-      setAskResult(payload);
       if (payload.project) {
         setProjects((current) => [payload.project!, ...current.filter((item) => item.id !== payload.project!.id)]);
         setActiveProjectId(payload.project.id);
@@ -782,7 +861,6 @@ export function ResearchWorkspace() {
           payload.assistantMessage!,
         ]);
       }
-      setHistory((current) => payload.id ? [payload, ...current.filter((item) => item.id !== payload.id)] : current);
       const corpusResponse = await authorizedFetch("/api/corpus");
       if (corpusResponse.ok) setCorpus(await corpusResponse.json() as CorpusPayload);
     } catch (caught) {
@@ -939,7 +1017,6 @@ export function ResearchWorkspace() {
             >
               <span className="nav-symbol">{navIcons[id]}</span>
               {c.nav[id]}
-              {id === "history" && history.length > 0 && <em>{history.length}</em>}
             </button>
           ))}
         </nav>
@@ -969,7 +1046,7 @@ export function ResearchWorkspace() {
             <button className={language === "en" ? "active" : ""} onClick={() => void switchLanguage("en")}>EN</button>
             <button className={language === "zh" ? "active" : ""} onClick={() => void switchLanguage("zh")}>中</button>
           </div>
-          {active !== "assistant" && active !== "history" && (
+          {active !== "assistant" && (
             <button className="upload-button" onClick={() => setComposer(true)}>＋ {c.capture}</button>
           )}
         </header>
@@ -1066,13 +1143,12 @@ export function ResearchWorkspace() {
                   className={eventView === "claims" ? "active" : ""}
                   onClick={() => setEventView("claims")}
                 >
-                  {language === "zh" ? "Claim 收件箱" : "Claims inbox"}
+                  {language === "zh" ? "说法与来源" : "Claims & sources"}
                 </button>
               </div>
-              <div className="metrics">
+              <div className="metrics event-summary-metrics">
                 <article><span>{language === "zh" ? "事件" : "Events"}</span><strong>{events.length}</strong><small>{p0Events} P0 · {unverifiedEvents} {language === "zh" ? "待验证" : "unverified"}</small></article>
-                <article><span>Claims</span><strong>{eventsPayload?.attention.claim_count || claims.length}</strong><small>{eventsPayload?.attention.unverified_claim_count || 0} {language === "zh" ? "进入验证队列" : "need verification"}</small></article>
-                <article><span>{language === "zh" ? "团队注意记录" : "Team notices"}</span><strong>{eventsPayload?.attention.notice_count || 0}</strong><small>{language === "zh" ? "谁在何时注意到事件" : "who noticed what, when"}</small></article>
+                <article><span>{language === "zh" ? "来源说法" : "Source claims"}</span><strong>{eventsPayload?.attention.claim_count || claims.length}</strong><small>{eventsPayload?.attention.unverified_claim_count || 0} {language === "zh" ? "条待核实" : "need verification"}</small></article>
               </div>
 
               {eventView === "events" ? <div className="event-workbench">
@@ -1087,7 +1163,7 @@ export function ResearchWorkspace() {
                       className={eventTypeFilter === stat.event_type ? "event-filter active" : "event-filter"}
                       onClick={() => setEventTypeFilter(stat.event_type)}
                     >
-                      <strong>{eventTypeLabels[stat.event_type] || stat.event_type}</strong>
+                      <strong>{eventTypeLabels[language][stat.event_type] || stat.event_type}</strong>
                       <span>{stat.count}</span>
                     </button>
                   ))}
@@ -1103,42 +1179,37 @@ export function ResearchWorkspace() {
                   {!filteredEvents.length ? (
                     <div className="empty-state"><h3>{language === "zh" ? "没有匹配事件" : "No matching events"}</h3><p>{language === "zh" ? "尝试其他关键词或事件类型。" : "Try a different search term or event-type filter."}</p></div>
                   ) : filteredEvents.map((event) => {
-                    const tags = parseTags(event.tags_json).slice(0, 5);
+                    const eventDate = exactDate(event.event_date);
+                    const claimDate = exactDate(event.latest_claimed_at);
+                    const summary = cleanEventSummary(event);
                     return (
                       <article className={`event-card priority-${event.priority.toLowerCase()}`} key={event.id}>
                         <div className="event-card-top">
                           <span className="tag">{event.priority}</span>
-                          <span className="tag muted-tag">{eventTypeLabels[event.event_type] || event.event_type}</span>
-                          <span className={`verify-kind verify-kind-${event.verification_kind || "candidate"}`}>{event.verification_kind || "candidate"}</span>
-                          <span className={`verify-pill verify-${event.verification_status}`}>{event.verification_status.replaceAll("_", " ")}</span>
+                          <span className="tag muted-tag">{eventTypeLabels[language][event.event_type] || event.event_type}</span>
+                          <span className={`verify-pill verify-${event.verification_status}`}>{verificationLabel(event.verification_status, language)}</span>
                         </div>
                         <h3>{event.title}</h3>
                         <div className="event-meta-line">
                           <span>{event.company || "Sector / macro"}</span>
                           {event.ticker && <span>{event.ticker}</span>}
-                          {event.event_date && <span>{event.event_date}</span>}
-                          {event.source_week && <span>{event.source_week}</span>}
+                          {eventDate && <time dateTime={eventDate}>{eventDate}</time>}
                         </div>
-                        <p className="event-summary">{event.summary || event.raw_claim || event.source_excerpt}</p>
-                        <dl className="event-fields">
-                          {(event.metric_object || event.metric_name) && <div><dt>Metric</dt><dd>{event.metric_object || event.metric_name}</dd></div>}
-                          {event.pm_relevance && <div><dt>PM relevance</dt><dd>{event.pm_relevance}</dd></div>}
-                          {(event.verification_summary || event.verification_plan) && <div><dt>Verification</dt><dd>{event.verification_summary || event.verification_plan}</dd></div>}
-                          <div><dt>Evidence</dt><dd>{Number(event.claim_count || 0)} claims · {Number(event.notice_count || 0)} team notices</dd></div>
-                          {event.latest_notice_summary && <div><dt>Team notice · {event.latest_notice_type}</dt><dd>{event.latest_notice_summary}</dd></div>}
-                        </dl>
-                        <div className="event-card-foot">
-                          <span>{event.source_class || event.source_system}</span>
-                          <span>{event.source_locator || event.source_title}</span>
-                          {tags.map((tag) => <em key={tag}>{tag}</em>)}
-                        </div>
+                        {summary && <p className="event-summary">{summary}</p>}
+                        {event.latest_claim_text && (
+                          <p className="event-provenance">
+                            <span>{event.latest_claim_speaker || event.latest_claim_source_system || (language === "zh" ? "来源" : "Source")}</span>
+                            {claimDate && <time dateTime={claimDate}>{claimDate}</time>}
+                            <q>{event.latest_claim_text}</q>
+                          </p>
+                        )}
                       </article>
                     );
                   })}
                 </div>
               </div> : <div className="event-workbench">
                 <aside className="event-filter-panel">
-                  <div className="section-title"><h2>Claim types</h2><span>{claimsPayload?.stats.length || 0}</span></div>
+                  <div className="section-title"><h2>{language === "zh" ? "说法类型" : "Claim types"}</h2><span>{claimsPayload?.stats.length || 0}</span></div>
                   <button className={!claimTypeFilter ? "event-filter active" : "event-filter"} onClick={() => setClaimTypeFilter("")}>
                     <strong>{language === "zh" ? "全部" : "All"}</strong><span>{claims.length}</span>
                   </button>
@@ -1163,35 +1234,23 @@ export function ResearchWorkspace() {
                   {!filteredClaims.length ? (
                     <div className="empty-state"><h3>{language === "zh" ? "没有匹配 Claim" : "No matching claims"}</h3><p>{language === "zh" ? "尝试其他关键词或 Claim 类型。" : "Try a different search term or claim type."}</p></div>
                   ) : filteredClaims.map((claim) => {
-                    const eventIds = String(claim.event_ids || "").split(",").filter(Boolean);
-                    const relations = String(claim.relations || "").split(",").filter(Boolean);
+                    const claimDate = exactDate(claim.claimed_at);
+                    const showSource = claim.source_system !== "seed-list";
                     return (
                       <article className="claim-card" key={claim.id}>
                         <div className="event-card-top">
-                          <span className="tag">{claim.claim_type}</span>
-                          <span className={`verify-kind verify-kind-${claim.verification_kind}`}>{claim.verification_kind}</span>
-                          <span className={`claim-status claim-status-${claim.verification_status}`}>{claim.verification_status.replaceAll("_", " ")}</span>
+                          <span className="tag">{claimTypeLabel(claim.claim_type, language)}</span>
+                          <span className={`claim-status claim-status-${claim.verification_status}`}>{claimVerificationLabel(claim.verification_status, language)}</span>
                         </div>
                         <blockquote>{claim.claim_text}</blockquote>
                         <div className="event-meta-line">
-                          <span>{claim.speaker || claim.source_system}</span>
+                          <span>{speakerLabel(claim.speaker, language) || claim.source_system}</span>
                           {claim.company && <span>{claim.company}</span>}
                           {claim.ticker && <span>{claim.ticker}</span>}
-                          {claim.claimed_at && <span>{claim.claimed_at}</span>}
+                          {claimDate && <time dateTime={claimDate}>{claimDate}</time>}
                         </div>
                         {claim.source_excerpt && <p className="claim-context">{claim.source_excerpt}</p>}
-                        <div className="claim-links">
-                          {eventIds.map((eventId, index) => (
-                            <span key={`${claim.id}-${eventId}`}>
-                              {relations[index] || "supports"} → {eventId}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="event-card-foot">
-                          <span>{claim.source_system}</span>
-                          <span>{claim.source_title || claim.source_locator}</span>
-                          <em>{claim.confidence} confidence</em>
-                        </div>
+                        {showSource && <p className="claim-source">{claim.source_title || claim.source_system}</p>}
                       </article>
                     );
                   })}
@@ -1331,43 +1390,6 @@ export function ResearchWorkspace() {
                   </form>
                 </section>
               </div>
-              <form className="ask-box ask-box-v2 legacy-ask-box" onSubmit={askResearch}>
-                <div className="ask-title-row"><div><p className="eyebrow">DEEP RESEARCH</p><h2>{c.askTitle}</h2></div><span>DeepSeek · v4-flash</span></div>
-                <fieldset className="mode-picker">
-                  <legend>{c.evidenceMode}</legend>
-                  {([
-                    ["reports", c.modeReports, c.modeReportsNote],
-                    ["web", c.modeWeb, c.modeWebNote],
-                    ["hybrid", c.modeHybrid, c.modeHybridNote],
-                  ] as Array<[EvidenceMode, string, string]>).map(([id, label, note]) => (
-                    <button type="button" key={id} className={mode === id ? "active" : ""} onClick={() => setMode(id)}>
-                      <span>{id === "reports" ? "▤" : id === "web" ? "◎" : "◈"}</span>
-                      <strong>{label}</strong><small>{note}</small>
-                    </button>
-                  ))}
-                </fieldset>
-                <textarea name="question" required rows={4} placeholder={c.askPlaceholder} />
-                <div className="composer-foot">
-                  <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
-                  <button className="upload-button" disabled={asking || (mode === "reports" && !corpus?.documents.length)}>
-                    {asking && <i className="button-spinner light" />}{asking ? c.researching : c.ask}
-                  </button>
-                </div>
-              </form>
-              {askResult && (
-                <AnswerCard
-                  result={askResult}
-                  language={language}
-                  corpus={corpus?.documents ?? []}
-                  savedWebUrls={savedWebUrls}
-                  saving={saving}
-                  openReport={openReport}
-                  saveWebResult={saveWebResult}
-                  onExport={() => downloadText(answerMarkdown(askResult), askResult.question || "Level Grind research")}
-                  onObsidian={() => void sendToObsidian(answerMarkdown(askResult), askResult.question || "Level Grind research")}
-                  isAdmin={Boolean(isAdmin)}
-                />
-              )}
               {isAdmin && Boolean(corpus?.memberUsage.length) && (
                 <section className="member-usage">
                   <div className="section-title"><h2>{language === "zh" ? "团队 AI 用量" : "Team AI usage"}</h2><span>{language === "zh" ? "运营视图" : "Operations view"}</span></div>
@@ -1379,40 +1401,6 @@ export function ResearchWorkspace() {
             </section>
           )}
 
-          {active === "history" && (
-            <section className="history-layout">
-              <div className="history-list">
-                <div className="section-title"><h2>{c.nav.history}</h2><span>{history.length}</span></div>
-                {!history.length ? (
-                  <div className="empty-state"><h3>{c.historyEmpty}</h3><p>{c.historyEmptyBody}</p></div>
-                ) : history.map((item) => (
-                  <button key={item.id || item.createdAt} className={askResult?.id === item.id ? "history-row active" : "history-row"} onClick={() => setAskResult(item)}>
-                    <span className={`mode-dot mode-${item.mode || "reports"}`} />
-                    <strong>{item.question}</strong>
-                    <small>{item.createdAt ? new Date(item.createdAt).toLocaleString(language === "zh" ? "zh-CN" : "en") : ""}</small>
-                    <em>{item.mode === "web" ? c.modeWeb : item.mode === "hybrid" ? c.modeHybrid : c.modeReports}</em>
-                  </button>
-                ))}
-              </div>
-              <div className="history-detail">
-                {askResult ? (
-                  <AnswerCard
-                    result={askResult}
-                    language={language}
-                    corpus={corpus?.documents ?? []}
-                    savedWebUrls={savedWebUrls}
-                    saving={saving}
-                    openReport={openReport}
-                    saveWebResult={saveWebResult}
-                    onExport={() => downloadText(answerMarkdown(askResult), askResult.question || "Level Grind research")}
-                    onObsidian={() => void sendToObsidian(answerMarkdown(askResult), askResult.question || "Level Grind research")}
-                    isAdmin={Boolean(isAdmin)}
-                    compact
-                  />
-                ) : <div className="detail-placeholder">{c.selectItem}</div>}
-              </div>
-            </section>
-          )}
 
           {active === "settings" && context && (
             <section className="settings-grid">

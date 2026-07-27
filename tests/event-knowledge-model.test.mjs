@@ -48,7 +48,7 @@ test("migration creates the independent relational objects", () => {
   assert.doesNotMatch(migration, /raw private chat/i);
 });
 
-test("product exposes an Event timeline and a separate Claims inbox", async () => {
+test("product exposes a simple Event timeline and source-claim view", async () => {
   const [workspace, eventsRoute, claimsRoute, noticesRoute] = await Promise.all([
     fs.readFile("app/research-workspace.tsx", "utf8"),
     fs.readFile("app/api/events/route.ts", "utf8"),
@@ -56,10 +56,14 @@ test("product exposes an Event timeline and a separate Claims inbox", async () =
     fs.readFile("app/api/event-notices/route.ts", "utf8"),
   ]);
   assert.match(workspace, /Event timeline/);
-  assert.match(workspace, /Claims inbox/);
-  assert.match(workspace, /claim_count/);
-  assert.match(workspace, /latest_notice_summary/);
+  assert.match(workspace, /Claims & sources/);
+  assert.match(workspace, /latest_claim_text/);
+  assert.doesNotMatch(workspace, />Metric</);
+  assert.doesNotMatch(workspace, />PM relevance</);
+  assert.doesNotMatch(workspace, />Evidence</);
+  assert.doesNotMatch(workspace, /Team notice ·/);
   assert.match(eventsRoute, /research_event_claims/);
+  assert.match(eventsRoute, /latest_claim_text/);
   assert.match(claimsRoute, /INSERT INTO research_claims/);
   assert.match(claimsRoute, /INSERT INTO research_event_claims/);
   assert.match(noticesRoute, /INSERT INTO research_event_notices/);

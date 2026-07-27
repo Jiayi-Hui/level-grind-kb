@@ -23,6 +23,11 @@ function sqlValue(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
+function sqlText(value) {
+  if (value === null || value === undefined) return "NULL";
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
 function verificationSources(finding) {
   return [
     ...(finding.bbgEvidence ?? []).map((item) => ({
@@ -118,7 +123,7 @@ for (const event of events) {
     channel: "wechat",
     noticeType: "shared",
     salience: event.priority === "P0" ? "high" : "normal",
-    summary: `Raised in ${event.sourceWeek || "team discussion"} as a sanitized candidate; raw chat content is not stored.`,
+    summary: "",
     sourceMessageId: event.sourceMessageId,
     createdBy: event.createdBy,
     createdAt: event.createdAt,
@@ -242,7 +247,7 @@ for (const notice of notices) {
       notice.id, notice.eventId, notice.noticedBy, notice.noticedAt, notice.channel,
       notice.noticeType, notice.salience, notice.summary, notice.sourceMessageId,
       notice.createdBy, notice.createdAt, notice.updatedAt,
-    ].map(sqlValue).join(", ")}) ON CONFLICT(id) DO UPDATE SET event_id=excluded.event_id, noticed_by=excluded.noticed_by, noticed_at=excluded.noticed_at, channel=excluded.channel, notice_type=excluded.notice_type, salience=excluded.salience, summary=excluded.summary, source_message_id=excluded.source_message_id, updated_at=excluded.updated_at;`
+    ].map(sqlText).join(", ")}) ON CONFLICT(id) DO UPDATE SET event_id=excluded.event_id, noticed_by=excluded.noticed_by, noticed_at=excluded.noticed_at, channel=excluded.channel, notice_type=excluded.notice_type, salience=excluded.salience, summary=excluded.summary, source_message_id=excluded.source_message_id, updated_at=excluded.updated_at;`
   );
 }
 await fs.writeFile(knowledgeSqlPath, `${statements.join("\n")}\n`, "utf8");

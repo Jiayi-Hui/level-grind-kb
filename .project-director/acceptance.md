@@ -20,6 +20,9 @@
 - [x] Low-frequency research-profile controls are available in Settings.
 - [x] Settings shows personal storage used, remaining, and quota.
 - [x] Report Q&A history persists and reopens after refresh.
+- [x] Q&A history is contained inside Research Q&A rather than duplicated in
+  the main sidebar.
+- [x] Knowledge base and Report library have distinct user-facing definitions.
 - [x] History exports Markdown and opens the Obsidian URI handoff.
 - [x] Reports open in a new tab immediately with visible progress feedback.
 - [x] Report, Web, and Hybrid evidence modes exist.
@@ -44,8 +47,11 @@
 - [x] Source verification and Event verification use independent statuses.
 - [x] Dymon/BBG evidence is retained as Claims rather than overwriting the
   originating candidate.
-- [x] Event timeline shows evidence and attention counts.
+- [x] Event timeline links Events to attributed source statements.
 - [x] Claims inbox shows type, source, confidence, status, relation, and linked
   Event ids.
 - [x] Raw WeChat text is excluded from tracked seed data.
 - [x] Desktop and mobile layouts retain usable Event/Claim views.
+- [x] Event cards omit internal-model labels, coarse week labels, generated
+  notice prose, and seed filenames.
+- [x] Event and Claim typography is readable for mixed Chinese/English content.

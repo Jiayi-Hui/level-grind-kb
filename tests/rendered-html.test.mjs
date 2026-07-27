@@ -11,12 +11,13 @@ test("ships the bilingual Research OS instead of the legacy context navigation",
   ]);
   assert.match(layout, /Level Grind Research OS/);
   assert.match(page, /<ResearchWorkspace \/>/);
-  assert.match(i18n, /Research inbox/);
-  assert.match(i18n, /研究收件箱/);
+  assert.match(i18n, /Knowledge base/);
+  assert.match(i18n, /知识库/);
   assert.match(i18n, /Report library/);
-  assert.match(i18n, /问答历史/);
+  assert.match(i18n, /研究问答/);
   assert.match(i18n, /Welcome back/);
   assert.match(workspace, /language-switch/);
+  assert.doesNotMatch(workspace, /"assistant" \| "history"/);
   assert.doesNotMatch(workspace, /Conversation routing|routingComposer|Task context/);
   assert.doesNotMatch(workspace + layout + page, /Your site is taking shape|Building your site/);
 });

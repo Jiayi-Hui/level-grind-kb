@@ -136,6 +136,7 @@ button { color: inherit; }
 .metrics span { grid-column: 1 / -1; font-size: 8px; color: var(--muted); font-weight: 800; letter-spacing: 1.2px; }
 .metrics strong { font: 500 26px Georgia, serif; }
 .metrics small { color: var(--muted); font-size: 10px; padding-bottom: 3px; }
+.event-summary-metrics { grid-template-columns: repeat(2, 1fr); }
 
 .desk { display: grid; grid-template-columns: minmax(430px, 1.25fr) minmax(300px, .75fr); gap: 18px; align-items: start; }
 .feed, .detail { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -359,7 +360,12 @@ button { color: inherit; }
   line-height: 1.6;
 }
 .event-list { display: grid; gap: 12px; }
-.event-card { padding: 19px 20px; }
+.event-card {
+  padding: 20px 22px;
+  font-family: "Times New Roman", "Songti SC", "SimSun", serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
 .event-card.priority-p0 { border-left: 4px solid var(--accent); }
 .event-card.priority-p1 { border-left: 4px solid #8aa696; }
 .event-card-top,
@@ -372,17 +378,17 @@ button { color: inherit; }
 }
 .event-card h3 {
   margin: 14px 0 8px;
-  font: 500 20px/1.25 Georgia, serif;
-  letter-spacing: -.2px;
+  font: 700 18px/1.45 "Times New Roman", "Songti SC", "SimSun", serif;
+  letter-spacing: 0;
 }
 .muted-tag { background: #e9ece6; color: #51635a; }
 .verify-pill {
   margin-left: auto;
-  padding: 4px 8px;
+  padding: 5px 9px;
   border-radius: 12px;
-  font-size: 8px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
 }
 .verify-kind {
   padding: 4px 8px;
@@ -402,7 +408,7 @@ button { color: inherit; }
 .verify-expired { color: #93472e; background: #f8e7e1; }
 .event-meta-line {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 13px;
 }
 .event-meta-line span:not(:last-child)::after {
   content: "·";
@@ -410,10 +416,27 @@ button { color: inherit; }
   color: #a5aca6;
 }
 .event-summary {
-  margin: 13px 0 0;
+  margin: 14px 0 0;
   color: #35453e;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.event-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  margin: 15px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid #e7e5de;
+  color: #44534d;
+  font-size: 13px;
   line-height: 1.65;
+}
+.event-provenance span { font-weight: 700; }
+.event-provenance time { color: var(--muted); }
+.event-provenance q {
+  flex-basis: 100%;
+  quotes: "“" "”" "‘" "’";
 }
 .event-fields {
   display: grid;
@@ -470,7 +493,7 @@ button { color: inherit; }
   padding-left: 16px;
   border-left: 3px solid #8aa696;
   color: #263b33;
-  font: 500 17px/1.55 Georgia, serif;
+  font: 500 16px/1.65 "Times New Roman", "Songti SC", "SimSun", serif;
 }
 .claim-status {
   margin-left: auto;
@@ -492,6 +515,11 @@ button { color: inherit; }
   background: #f3f4ef;
   font-size: 10px;
   line-height: 1.55;
+}
+.claim-source {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 .claim-links {
   display: flex;

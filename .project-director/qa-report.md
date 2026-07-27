@@ -91,5 +91,19 @@
 | Production build | Pass | Event, Claim, and Notice routes included |
 | Automated tests | Pass | 7/7 |
 
+## V4.6 Demo IA and Readability Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Navigation | Pass | Knowledge base, Report library, Event DB, Research Q&A, Settings; no separate Q&A History tab |
+| Knowledge boundary | Pass | Knowledge base stores derived/saved knowledge; Report library is the indexed source-document layer |
+| Event-card disclosure | Pass | Internal Metric, PM relevance, Evidence, Team Notice, and seed-file fields are absent |
+| Date honesty | Pass | Only exact `YYYY-MM-DD` claim/event dates render; W30 and other coarse hints remain hidden |
+| Source readability | Pass | Event cards show an attributed source statement without generated notice prose |
+| Typography | Pass | Mixed Chinese/English Event and Claim content uses readable 13–18 px type with Times New Roman plus Chinese serif fallbacks |
+| Tavily credential | Pass | Hosted secret configured; direct provider probe returned HTTP 200 and one result |
+| Secret scan | Pass | Tavily secret absent from source and Git diff |
+| Validation | Pass | ESLint, strict TypeScript, production build, and 7/7 tests |
+
 Residual release check: authenticated owner-session interaction remains
 dependent on the user's Clerk session after deployment.

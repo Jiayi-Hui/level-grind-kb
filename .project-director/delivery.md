@@ -3,9 +3,10 @@
 ## Summary
 
 Level Grind Research OS Alpha is live in production. The current experience is
-organized around Research inbox, Report library, Ask research, History, and
+organized around Knowledge base, Report library, Event DB, Research Q&A, and
 Settings, with Clerk authentication and persistent D1 team membership,
-owner/admin/member roles, and suspension enforcement.
+owner/admin/member roles, and suspension enforcement. Q&A history now stays
+inside the Research Q&A project/conversation view.
 
 The V4 storage increment is now published. Report PDFs use the hosted R2
 `FILES` binding; report metadata, extracted page text, and per-user AI usage use
@@ -20,8 +21,8 @@ uses chunked file and page-text writes for larger documents; its temporary
 production credential was removed after the batch completed.
 
 The Research OS experience increment replaces the context-heavy navigation with
-five repeated-use surfaces: Research inbox, Report library, Ask research,
-History, and Settings. It adds account-persisted Chinese/English localization,
+five repeated-use surfaces: Knowledge base, Report library, Event DB, Research
+Q&A, and Settings. It adds account-persisted Chinese/English localization,
 per-login release notes, formatted Markdown answers, private query history,
 Obsidian export, personal storage visibility, faster report opening feedback,
 and explicit Report/Web/Hybrid evidence modes.
@@ -53,10 +54,18 @@ and explicit Report/Web/Hybrid evidence modes.
 - Selective public-web evidence capture.
 - Settings-based profile, quota, Obsidian, integration, and team controls.
 - Removed Conversation routing UI/API and the three context navigation items.
+- Removed the duplicate Q&A History navigation item.
+- Defined Report library as the source-document layer of the Knowledge base.
+- Simplified Event cards to event, company/ticker, exact known date,
+  verification status, and an attributed source statement.
+- Hid coarse week labels, seed filenames, generated Team Notice prose, and
+  internal Metric/PM/Evidence fields from the demo UI.
+- Configured Tavily as the hosted public-web search provider without committing
+  its secret.
 
 ## Verification
 
-- Typecheck, lint, build, 3/3 automated tests, migration inspection,
+- Typecheck, lint, build, 7/7 automated tests, migration inspection,
   unauthorized API probes, and local persistence probes passed.
 - Production version 11 is live. The homepage returns the new Research OS and
   protected APIs correctly reject anonymous requests after edge propagation.
@@ -69,9 +78,8 @@ and explicit Report/Web/Hybrid evidence modes.
   user's device.
 - Retrieval is keyword-grounded in this Alpha; embeddings and hybrid/vector
   ranking are a later quality layer.
-- Web and Hybrid modes require a separate server-side search provider key.
-  DeepSeek performs synthesis; its standard API does not bundle the consumer
-  app's search results.
+- Web and Hybrid modes use a server-side Tavily key; DeepSeek performs
+  synthesis and does not receive the key.
 - Scanned/image-only PDFs still require OCR.
 - No external chat connector, knowledge graph, or autonomous agent execution.
 - No two-way Obsidian sync or Excel runner.
@@ -83,6 +91,6 @@ and explicit Report/Web/Hybrid evidence modes.
 
 1. Complete the Gmail owner-session walkthrough and persona onboarding.
 2. Ask one production report question and verify citations plus usage metering.
-3. Configure the governed public-web search provider key.
+3. Test one Web/Hybrid question with the hosted Tavily integration.
 4. Add owner-managed quota allocation and hard quota enforcement.
 5. Build governed Obsidian and company-AVD connectors.

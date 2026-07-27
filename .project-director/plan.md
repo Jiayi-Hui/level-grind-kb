@@ -51,7 +51,7 @@
 - [x] Pass lint, TypeScript, production build, and focused tests.
 - [x] Deploy validated Research OS version 11 and verify production route/auth health.
 - [ ] Complete the authenticated owner-session browser walkthrough.
-- [ ] Configure a governed public-web search API key.
+- [x] Configure the Tavily public-web search key in the hosted environment.
 
 ## V4.5 — Event / Claim / Team Notice
 
@@ -63,4 +63,17 @@
 - [x] Add authenticated read and owner/admin write APIs.
 - [x] Add and validate additive D1 migrations and seed migration.
 - [x] Pass lint, TypeScript, build, model tests, and migration replay.
-- [ ] Publish and verify the production version.
+- [x] Publish and verify production version 12.
+
+## V4.6 — Demo IA and Event Readability
+
+- [x] Consolidate Q&A history into the Research Q&A surface.
+- [x] Rename Research inbox to Knowledge base and define Report library as its
+  source-document layer.
+- [x] Simplify Event cards to event, company/ticker, exact date, status, and
+  attributed source statement.
+- [x] Hide W30, generated Team Notice prose, seed filenames, and internal
+  Metric/PM/Evidence fields from Event cards.
+- [x] Configure Tavily without placing its key in source control.
+- [ ] Validate, publish, and verify the revised production demo.
+- [ ] Add and test the user's company email after the exact address is supplied.
