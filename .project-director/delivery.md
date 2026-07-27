@@ -125,3 +125,6 @@ and explicit Report/Web/Hybrid evidence modes.
   review candidates, preserves a change log, and exports approved values.
 - Excel remains the authoritative formula engine. The web application does not
   pretend to execute arbitrary workbook logic.
+- Sites version 15 was published from validated commit `82e8f21`.
+- `level-grind.com` is attached to the site and awaits apex/ownership DNS
+  validation before it can route traffic.

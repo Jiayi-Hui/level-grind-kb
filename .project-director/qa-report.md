@@ -136,7 +136,11 @@ dependent on the user's Clerk session after deployment.
 | Update safety | Pass | Source scans create review candidates with blank proposed values; analyst confirmation is required before writeback |
 | Dependency boundary | Pass | Narrow `fflate` parser avoids adding a vulnerable full spreadsheet runtime to the browser bundle |
 | Automated validation | Pass | ESLint, strict TypeScript, production build, and 8/8 tests |
+| Production deployment | Pass | Saved Sites version 15 deployed successfully from validated commit `82e8f21` |
+| Anonymous access boundary | Pass | Published site renders its Clerk sign-in gate without exposing workspace content |
+| Custom domain attachment | Pending DNS | `level-grind.com` is registered with the site; apex and validation records still need to be added at the DNS provider |
 
 Pending release check: authenticated desktop and phone walkthrough requires the
-hosted Clerk environment; localhost intentionally fails closed without its
-public key.
+user's Clerk session. Localhost intentionally fails closed without its public
+key, and the shared in-app browser correctly reached the production sign-in
+gate but did not have an authenticated account.

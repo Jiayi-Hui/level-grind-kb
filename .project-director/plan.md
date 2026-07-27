@@ -105,4 +105,5 @@
 - [x] Add safe template mapping, reviewed input updates, and Excel export.
 - [x] Generate and visually validate a formula-backed sample workbook.
 - [x] Add responsive desktop/tablet/mobile layouts.
-- [ ] Publish the validated source, attach `level-grind.com`, and verify production.
+- [x] Publish the validated source and verify the production deployment.
+- [x] Attach `level-grind.com`; DNS validation is pending at the domain provider.
