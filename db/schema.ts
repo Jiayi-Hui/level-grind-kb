@@ -211,3 +211,55 @@ export const researchQueries = sqliteTable(
     index("research_queries_user_created_idx").on(table.userEmail, table.createdAt),
   ],
 );
+
+export const researchProjects = sqliteTable(
+  "research_projects",
+  {
+    id: text("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
+    title: text("title").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("research_projects_user_updated_idx").on(table.userEmail, table.updatedAt),
+  ],
+);
+
+export const researchChats = sqliteTable(
+  "research_chats",
+  {
+    id: text("id").primaryKey(),
+    userEmail: text("user_email").notNull(),
+    projectId: text("project_id").notNull(),
+    title: text("title").notNull(),
+    evidenceMode: text("evidence_mode").notNull().default("hybrid"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("research_chats_project_updated_idx").on(table.userEmail, table.projectId, table.updatedAt),
+  ],
+);
+
+export const researchMessages = sqliteTable(
+  "research_messages",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id").notNull(),
+    userEmail: text("user_email").notNull(),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    citationsJson: text("citations_json").notNull().default("[]"),
+    webResultsJson: text("web_results_json").notNull().default("[]"),
+    provider: text("provider"),
+    model: text("model"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    estimatedCostUsd: text("estimated_cost_usd").notNull().default("0"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("research_messages_chat_created_idx").on(table.chatId, table.createdAt),
+  ],
+);

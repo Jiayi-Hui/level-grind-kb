@@ -74,7 +74,20 @@ AI_OUTPUT_USD_PER_MTOK=0.28
 Keep `AI_API_KEY` in the hosted secret store. The token-price settings are
 runtime values so the cost display can be updated without a code change.
 
-## 4. Local verification
+## 4. Web search
+
+Hybrid and Web modes use Tavily as the governed public-web search provider.
+Store the key as a server-side secret:
+
+```text
+WEB_SEARCH_PROVIDER=tavily
+TAVILY_API_KEY=...
+```
+
+Do not commit the Tavily key. `WEB_SEARCH_API_KEY` is still supported as a
+generic fallback, but `TAVILY_API_KEY` is the preferred name for this deployment.
+
+## 5. Local verification
 
 ```powershell
 npm install
@@ -84,7 +97,7 @@ npm run build
 npm run lint
 ```
 
-## 5. Boundary notes
+## 6. Boundary notes
 
 Level Grind stores context, provenance, permissions, task state, timelines, and
 approved research results. Raw systems such as Obsidian, Bloomberg, Wind,

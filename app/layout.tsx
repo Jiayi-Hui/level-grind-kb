@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://app.level-grind.com"),
+  metadataBase: new URL("https://level-grind.com"),
   title: "Level Grind Research OS",
   description: "A governed research workspace for reports, public evidence, and durable AI-assisted analysis.",
   manifest: "/manifest.webmanifest",

@@ -39,19 +39,74 @@ const researchQueriesSchema = `
   )
 `;
 
+const researchProjectsSchema = `
+  CREATE TABLE IF NOT EXISTS research_projects (
+    id TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL,
+    title TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
+const researchChatsSchema = `
+  CREATE TABLE IF NOT EXISTS research_chats (
+    id TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    evidence_mode TEXT NOT NULL DEFAULT 'hybrid',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
+const researchMessagesSchema = `
+  CREATE TABLE IF NOT EXISTS research_messages (
+    id TEXT PRIMARY KEY,
+    chat_id TEXT NOT NULL,
+    user_email TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    citations_json TEXT NOT NULL DEFAULT '[]',
+    web_results_json TEXT NOT NULL DEFAULT '[]',
+    provider TEXT,
+    model TEXT,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    estimated_cost_usd TEXT NOT NULL DEFAULT '0',
+    created_at TEXT NOT NULL
+  )
+`;
+
 export async function prepareResearchDb() {
   await env.DB.batch([
     env.DB.prepare(preferencesSchema),
     env.DB.prepare(researchQueriesSchema),
+    env.DB.prepare(researchProjectsSchema),
+    env.DB.prepare(researchChatsSchema),
+    env.DB.prepare(researchMessagesSchema),
     env.DB.prepare(
       "CREATE INDEX IF NOT EXISTS research_queries_user_created_idx ON research_queries(user_email, created_at)",
+    ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS research_projects_user_updated_idx ON research_projects(user_email, updated_at)",
+    ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS research_chats_project_updated_idx ON research_chats(user_email, project_id, updated_at)",
+    ),
+    env.DB.prepare(
+      "CREATE INDEX IF NOT EXISTS research_messages_chat_created_idx ON research_messages(chat_id, created_at)",
     ),
   ]);
 }
 
 export async function webSearch(question: string): Promise<WebSearchResult[]> {
   const provider = (runtimeEnv("WEB_SEARCH_PROVIDER") || "tavily").trim().toLowerCase();
-  const apiKey = runtimeEnv("WEB_SEARCH_API_KEY")?.trim();
+  const apiKey = (
+    runtimeEnv("TAVILY_API_KEY") ||
+    runtimeEnv("WEB_SEARCH_API_KEY")
+  )?.trim();
   if (!apiKey) {
     throw new Error(
       "Web search is not configured yet. Add a server-side web-search API key in Settings infrastructure.",

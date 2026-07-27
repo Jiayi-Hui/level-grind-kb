@@ -41,6 +41,37 @@ type WebCitation = {
 
 type Citation = ReportCitation | WebCitation;
 
+type ResearchProject = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type ResearchChat = {
+  id: string;
+  project_id: string;
+  title: string;
+  evidence_mode: EvidenceMode;
+  created_at: string;
+  updated_at: string;
+};
+
+type ResearchMessage = {
+  id: string;
+  chat_id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations_json: string;
+  web_results_json: string;
+  provider?: string | null;
+  model?: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  estimated_cost_usd: string;
+  created_at: string;
+};
+
 type ProviderConfig = {
   name: string;
   baseUrl: string;
@@ -83,11 +114,107 @@ function jsonArray<T>(value: string): T[] {
   }
 }
 
+function titleFromQuestion(question: string) {
+  return question.replace(/\s+/g, " ").trim().slice(0, 72) || "New research chat";
+}
+
+function projectPayload(row: ResearchProject) {
+  return {
+    id: row.id,
+    title: row.title,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function chatPayload(row: ResearchChat) {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    mode: row.evidence_mode,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function messagePayload(row: ResearchMessage) {
+  return {
+    id: row.id,
+    chatId: row.chat_id,
+    role: row.role,
+    content: row.content,
+    citations: jsonArray<Citation>(row.citations_json),
+    webResults: jsonArray<WebSearchResult>(row.web_results_json),
+    usage: row.provider && row.model ? {
+      inputTokens: row.input_tokens,
+      outputTokens: row.output_tokens,
+      estimatedCostUsd: Number(row.estimated_cost_usd),
+      provider: row.provider,
+      model: row.model,
+    } : undefined,
+    createdAt: row.created_at,
+  };
+}
+
+async function ensureDefaultProject(email: string, title = "General research") {
+  const existing = await env.DB.prepare(
+    `SELECT id, title, created_at, updated_at
+     FROM research_projects
+     WHERE user_email = ?1
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+  ).bind(email).first<ResearchProject>();
+  if (existing) return existing;
+
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO research_projects (id, user_email, title, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?4)`,
+  ).bind(id, email, title, now).run();
+  return { id, title, created_at: now, updated_at: now };
+}
+
+async function getProject(email: string, projectId?: string) {
+  if (projectId) {
+    const project = await env.DB.prepare(
+      `SELECT id, title, created_at, updated_at
+       FROM research_projects
+       WHERE id = ?1 AND user_email = ?2`,
+    ).bind(projectId, email).first<ResearchProject>();
+    if (project) return project;
+  }
+  return ensureDefaultProject(email);
+}
+
+async function getOrCreateChat(email: string, projectId: string, chatId: string | undefined, question: string, mode: EvidenceMode) {
+  if (chatId) {
+    const chat = await env.DB.prepare(
+      `SELECT id, project_id, title, evidence_mode, created_at, updated_at
+       FROM research_chats
+       WHERE id = ?1 AND user_email = ?2`,
+    ).bind(chatId, email).first<ResearchChat>();
+    if (chat) return chat;
+  }
+
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  const title = titleFromQuestion(question);
+  await env.DB.prepare(
+    `INSERT INTO research_chats (
+      id, user_email, project_id, title, evidence_mode, created_at, updated_at
+    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)`,
+  ).bind(id, email, projectId, title, mode, now).run();
+  return { id, project_id: projectId, title, evidence_mode: mode, created_at: now, updated_at: now };
+}
+
 export async function GET(request: NextRequest) {
   const { user, response } = await requireAppUser(request);
   if (!user) return response;
   await prepareResearchDb();
-  const rows = await env.DB.prepare(
+  const selectedChatId = request.nextUrl.searchParams.get("chatId")?.trim() || "";
+  const historyRows = await env.DB.prepare(
     `SELECT id, question, answer, evidence_mode, citations_json, web_results_json,
             provider, model, input_tokens, output_tokens, estimated_cost_usd, created_at
      FROM research_queries
@@ -109,8 +236,46 @@ export async function GET(request: NextRequest) {
     created_at: string;
   }>();
 
+  const projectRows = await env.DB.prepare(
+    `SELECT id, title, created_at, updated_at
+     FROM research_projects
+     WHERE user_email = ?1
+     ORDER BY updated_at DESC
+     LIMIT 40`,
+  ).bind(user.email).all<ResearchProject>();
+  let projects = projectRows.results;
+  if (!projects.length) {
+    projects = [await ensureDefaultProject(user.email)];
+  }
+
+  const chatRows = await env.DB.prepare(
+    `SELECT id, project_id, title, evidence_mode, created_at, updated_at
+     FROM research_chats
+     WHERE user_email = ?1
+     ORDER BY updated_at DESC
+     LIMIT 120`,
+  ).bind(user.email).all<ResearchChat>();
+  const chats = chatRows.results;
+  const activeChat = selectedChatId
+    ? chats.find((chat) => chat.id === selectedChatId)
+    : chats[0];
+  const messageRows = activeChat
+    ? await env.DB.prepare(
+      `SELECT id, chat_id, role, content, citations_json, web_results_json,
+              provider, model, input_tokens, output_tokens, estimated_cost_usd, created_at
+       FROM research_messages
+       WHERE chat_id = ?1 AND user_email = ?2
+       ORDER BY created_at ASC
+       LIMIT 120`,
+    ).bind(activeChat.id, user.email).all<ResearchMessage>()
+    : { results: [] as ResearchMessage[] };
+
   return NextResponse.json({
-    history: rows.results.map((row) => ({
+    projects: projects.map(projectPayload),
+    chats: chats.map(chatPayload),
+    activeChatId: activeChat?.id ?? null,
+    messages: messageRows.results.map(messagePayload),
+    history: historyRows.results.map((row) => ({
       id: row.id,
       question: row.question,
       answer: row.answer,
@@ -133,13 +298,34 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireAppUser(request);
   if (!user) return response;
   await Promise.all([prepareCorpusDb(), prepareResearchDb()]);
-  const body = await request.json() as { question?: string; mode?: string };
+  const body = await request.json() as {
+    question?: string;
+    mode?: string;
+    projectId?: string;
+    chatId?: string;
+  };
   const question = String(body.question ?? "").trim().slice(0, 2000);
   const mode: EvidenceMode =
-    body.mode === "web" || body.mode === "hybrid" ? body.mode : "reports";
+    body.mode === "reports" || body.mode === "web" ? body.mode : "hybrid";
   if (question.length < 3) {
     return NextResponse.json({ error: "Please enter a more specific question." }, { status: 400 });
   }
+
+  const project = await getProject(user.email, String(body.projectId ?? "").trim() || undefined);
+  const chat = await getOrCreateChat(
+    user.email,
+    project.id,
+    String(body.chatId ?? "").trim() || undefined,
+    question,
+    mode,
+  );
+  const askedAt = new Date().toISOString();
+  const userMessageId = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO research_messages (
+      id, chat_id, user_email, role, content, created_at
+    ) VALUES (?1, ?2, ?3, 'user', ?4, ?5)`,
+  ).bind(userMessageId, chat.id, user.email, question, askedAt).run();
 
   let ranked: Array<SearchRow & { score: number }> = [];
   if (mode !== "web") {
@@ -198,10 +384,49 @@ export async function POST(request: NextRequest) {
   }));
   const citations: Citation[] = [...reportCitations, ...webCitations];
   if (!citations.length) {
+    const answer = "I could not find relevant evidence for this question.";
+    const createdAt = new Date().toISOString();
+    const assistantMessageId = crypto.randomUUID();
+    await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO research_messages (
+          id, chat_id, user_email, role, content, citations_json, web_results_json, created_at
+        ) VALUES (?1, ?2, ?3, 'assistant', ?4, '[]', '[]', ?5)`,
+      ).bind(assistantMessageId, chat.id, user.email, answer, createdAt),
+      env.DB.prepare(
+        "UPDATE research_chats SET evidence_mode = ?1, updated_at = ?2 WHERE id = ?3 AND user_email = ?4",
+      ).bind(mode, createdAt, chat.id, user.email),
+      env.DB.prepare(
+        "UPDATE research_projects SET updated_at = ?1 WHERE id = ?2 AND user_email = ?3",
+      ).bind(createdAt, project.id, user.email),
+    ]);
     return NextResponse.json({
-      answer: "I could not find relevant evidence for this question.",
+      project: projectPayload({ ...project, updated_at: createdAt }),
+      chat: chatPayload({ ...chat, evidence_mode: mode, updated_at: createdAt }),
+      userMessage: {
+        id: userMessageId,
+        chatId: chat.id,
+        role: "user",
+        content: question,
+        citations: [],
+        webResults: [],
+        createdAt: askedAt,
+      },
+      assistantMessage: {
+        id: assistantMessageId,
+        chatId: chat.id,
+        role: "assistant",
+        content: answer,
+        citations: [],
+        webResults: [],
+        createdAt,
+      },
+      question,
+      answer,
+      mode,
       citations: [],
       webResults: [],
+      createdAt,
     });
   }
 
@@ -218,6 +443,17 @@ export async function POST(request: NextRequest) {
     `[${result.index}] WEB · ${result.title}\nURL: ${result.url}${result.publishedAt ? `\nPublished: ${result.publishedAt}` : ""}\n${result.snippet}`,
   );
   const sources = [...reportSources, ...externalSources].join("\n\n");
+  const priorMessages = await env.DB.prepare(
+    `SELECT role, content
+     FROM research_messages
+     WHERE chat_id = ?1 AND user_email = ?2 AND id != ?3
+     ORDER BY created_at DESC
+     LIMIT 8`,
+  ).bind(chat.id, user.email, userMessageId).all<{ role: "user" | "assistant"; content: string }>();
+  const conversationContext = priorMessages.results
+    .reverse()
+    .map((message) => `${message.role.toUpperCase()}: ${message.content.slice(0, 1600)}`)
+    .join("\n\n");
   const startedAt = Date.now();
   let inputTokens = 0;
   let outputTokens = 0;
@@ -239,11 +475,11 @@ export async function POST(request: NextRequest) {
           {
             role: "system",
             content:
-              "You are a financial research assistant. Use only the supplied evidence. Distinguish report evidence from public-web evidence, cite every material claim with [n], and say clearly when evidence is insufficient or conflicting. Use clean Markdown and reply in the user's language.",
+              "You are a financial research chatbot for equity analysts. Use the conversation only to understand follow-up intent. Use the supplied report and web evidence for factual claims. Distinguish report evidence from public-web evidence, cite every material claim with [n], and say clearly when evidence is insufficient or conflicting. Use clean Markdown and reply in the user's language.",
           },
           {
             role: "user",
-            content: `Evidence mode: ${mode}\nQuestion:\n${question}\n\nEvidence:\n${sources}`,
+            content: `Project: ${project.title}\nChat: ${chat.title}\nEvidence mode: ${mode}\n\nConversation so far:\n${conversationContext || "(new chat)"}\n\nCurrent question:\n${question}\n\nEvidence:\n${sources}`,
           },
         ],
       }),
@@ -294,6 +530,34 @@ export async function POST(request: NextRequest) {
   );
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
+  const assistantMessageId = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO research_messages (
+      id, chat_id, user_email, role, content, citations_json, web_results_json,
+      provider, model, input_tokens, output_tokens, estimated_cost_usd, created_at
+    ) VALUES (?1, ?2, ?3, 'assistant', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
+  ).bind(
+    assistantMessageId,
+    chat.id,
+    user.email,
+    answer,
+    JSON.stringify(citations),
+    JSON.stringify(webResults),
+    provider.name,
+    provider.model,
+    inputTokens,
+    outputTokens,
+    estimatedCostUsd.toFixed(8),
+    createdAt,
+  ).run();
+  await env.DB.batch([
+    env.DB.prepare(
+      "UPDATE research_chats SET title = CASE WHEN title = 'New research chat' THEN ?1 ELSE title END, evidence_mode = ?2, updated_at = ?3 WHERE id = ?4 AND user_email = ?5",
+    ).bind(titleFromQuestion(question), mode, createdAt, chat.id, user.email),
+    env.DB.prepare(
+      "UPDATE research_projects SET updated_at = ?1 WHERE id = ?2 AND user_email = ?3",
+    ).bind(createdAt, project.id, user.email),
+  ]);
   await env.DB.prepare(
     `INSERT INTO research_queries (
       id, user_email, question, answer, evidence_mode, citations_json,
@@ -318,6 +582,33 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     id,
+    project: projectPayload({ ...project, updated_at: createdAt }),
+    chat: chatPayload({ ...chat, title: chat.title === "New research chat" ? titleFromQuestion(question) : chat.title, evidence_mode: mode, updated_at: createdAt }),
+    userMessage: {
+      id: userMessageId,
+      chatId: chat.id,
+      role: "user",
+      content: question,
+      citations: [],
+      webResults: [],
+      createdAt: askedAt,
+    },
+    assistantMessage: {
+      id: assistantMessageId,
+      chatId: chat.id,
+      role: "assistant",
+      content: answer,
+      citations,
+      webResults,
+      usage: {
+        inputTokens,
+        outputTokens,
+        estimatedCostUsd,
+        model: provider.model,
+        provider: provider.name,
+      },
+      createdAt,
+    },
     question,
     answer,
     mode,

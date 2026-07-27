@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     },
     integrations: {
       aiConfigured: Boolean(runtimeEnv("AI_API_KEY")),
-      webSearchConfigured: Boolean(runtimeEnv("WEB_SEARCH_API_KEY")),
+      webSearchConfigured: Boolean(runtimeEnv("TAVILY_API_KEY") || runtimeEnv("WEB_SEARCH_API_KEY")),
       webSearchProvider: runtimeEnv("WEB_SEARCH_PROVIDER") || "tavily",
     },
   });

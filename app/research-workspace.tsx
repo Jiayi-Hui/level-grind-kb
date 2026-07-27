@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/react";
+import { useAuth, useClerk } from "@clerk/react";
 import {
   FormEvent,
   useCallback,
@@ -132,6 +132,41 @@ type AskResult = {
   webResults: WebResult[];
 };
 
+type ResearchProject = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ResearchChat = {
+  id: string;
+  projectId: string;
+  title: string;
+  mode: EvidenceMode;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ChatMessage = {
+  id: string;
+  chatId: string;
+  role: "user" | "assistant";
+  content: string;
+  citations: Array<ReportCitation | WebCitation>;
+  webResults: WebResult[];
+  usage?: AskResult["usage"];
+  createdAt: string;
+};
+
+type AskPayload = {
+  history: AskResult[];
+  projects: ResearchProject[];
+  chats: ResearchChat[];
+  activeChatId: string | null;
+  messages: ChatMessage[];
+};
+
 type PreferencesPayload = {
   language: Language;
   storage: {
@@ -202,8 +237,22 @@ ${sourceLines}
 `;
 }
 
+function messageAsAnswer(message: ChatMessage, question = "Research answer"): AskResult {
+  return {
+    id: message.id,
+    question,
+    answer: message.content,
+    mode: undefined,
+    createdAt: message.createdAt,
+    usage: message.usage,
+    citations: message.citations,
+    webResults: message.webResults,
+  };
+}
+
 export function ResearchWorkspace() {
   const { getToken, sessionId } = useAuth();
+  const { signOut } = useClerk();
   const [active, setActive] = useState<View>("assistant");
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof window === "undefined") return "en";
@@ -216,11 +265,17 @@ export function ResearchWorkspace() {
   const [corpus, setCorpus] = useState<CorpusPayload | null>(null);
   const [preferences, setPreferences] = useState<PreferencesPayload | null>(null);
   const [history, setHistory] = useState<AskResult[]>([]);
+  const [projects, setProjects] = useState<ResearchProject[]>([]);
+  const [chats, setChats] = useState<ResearchChat[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState("");
+  const [activeChatId, setActiveChatId] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [askResult, setAskResult] = useState<AskResult | null>(null);
   const [selected, setSelected] = useState<DocumentRecord | null>(null);
   const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<EvidenceMode>("reports");
+  const [mode, setMode] = useState<EvidenceMode>("hybrid");
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -236,6 +291,7 @@ export function ResearchWorkspace() {
     return window.localStorage.getItem("lg-obsidian-vault") || "Research";
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   const authorizedFetch = useCallback(async (
     input: RequestInfo | URL,
@@ -250,6 +306,7 @@ export function ResearchWorkspace() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+    setAccessDenied(false);
     try {
       const responses = await Promise.all([
         authorizedFetch("/api/documents?scope=team"),
@@ -259,24 +316,43 @@ export function ResearchWorkspace() {
         authorizedFetch("/api/preferences"),
         authorizedFetch("/api/ask"),
       ]);
+      if (responses.some((response) => response.status === 401)) {
+        setAccessDenied(true);
+        return;
+      }
       if (responses.some((response) => !response.ok)) {
         throw new Error("The research workspace could not be loaded.");
       }
-      const [documentsData, contextData, membersData, corpusData, preferenceData, historyData] =
+      const [documentsData, contextData, membersData, corpusData, preferenceData, askData] =
         await Promise.all(responses.map((response) => response.json())) as [
           { documents: DocumentRecord[] },
           ContextPayload,
           { members: TeamMember[] },
           CorpusPayload,
           PreferencesPayload,
-          { history: AskResult[] },
+          AskPayload,
         ];
       setDocuments(documentsData.documents ?? []);
       setContext(contextData);
       setMembers(membersData.members ?? []);
       setCorpus(corpusData);
       setPreferences(preferenceData);
-      setHistory(historyData.history ?? []);
+      setHistory(askData.history ?? []);
+      setProjects(askData.projects ?? []);
+      setChats(askData.chats ?? []);
+      setActiveProjectId((current) =>
+        (askData.projects ?? []).some((project) => project.id === current)
+          ? current
+          : askData.projects?.[0]?.id ?? "",
+      );
+      setActiveChatId((current) =>
+        (askData.chats ?? []).some((chat) => chat.id === current)
+          ? current
+          : askData.activeChatId ?? askData.chats?.[0]?.id ?? "",
+      );
+      setChatMessages(askData.messages ?? []);
+      const activeChat = (askData.chats ?? []).find((chat) => chat.id === askData.activeChatId);
+      if (activeChat) setMode(activeChat.mode);
       setLanguage(preferenceData.language);
       setSelected((current) =>
         documentsData.documents.find((item) => item.id === current?.id) ??
@@ -310,6 +386,75 @@ export function ResearchWorkspace() {
     const timer = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({
+      top: chatScrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [chatMessages, asking]);
+
+  async function openChat(chatId: string) {
+    setActiveChatId(chatId);
+    const chat = chats.find((item) => item.id === chatId);
+    if (chat) {
+      setActiveProjectId(chat.projectId);
+      setMode(chat.mode || "hybrid");
+    }
+    setError("");
+    try {
+      const response = await authorizedFetch(`/api/ask?chatId=${encodeURIComponent(chatId)}`);
+      const payload = await response.json() as AskPayload & { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not load this chat.");
+      setProjects(payload.projects ?? []);
+      setChats(payload.chats ?? []);
+      setChatMessages(payload.messages ?? []);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load this chat.");
+    }
+  }
+
+  async function createProject() {
+    const title = window.prompt(language === "zh" ? "项目名称" : "Project name");
+    if (!title?.trim()) return;
+    try {
+      const response = await authorizedFetch("/api/research-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "project", title }),
+      });
+      const payload = await response.json() as { project?: ResearchProject; error?: string };
+      if (!response.ok || !payload.project) throw new Error(payload.error || "Could not create project.");
+      setProjects((current) => [payload.project!, ...current]);
+      setActiveProjectId(payload.project.id);
+      setActiveChatId("");
+      setChatMessages([]);
+      setToast(language === "zh" ? "项目已创建" : "Project created");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create project.");
+    }
+  }
+
+  async function createChat(projectId = activeProjectId) {
+    const title = window.prompt(language === "zh" ? "聊天标题" : "Chat title");
+    if (!title?.trim() || !projectId) return;
+    try {
+      const response = await authorizedFetch("/api/research-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "chat", projectId, title, mode }),
+      });
+      const payload = await response.json() as { chat?: ResearchChat; error?: string };
+      if (!response.ok || !payload.chat) throw new Error(payload.error || "Could not create chat.");
+      setChats((current) => [payload.chat!, ...current]);
+      setActiveChatId(payload.chat.id);
+      setActiveProjectId(payload.chat.projectId);
+      setChatMessages([]);
+      setToast(language === "zh" ? "聊天已创建" : "Chat created");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create chat.");
+    }
+  }
 
   const filteredDocuments = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -428,25 +573,65 @@ export function ResearchWorkspace() {
 
   async function askResearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const question = String(form.get("question") ?? "").trim();
     if (!question) return;
     setAsking(true);
     setError("");
     setAskResult(null);
+    const optimisticMessage: ChatMessage = {
+      id: `local-${Date.now()}`,
+      chatId: activeChatId || "pending",
+      role: "user",
+      content: question,
+      citations: [],
+      webResults: [],
+      createdAt: new Date().toISOString(),
+    };
+    setChatMessages((current) => [...current, optimisticMessage]);
+    formElement.reset();
     try {
       const response = await authorizedFetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, mode }),
+        body: JSON.stringify({
+          question,
+          mode,
+          projectId: activeProjectId || projects[0]?.id,
+          chatId: activeChatId || undefined,
+        }),
       });
-      const payload = await response.json() as AskResult & { error?: string };
+      const payload = await response.json() as AskResult & {
+        error?: string;
+        project?: ResearchProject;
+        chat?: ResearchChat;
+        userMessage?: ChatMessage;
+        assistantMessage?: ChatMessage;
+      };
       if (!response.ok) throw new Error(payload.error || "The research assistant could not answer.");
       setAskResult(payload);
+      if (payload.project) {
+        setProjects((current) => [payload.project!, ...current.filter((item) => item.id !== payload.project!.id)]);
+        setActiveProjectId(payload.project.id);
+      }
+      if (payload.chat) {
+        setChats((current) => [payload.chat!, ...current.filter((item) => item.id !== payload.chat!.id)]);
+        setActiveChatId(payload.chat.id);
+        setMode(payload.chat.mode || "hybrid");
+      }
+      if (payload.userMessage && payload.assistantMessage) {
+        setChatMessages((current) => [
+          ...current.filter((item) => item.id !== optimisticMessage.id),
+          payload.userMessage!,
+          payload.assistantMessage!,
+        ]);
+      }
       setHistory((current) => payload.id ? [payload, ...current.filter((item) => item.id !== payload.id)] : current);
       const corpusResponse = await authorizedFetch("/api/corpus");
       if (corpusResponse.ok) setCorpus(await corpusResponse.json() as CorpusPayload);
     } catch (caught) {
+      setChatMessages((current) => current.filter((item) => item.id !== optimisticMessage.id));
       setError(caught instanceof Error ? caught.message : "The research assistant could not answer.");
     } finally {
       setAsking(false);
@@ -561,6 +746,29 @@ export function ResearchWorkspace() {
     ? Math.min(100, (preferences.storage.usedBytes / Math.max(1, preferences.storage.quotaBytes)) * 100)
     : 0;
   const isAdmin = context?.user.role === "owner" || context?.user.role === "admin";
+  const activeProjectChats = chats.filter((chat) => chat.projectId === activeProjectId);
+  const activeProject = projects.find((project) => project.id === activeProjectId);
+  const activeChat = chats.find((chat) => chat.id === activeChatId);
+
+  if (accessDenied) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card unauthorized-card">
+          <p className="eyebrow">INVITATION REQUIRED</p>
+          <h1>Ask the workspace owner for access.</h1>
+          <p>
+            You are signed in with Clerk, but this email is not an active Level
+            Grind team member yet. Ask the owner/admin to add your email in
+            Settings → Team Access, then refresh this page.
+          </p>
+          <div className="auth-actions">
+            <button className="upload-button" onClick={() => void load()}>Refresh access</button>
+            <button className="quiet-button" onClick={() => void signOut()}>Sign out</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="app-shell research-os">
@@ -694,7 +902,130 @@ export function ResearchWorkspace() {
                 <article><span>{c.outputTokens}</span><strong>{Number(corpus?.usage.output_tokens || 0).toLocaleString()}</strong></article>
                 <article><span>{c.estCost}</span><strong>${Number(corpus?.usage.estimated_cost_usd || 0).toFixed(4)}</strong></article>
               </div>
-              <form className="ask-box ask-box-v2" onSubmit={askResearch}>
+              <div className="chat-workspace">
+                <aside className="chat-sidebar">
+                  <div className="chat-sidebar-head">
+                    <div><p className="eyebrow">PROJECTS</p><h2>{language === "zh" ? "研究项目" : "Research projects"}</h2></div>
+                    <button className="quiet-button" onClick={() => void createProject()}>＋</button>
+                  </div>
+                  <div className="project-list">
+                    {projects.map((project) => (
+                      <button
+                        key={project.id}
+                        className={project.id === activeProjectId ? "project-row active" : "project-row"}
+                        onClick={() => {
+                          setActiveProjectId(project.id);
+                          const firstChat = chats.find((chat) => chat.projectId === project.id);
+                          if (firstChat) void openChat(firstChat.id);
+                          else {
+                            setActiveChatId("");
+                            setChatMessages([]);
+                          }
+                        }}
+                      >
+                        <strong>{project.title}</strong>
+                        <small>{chats.filter((chat) => chat.projectId === project.id).length} chats</small>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="chat-sidebar-head compact">
+                    <div><p className="eyebrow">CHATS</p><h2>{activeProject?.title || "General"}</h2></div>
+                    <button className="quiet-button" disabled={!activeProjectId} onClick={() => void createChat()}>＋</button>
+                  </div>
+                  <div className="chat-list">
+                    {activeProjectChats.length === 0 ? (
+                      <button className="project-row empty" disabled>{language === "zh" ? "还没有聊天" : "No chats yet"}</button>
+                    ) : activeProjectChats.map((chat) => (
+                      <button
+                        key={chat.id}
+                        className={chat.id === activeChatId ? "chat-row active" : "chat-row"}
+                        onClick={() => void openChat(chat.id)}
+                      >
+                        <span className={`mode-dot mode-${chat.mode || "hybrid"}`} />
+                        <strong>{chat.title}</strong>
+                        <small>{new Date(chat.updatedAt).toLocaleString(language === "zh" ? "zh-CN" : "en")}</small>
+                      </button>
+                    ))}
+                  </div>
+                </aside>
+
+                <section className="chat-panel">
+                  <div className="chat-panel-head">
+                    <div>
+                      <p className="eyebrow">ASK AI · {mode.toUpperCase()}</p>
+                      <h2>{activeChat?.title || c.askTitle}</h2>
+                      <p>{language === "zh" ? "默认使用报告库 + 公开网络；每条结论都应该标注来源。" : "Hybrid is the default: report library plus public web, with sources attached to material claims."}</p>
+                    </div>
+                    <span>DeepSeek · Tavily</span>
+                  </div>
+                  <div className="chat-thread" ref={chatScrollRef}>
+                    {chatMessages.length === 0 && (
+                      <div className="empty-state chat-empty">
+                        <h3>{language === "zh" ? "开始一个研究对话" : "Start a research chat"}</h3>
+                        <p>{language === "zh" ? "可以直接问：这家公司最近的盈利预期风险是什么？系统会同时看报告库和公开网络。" : "Ask a follow-up-friendly question. The system will combine indexed reports and public web evidence."}</p>
+                      </div>
+                    )}
+                    {chatMessages.map((message, index) => {
+                      const previousUser = [...chatMessages.slice(0, index)].reverse().find((item) => item.role === "user");
+                      return (
+                        <article key={message.id} className={`chat-message ${message.role}`}>
+                          <div className="message-avatar">{message.role === "user" ? "You" : "AI"}</div>
+                          <div className="message-bubble">
+                            {message.role === "assistant" ? (
+                              <>
+                                <MarkdownAnswer value={message.content} />
+                                {(message.citations.length > 0 || message.webResults.length > 0) && (
+                                  <AnswerCard
+                                    result={messageAsAnswer(message, previousUser?.content || activeChat?.title || "Research answer")}
+                                    language={language}
+                                    corpus={corpus?.documents ?? []}
+                                    savedWebUrls={savedWebUrls}
+                                    saving={saving}
+                                    openReport={openReport}
+                                    saveWebResult={saveWebResult}
+                                    onExport={() => downloadText(answerMarkdown(messageAsAnswer(message, previousUser?.content || "Level Grind research")), previousUser?.content || "Level Grind research")}
+                                    onObsidian={() => void sendToObsidian(answerMarkdown(messageAsAnswer(message, previousUser?.content || "Level Grind research")), previousUser?.content || "Level Grind research")}
+                                    isAdmin={Boolean(isAdmin)}
+                                    compact
+                                  />
+                                )}
+                              </>
+                            ) : <p>{message.content}</p>}
+                          </div>
+                        </article>
+                      );
+                    })}
+                    {asking && (
+                      <article className="chat-message assistant">
+                        <div className="message-avatar">AI</div>
+                        <div className="message-bubble typing"><i className="button-spinner" /> {c.researching}</div>
+                      </article>
+                    )}
+                  </div>
+                  <form className="chat-composer" onSubmit={askResearch}>
+                    <fieldset className="mode-picker compact">
+                      <legend>{c.evidenceMode}</legend>
+                      {([
+                        ["hybrid", c.modeHybrid, c.modeHybridNote],
+                        ["web", c.modeWeb, c.modeWebNote],
+                        ["reports", c.modeReports, c.modeReportsNote],
+                      ] as Array<[EvidenceMode, string, string]>).map(([id, label, note]) => (
+                        <button type="button" key={id} className={mode === id ? "active" : ""} onClick={() => setMode(id)}>
+                          <strong>{label}</strong><small>{note}</small>
+                        </button>
+                      ))}
+                    </fieldset>
+                    <textarea name="question" required rows={3} placeholder={c.askPlaceholder} />
+                    <div className="composer-foot">
+                      <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
+                      <button className="upload-button" disabled={asking || (mode === "reports" && !corpus?.documents.length)}>
+                        {asking && <i className="button-spinner light" />}{asking ? c.researching : c.ask}
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              </div>
+              <form className="ask-box ask-box-v2 legacy-ask-box" onSubmit={askResearch}>
                 <div className="ask-title-row"><div><p className="eyebrow">DEEP RESEARCH</p><h2>{c.askTitle}</h2></div><span>DeepSeek · v4-flash</span></div>
                 <fieldset className="mode-picker">
                   <legend>{c.evidenceMode}</legend>

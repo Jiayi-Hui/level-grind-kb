@@ -23,6 +23,7 @@
     "CLERK_AFTER_SIGN_IN_URL": "/",
     "CLERK_AFTER_SIGN_UP_URL": "/",
     "LEVEL_GRIND_INVITED_EMAILS": "you@example.com",
+    "WEB_SEARCH_PROVIDER": "tavily",
     "AI_PROVIDER": "deepseek",
     "AI_MODEL": "deepseek-v4-flash",
     "AI_BASE_URL": "https://api.deepseek.com",
