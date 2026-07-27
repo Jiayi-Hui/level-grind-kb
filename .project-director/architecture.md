@@ -31,6 +31,13 @@ attachments and report bytes.
 - `user_preferences`: language, personal storage quota, and update timestamp.
 - `research_queries`: private question/answer history, evidence mode, serialized
   citations/results, model usage, and timestamp.
+- `research_events`: candidate or confirmed real-world changes used as the
+  primary team timeline.
+- `research_claims`: source-attributed facts, forecasts, rumors, estimates,
+  interpretations, and denials.
+- `research_event_claims`: typed many-to-many Claim–Event relations.
+- `research_event_notices`: who surfaced, questioned, challenged, escalated, or
+  acted on an Event, with time and channel.
 
 ## API / Contract
 
@@ -47,6 +54,9 @@ attachments and report bytes.
 | Members | `GET /api/members` | authenticated member | team roster and current role | 401 |
 | Members | `POST /api/members` | owner/admin plus member details | saved membership | 400, 401, 403, 409 |
 | Files | `GET /api/files/:id` | authenticated user | authorized attachment | 401, 404 |
+| Events | `GET/POST /api/events` | filters / admin event input | Event timeline with Claim/Notice counts | 400, 401, 403 |
+| Claims | `GET/POST /api/claims` | filters / admin claim input | Claims inbox with Event links | 400, 401, 403 |
+| Notices | `GET/POST /api/event-notices` | event filter / admin notice input | Team attention records | 400, 401, 403 |
 
 ## Frontend Flow
 
@@ -79,3 +89,6 @@ attachments and report bytes.
   exposed in the main interface.
 - Preferences and query history are additive tables with guarded runtime
   initialization for hosted D1.
+- Claim and Team Notice tables are additive. The legacy `raw_claim` Event
+  column remains readable for compatibility but is no longer the canonical
+  Claim store.

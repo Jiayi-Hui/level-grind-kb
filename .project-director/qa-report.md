@@ -73,3 +73,23 @@
 - The dependency audit reports upstream package vulnerabilities that require a separate dependency-upgrade review.
 - Nightly GitHub synchronization covers source and schema, not live D1/R2 records.
 - The authenticated owner-session walkthrough remains a manual release check.
+
+## V4.5 Event Knowledge Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Seed integrity | Pass | 45 Events, 62 Claims, 106 typed links, 45 Team Notices |
+| Verification migration | Pass | 13 Events partially verified; 17 Claims source verified |
+| SQLite migration replay | Pass | 0009 → 0010 → 0011; counts reconcile and foreign-key check is clean |
+| Privacy boundary | Pass | Raw WeChat messages excluded; Notices retain only sanitized week/channel metadata |
+| API contract | Pass | Authenticated reads; owner/admin writes for Events, Claims, and Notices |
+| UI contract | Pass | Event timeline and Claims inbox are separate; Event cards expose Claim/Notice counts |
+| Responsive contract | Pass | Event workbench collapses to one column; evidence fields collapse on mobile |
+| JSON validation | Pass | Taxonomy, Event, Claim, Notice, and verification files parse successfully |
+| ESLint | Pass | No findings |
+| TypeScript | Pass | Strict no-emit check |
+| Production build | Pass | Event, Claim, and Notice routes included |
+| Automated tests | Pass | 7/7 |
+
+Residual release check: authenticated owner-session interaction remains
+dependent on the user's Clerk session after deployment.

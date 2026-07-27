@@ -52,3 +52,15 @@
 - [x] Deploy validated Research OS version 11 and verify production route/auth health.
 - [ ] Complete the authenticated owner-session browser walkthrough.
 - [ ] Configure a governed public-web search API key.
+
+## V4.5 — Event / Claim / Team Notice
+
+- [x] Pull the work-computer Event seed and Dymon/BBG verification findings.
+- [x] Preserve 45 existing Events and apply 13 partial-verification updates.
+- [x] Add independent Claims, Claim–Event links, and Team Notices.
+- [x] Generate 62 Claims, 106 relations, and 45 privacy-preserving Notices.
+- [x] Add Event timeline and Claims inbox views.
+- [x] Add authenticated read and owner/admin write APIs.
+- [x] Add and validate additive D1 migrations and seed migration.
+- [x] Pass lint, TypeScript, build, model tests, and migration replay.
+- [ ] Publish and verify the production version.

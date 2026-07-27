@@ -466,9 +466,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG validates HK ticker identities after removing leading zeroes and shows event-window price reactions; official profit-alert/occupancy source evidence still required.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "收入；归母利润；经营现金流",
@@ -491,21 +491,44 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0009",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "268 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "14.9842"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2556 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "30.5732"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "1686 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "4.3299"
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W28",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-004",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0010",
@@ -522,9 +545,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG validates HK ticker identities after removing leading zeroes and shows event-window price reactions; official profit-alert/occupancy source evidence still required.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "占用率；客户迁入；上线时间",
@@ -547,21 +570,44 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0010",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "268 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "14.9842"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2556 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "30.5732"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "1686 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "4.3299"
+        }
+      ],
       "tags": [
         "P0",
         "ORDER_SUPPLY",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W28",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-004",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0011",
@@ -802,9 +848,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG validates HK ticker identities after removing leading zeroes and shows event-window price reactions; official profit-alert/occupancy source evidence still required.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "收入；AI应用收入；归母利润",
@@ -827,21 +873,44 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0015",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "268 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "14.9842"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2556 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "30.5732"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "1686 HK Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-08",
+          "note": "4.3299"
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W29",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-004",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0016",
@@ -858,9 +927,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon marketview evidence support TSMC Q2/Q3 guide/capex-spending concern as a canonical event family; exact revenue, margin, and capex values still need primary/company or BBG financial tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "季度收入",
@@ -883,21 +952,51 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0016",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "TSM US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "-2.3219"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2330 TT Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-17",
+          "note": "-7.2874"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Links TSMC and Google post-earnings reactions to higher spending, margins, and free cash flow worries."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW Recap: Lost 44K/QMA w semis dragging on AI spending/FCF woes.",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Describes Taiwan semis weakness under AI spending/FCF worries and TSMC underperformance."
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W29",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-003",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0017",
@@ -914,9 +1013,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon marketview evidence support TSMC Q2/Q3 guide/capex-spending concern as a canonical event family; exact revenue, margin, and capex values still need primary/company or BBG financial tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "收入指引",
@@ -939,21 +1038,51 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0017",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "TSM US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "-2.3219"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2330 TT Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-17",
+          "note": "-7.2874"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Links TSMC and Google post-earnings reactions to higher spending, margins, and free cash flow worries."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW Recap: Lost 44K/QMA w semis dragging on AI spending/FCF woes.",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Describes Taiwan semis weakness under AI spending/FCF worries and TSMC underperformance."
+        }
+      ],
       "tags": [
         "P0",
         "GUIDANCE",
         "forecast",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W29",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-003",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0018",
@@ -970,9 +1099,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon marketview evidence support TSMC Q2/Q3 guide/capex-spending concern as a canonical event family; exact revenue, margin, and capex values still need primary/company or BBG financial tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "毛利率指引",
@@ -995,21 +1124,51 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0018",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "TSM US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "-2.3219"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2330 TT Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-17",
+          "note": "-7.2874"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Links TSMC and Google post-earnings reactions to higher spending, margins, and free cash flow worries."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW Recap: Lost 44K/QMA w semis dragging on AI spending/FCF woes.",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Describes Taiwan semis weakness under AI spending/FCF worries and TSMC underperformance."
+        }
+      ],
       "tags": [
         "P0",
         "GUIDANCE",
         "forecast",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W29",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-003",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0019",
@@ -1026,9 +1185,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon marketview evidence support TSMC Q2/Q3 guide/capex-spending concern as a canonical event family; exact revenue, margin, and capex values still need primary/company or BBG financial tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "年度capex",
@@ -1051,21 +1210,51 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0019",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "TSM US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-16",
+          "note": "-2.3219"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "2330 TT Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-17",
+          "note": "-7.2874"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Links TSMC and Google post-earnings reactions to higher spending, margins, and free cash flow worries."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW Recap: Lost 44K/QMA w semis dragging on AI spending/FCF woes.",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Describes Taiwan semis weakness under AI spending/FCF worries and TSMC underperformance."
+        }
+      ],
       "tags": [
         "P0",
         "CAPITAL_ALLOCATION",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W29",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-003",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0020",
@@ -1418,9 +1607,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "Search收入增速；共识差",
@@ -1443,21 +1632,58 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0026",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOGL US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-7.1326"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOG US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-6.8936"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "kind": "dymon-sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "publisher": "JPM",
+          "observedAt": "2026-07-20",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-001",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0027",
@@ -1474,9 +1700,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "Cloud收入增速；Cloud OPM",
@@ -1499,21 +1725,58 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0027",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOGL US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-7.1326"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOG US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-6.8936"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "kind": "dymon-sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "publisher": "JPM",
+          "observedAt": "2026-07-20",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-001",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0028",
@@ -1530,9 +1793,9 @@
       "impactType": "fundamental",
       "impactDirection": "negative",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "Operating profit；surprise",
@@ -1555,21 +1818,58 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0028",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOGL US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-7.1326"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOG US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-6.8936"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "kind": "dymon-sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "publisher": "JPM",
+          "observedAt": "2026-07-20",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "negative",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-001",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0029",
@@ -1586,9 +1886,9 @@
       "impactType": "fundamental",
       "impactDirection": "mixed",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "季度capex；全年指引",
@@ -1611,21 +1911,58 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0029",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOGL US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-7.1326"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOG US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-6.8936"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "kind": "dymon-sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "publisher": "JPM",
+          "observedAt": "2026-07-20",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
       "tags": [
         "P0",
         "CAPITAL_ALLOCATION",
         "actual",
         "fundamental",
         "mixed",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-001",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0030",
@@ -1698,9 +2035,9 @@
       "impactType": "fundamental",
       "impactDirection": "positive",
       "priority": "P0",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction supports ServiceNow as an earnings/guidance event candidate; cRPO/revenue/guidance details still need source tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "Revenue；cRPO；guidance",
@@ -1723,21 +2060,30 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0031",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "NOW US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-24",
+          "note": "7.4396"
+        }
+      ],
       "tags": [
         "P0",
         "EARNINGS",
         "actual",
         "fundamental",
         "positive",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-002",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     },
     {
       "id": "EVT-0032",
@@ -2482,9 +2828,9 @@
       "impactType": "market",
       "impactDirection": "mixed",
       "priority": "P1",
-      "verificationStatus": "unverified",
-      "verificationKind": "candidate",
-      "verificationSummary": "Unverified candidate raised from team discussion / seed list.",
+      "verificationStatus": "partially_verified",
+      "verificationKind": "public",
+      "verificationSummary": "BBG price reaction and Dymon Marketview/research evidence support Alphabet/Google Q2 earnings + capex-spending concern as a canonical event family; exact Search/GCP/OP/capex figures still need primary-company or BBG financial-field tie-out.",
       "confidence": "medium",
       "metricName": "",
       "metricObject": "盘后/次日收益；成交量；估值",
@@ -2507,21 +2853,58 @@
       "sourceUrl": "",
       "sourceMessageId": "EVT-0045",
       "sourceExcerpt": "",
-      "verificationSources": [],
+      "verificationSources": [
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOGL US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-7.1326"
+        },
+        {
+          "kind": "bbg-desktop",
+          "title": "GOOG US Equity CHG_PCT_1D",
+          "publisher": "Bloomberg",
+          "observedAt": "2026-07-23",
+          "note": "-6.8936"
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS TW RSCH: GlobalWafers, Sinbon, Google Read, APAC Tech Model Portfolio",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Discusses Google cloud/services acceleration, continued investment, capex upward revisions, and AI/TPU supply-chain read-through."
+        },
+        {
+          "kind": "dymon-marketview",
+          "title": "UBS: What are investors thinking in TW??",
+          "publisher": "Dymon MCP",
+          "observedAt": "2026-07-24",
+          "note": "Notes investors looked beyond solid TSMC/Google results/outlook and focused on higher spending, margins, and FCF."
+        },
+        {
+          "kind": "dymon-sellside",
+          "title": "US Equity Strategy - Hyperscalers vs AI Hardware, AI Capex & Monetization",
+          "publisher": "JPM",
+          "observedAt": "2026-07-20",
+          "note": "Frames hyperscaler capex guide as a pivotal 2Q26 earnings-season validation point."
+        }
+      ],
       "tags": [
         "P1",
         "MARKET_STRUCTURE",
         "actual",
         "market",
         "mixed",
-        "verification:candidate",
         "W30",
         "source:seed-list",
-        "sanitized:tracked"
+        "sanitized:tracked",
+        "finding:VF-2026-07-27-001",
+        "verification:public"
       ],
       "createdBy": "seed:team_event_db_cold_start",
       "createdAt": "2026-07-27T08:30:29.416878+00:00",
-      "updatedAt": "2026-07-27T09:02:24.575648+00:00"
+      "updatedAt": "2026-07-27T09:00:23.163160+00:00"
     }
   ],
   "verificationFindings": [

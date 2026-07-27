@@ -50,6 +50,10 @@ idempotently from protected routes:
 - `corpus_documents`
 - `corpus_chunks`
 - `ai_usage_events`
+- `research_events`
+- `research_claims`
+- `research_event_claims`
+- `research_event_notices`
 
 PDF bytes live in R2. Searchable report metadata, page text, permissions, and AI
 usage live in D1.

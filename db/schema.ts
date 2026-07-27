@@ -319,3 +319,73 @@ export const researchEvents = sqliteTable(
     index("research_events_verification_idx").on(table.verificationStatus),
   ],
 );
+
+export const researchClaims = sqliteTable(
+  "research_claims",
+  {
+    id: text("id").primaryKey(),
+    claimText: text("claim_text").notNull(),
+    claimType: text("claim_type").notNull().default("fact"),
+    claimedAt: text("claimed_at"),
+    speaker: text("speaker"),
+    company: text("company"),
+    ticker: text("ticker"),
+    sourceSystem: text("source_system").notNull().default("manual"),
+    sourceTitle: text("source_title"),
+    sourceUrl: text("source_url"),
+    sourceLocator: text("source_locator"),
+    sourceExcerpt: text("source_excerpt"),
+    verificationStatus: text("verification_status").notNull().default("unverified"),
+    verificationKind: text("verification_kind").notNull().default("candidate"),
+    confidence: text("confidence").notNull().default("medium"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("research_claims_type_claimed_idx").on(table.claimType, table.claimedAt),
+    index("research_claims_verification_idx").on(table.verificationStatus),
+  ],
+);
+
+export const researchEventClaims = sqliteTable(
+  "research_event_claims",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => researchEvents.id, { onDelete: "cascade" }),
+    claimId: text("claim_id")
+      .notNull()
+      .references(() => researchClaims.id, { onDelete: "cascade" }),
+    relation: text("relation").notNull().default("supports"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("research_event_claims_pair_idx").on(table.eventId, table.claimId),
+    index("research_event_claims_claim_idx").on(table.claimId),
+  ],
+);
+
+export const researchEventNotices = sqliteTable(
+  "research_event_notices",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => researchEvents.id, { onDelete: "cascade" }),
+    noticedBy: text("noticed_by").notNull(),
+    noticedAt: text("noticed_at").notNull(),
+    channel: text("channel").notNull().default("manual"),
+    noticeType: text("notice_type").notNull().default("shared"),
+    salience: text("salience").notNull().default("normal"),
+    summary: text("summary").notNull().default(""),
+    sourceMessageId: text("source_message_id"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("research_event_notices_event_idx").on(table.eventId, table.noticedAt),
+    index("research_event_notices_type_idx").on(table.noticeType),
+  ],
+);

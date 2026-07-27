@@ -22,6 +22,36 @@
     "public",
     "mixed"
   ],
+  "claimTypes": [
+    "fact",
+    "forecast",
+    "rumor",
+    "estimate",
+    "interpretation",
+    "denial"
+  ],
+  "claimVerificationStatuses": [
+    "unverified",
+    "source_verified",
+    "misquoted",
+    "retracted"
+  ],
+  "claimRelations": [
+    "supports",
+    "contradicts",
+    "predicts",
+    "explains",
+    "denies",
+    "suggests"
+  ],
+  "noticeTypes": [
+    "shared",
+    "questioned",
+    "discussed",
+    "challenged",
+    "escalated",
+    "acted_on"
+  ],
   "tagGroups": {
     "priority": [
       "P0",
@@ -56,6 +86,8 @@
     "Candidate events can come from analyst discussion / seed list and remain unverified.",
     "Internal verified events require analyst/channel/supply-chain verification recorded in verificationSources.",
     "Public verified events require Dymon MCP, BBG Desktop API, company disclosure, exchange filing, sell-side/bank research, or public source evidence.",
-    "Do not treat seed-list wording as the canonical event definition."
+    "Do not treat seed-list wording as the canonical event definition.",
+    "Claims remain immutable evidence records after verification; they do not become Events.",
+    "Team attention is a separate Notice relation, not a noticed boolean on the Event."
   ]
 }

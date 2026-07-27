@@ -19,6 +19,40 @@ export const verificationStatuses = [
   "expired",
 ] as const;
 
+export const claimTypes = [
+  "fact",
+  "forecast",
+  "rumor",
+  "estimate",
+  "interpretation",
+  "denial",
+] as const;
+
+export const claimRelations = [
+  "supports",
+  "contradicts",
+  "predicts",
+  "explains",
+  "denies",
+  "suggests",
+] as const;
+
+export const claimVerificationStatuses = [
+  "unverified",
+  "source_verified",
+  "misquoted",
+  "retracted",
+] as const;
+
+export const noticeTypes = [
+  "shared",
+  "questioned",
+  "discussed",
+  "challenged",
+  "escalated",
+  "acted_on",
+] as const;
+
 export type ResearchEventInput = {
   id?: string;
   title?: string;
@@ -70,6 +104,38 @@ export type ResearchEventInput = {
   tags?: string[] | string;
 };
 
+export type ResearchClaimInput = {
+  id?: string;
+  claimText?: string;
+  claimType?: string;
+  claimedAt?: string;
+  speaker?: string;
+  company?: string;
+  ticker?: string;
+  sourceSystem?: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
+  sourceLocator?: string;
+  sourceExcerpt?: string;
+  verificationStatus?: string;
+  verificationKind?: string;
+  confidence?: string;
+  eventIds?: string[];
+  relation?: string;
+};
+
+export type ResearchEventNoticeInput = {
+  id?: string;
+  eventId?: string;
+  noticedBy?: string;
+  noticedAt?: string;
+  channel?: string;
+  noticeType?: string;
+  salience?: string;
+  summary?: string;
+  sourceMessageId?: string;
+};
+
 export const researchEventsSchema = `
   CREATE TABLE IF NOT EXISTS research_events (
     id TEXT PRIMARY KEY,
@@ -119,14 +185,75 @@ export const researchEventsSchema = `
   )
 `;
 
+export const researchClaimsSchema = `
+  CREATE TABLE IF NOT EXISTS research_claims (
+    id TEXT PRIMARY KEY,
+    claim_text TEXT NOT NULL,
+    claim_type TEXT NOT NULL DEFAULT 'fact',
+    claimed_at TEXT,
+    speaker TEXT,
+    company TEXT,
+    ticker TEXT,
+    source_system TEXT NOT NULL DEFAULT 'manual',
+    source_title TEXT,
+    source_url TEXT,
+    source_locator TEXT,
+    source_excerpt TEXT,
+    verification_status TEXT NOT NULL DEFAULT 'unverified',
+    verification_kind TEXT NOT NULL DEFAULT 'candidate',
+    confidence TEXT NOT NULL DEFAULT 'medium',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
+export const researchEventClaimsSchema = `
+  CREATE TABLE IF NOT EXISTS research_event_claims (
+    event_id TEXT NOT NULL,
+    claim_id TEXT NOT NULL,
+    relation TEXT NOT NULL DEFAULT 'supports',
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (event_id, claim_id),
+    FOREIGN KEY (event_id) REFERENCES research_events(id) ON DELETE CASCADE,
+    FOREIGN KEY (claim_id) REFERENCES research_claims(id) ON DELETE CASCADE
+  )
+`;
+
+export const researchEventNoticesSchema = `
+  CREATE TABLE IF NOT EXISTS research_event_notices (
+    id TEXT PRIMARY KEY,
+    event_id TEXT NOT NULL,
+    noticed_by TEXT NOT NULL,
+    noticed_at TEXT NOT NULL,
+    channel TEXT NOT NULL DEFAULT 'manual',
+    notice_type TEXT NOT NULL DEFAULT 'shared',
+    salience TEXT NOT NULL DEFAULT 'normal',
+    summary TEXT NOT NULL DEFAULT '',
+    source_message_id TEXT,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES research_events(id) ON DELETE CASCADE
+  )
+`;
+
 export async function prepareEventsDb() {
   await env.DB.prepare(researchEventsSchema).run();
+  await env.DB.prepare(researchClaimsSchema).run();
+  await env.DB.prepare(researchEventClaimsSchema).run();
+  await env.DB.prepare(researchEventNoticesSchema).run();
   await ensureResearchEventColumns();
   await env.DB.batch([
     env.DB.prepare("CREATE INDEX IF NOT EXISTS research_events_type_date_idx ON research_events(event_type, event_date)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS research_events_company_date_idx ON research_events(company, event_date)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS research_events_priority_idx ON research_events(priority)"),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS research_events_verification_idx ON research_events(verification_status)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS research_claims_type_claimed_idx ON research_claims(claim_type, claimed_at)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS research_claims_verification_idx ON research_claims(verification_status)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS research_event_claims_claim_idx ON research_event_claims(claim_id)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS research_event_notices_event_idx ON research_event_notices(event_id, noticed_at)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS research_event_notices_type_idx ON research_event_notices(notice_type)"),
   ]);
 }
 
@@ -259,6 +386,67 @@ export function normalizeResearchEvent(input: ResearchEventInput, userEmail: str
     sourceExcerpt: optional(input.sourceExcerpt, 500),
     verificationSourcesJson: verificationSourcesJson(input.verificationSources),
     tagsJson: tagsJson(input.tags),
+    createdBy: userEmail,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function normalizeResearchClaim(input: ResearchClaimInput, userEmail: string) {
+  const now = new Date().toISOString();
+  const claimText = clean(input.claimText, 2_000);
+  if (!claimText) throw new Error("Claim text is required.");
+  return {
+    id: clean(input.id, 120) || crypto.randomUUID(),
+    claimText,
+    claimType: lowerChoice(input.claimType, claimTypes, "fact"),
+    claimedAt: optional(input.claimedAt, 80),
+    speaker: optional(input.speaker, 160),
+    company: optional(input.company, 160),
+    ticker: optional(input.ticker, 80),
+    sourceSystem: clean(input.sourceSystem || "manual", 120),
+    sourceTitle: optional(input.sourceTitle, 300),
+    sourceUrl: optional(input.sourceUrl, 600),
+    sourceLocator: optional(input.sourceLocator, 300),
+    sourceExcerpt: optional(input.sourceExcerpt, 800),
+    verificationStatus: lowerChoice(
+      input.verificationStatus,
+      claimVerificationStatuses,
+      "unverified",
+    ),
+    verificationKind: lowerChoice(
+      input.verificationKind,
+      ["candidate", "internal", "public", "mixed"],
+      "candidate",
+    ),
+    confidence: lowerChoice(input.confidence, ["low", "medium", "high"], "medium"),
+    eventIds: Array.isArray(input.eventIds)
+      ? input.eventIds.map((id) => clean(id, 120)).filter(Boolean).slice(0, 20)
+      : [],
+    relation: lowerChoice(input.relation, claimRelations, "supports"),
+    createdBy: userEmail,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function normalizeResearchEventNotice(
+  input: ResearchEventNoticeInput,
+  userEmail: string,
+) {
+  const now = new Date().toISOString();
+  const eventId = clean(input.eventId, 120);
+  if (!eventId) throw new Error("Event id is required.");
+  return {
+    id: clean(input.id, 120) || crypto.randomUUID(),
+    eventId,
+    noticedBy: clean(input.noticedBy || userEmail, 160),
+    noticedAt: clean(input.noticedAt || now, 80),
+    channel: clean(input.channel || "manual", 80),
+    noticeType: lowerChoice(input.noticeType, noticeTypes, "shared"),
+    salience: lowerChoice(input.salience, ["low", "normal", "high"], "normal"),
+    summary: clean(input.summary, 1_000),
+    sourceMessageId: optional(input.sourceMessageId, 160),
     createdBy: userEmail,
     createdAt: now,
     updatedAt: now,

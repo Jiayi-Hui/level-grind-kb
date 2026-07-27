@@ -129,11 +129,45 @@ type ResearchEvent = {
   source_excerpt?: string;
   verification_sources_json: string;
   tags_json: string;
+  claim_count: number;
+  notice_count: number;
+  latest_notice_type?: string;
+  latest_notice_summary?: string;
 };
 
 type EventsPayload = {
   events: ResearchEvent[];
   stats: Array<{ event_type: string; count: number }>;
+  attention: {
+    claim_count: number;
+    unverified_claim_count: number;
+    notice_count: number;
+  };
+};
+
+type ResearchClaim = {
+  id: string;
+  claim_text: string;
+  claim_type: "fact" | "forecast" | "rumor" | "estimate" | "interpretation" | "denial";
+  claimed_at?: string;
+  speaker?: string;
+  company?: string;
+  ticker?: string;
+  source_system: string;
+  source_title?: string;
+  source_url?: string;
+  source_locator?: string;
+  source_excerpt?: string;
+  verification_status: "unverified" | "source_verified" | "misquoted" | "retracted";
+  verification_kind: "candidate" | "internal" | "public" | "mixed";
+  confidence: "low" | "medium" | "high";
+  event_ids?: string;
+  relations?: string;
+};
+
+type ClaimsPayload = {
+  claims: ResearchClaim[];
+  stats: Array<{ claim_type: string; count: number }>;
 };
 
 type ReportCitation = {
@@ -333,6 +367,7 @@ export function ResearchWorkspace() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [corpus, setCorpus] = useState<CorpusPayload | null>(null);
   const [eventsPayload, setEventsPayload] = useState<EventsPayload | null>(null);
+  const [claimsPayload, setClaimsPayload] = useState<ClaimsPayload | null>(null);
   const [preferences, setPreferences] = useState<PreferencesPayload | null>(null);
   const [history, setHistory] = useState<AskResult[]>([]);
   const [projects, setProjects] = useState<ResearchProject[]>([]);
@@ -345,6 +380,8 @@ export function ResearchWorkspace() {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<EvidenceMode>("hybrid");
   const [eventTypeFilter, setEventTypeFilter] = useState("");
+  const [claimTypeFilter, setClaimTypeFilter] = useState("");
+  const [eventView, setEventView] = useState<"events" | "claims">("events");
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -387,6 +424,7 @@ export function ResearchWorkspace() {
         authorizedFetch("/api/events"),
         authorizedFetch("/api/preferences"),
         authorizedFetch("/api/ask"),
+        authorizedFetch("/api/claims"),
       ]);
       if (responses.some((response) => response.status === 401)) {
         setAccessDenied(true);
@@ -395,7 +433,7 @@ export function ResearchWorkspace() {
       if (responses.some((response) => !response.ok)) {
         throw new Error("The research workspace could not be loaded.");
       }
-      const [documentsData, contextData, membersData, corpusData, eventsData, preferenceData, askData] =
+      const [documentsData, contextData, membersData, corpusData, eventsData, preferenceData, askData, claimsData] =
         await Promise.all(responses.map((response) => response.json())) as [
           { documents: DocumentRecord[] },
           ContextPayload,
@@ -404,12 +442,14 @@ export function ResearchWorkspace() {
           EventsPayload,
           PreferencesPayload,
           AskPayload,
+          ClaimsPayload,
         ];
       setDocuments(documentsData.documents ?? []);
       setContext(contextData);
       setMembers(membersData.members ?? []);
       setCorpus(corpusData);
       setEventsPayload(eventsData);
+      setClaimsPayload(claimsData);
       setPreferences(preferenceData);
       setHistory(askData.history ?? []);
       setProjects(askData.projects ?? []);
@@ -571,6 +611,23 @@ export function ResearchWorkspace() {
 
   const p0Events = events.filter((event) => event.priority === "P0").length;
   const unverifiedEvents = events.filter((event) => event.verification_status === "unverified").length;
+  const claims = useMemo(() => claimsPayload?.claims ?? [], [claimsPayload?.claims]);
+  const filteredClaims = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return claims.filter((claim) => {
+      const matchesType = !claimTypeFilter || claim.claim_type === claimTypeFilter;
+      const matchesTerm = !term || [
+        claim.claim_text,
+        claim.company,
+        claim.ticker,
+        claim.speaker,
+        claim.source_title,
+        claim.source_locator,
+        claim.event_ids,
+      ].some((value) => String(value || "").toLowerCase().includes(term));
+      return matchesType && matchesTerm;
+    });
+  }, [claims, claimTypeFilter, query]);
 
   async function switchLanguage(next: Language) {
     setLanguage(next);
@@ -994,17 +1051,35 @@ export function ResearchWorkspace() {
 
           {active === "events" && (
             <section className="events-board">
+              <div className="event-mode-switch" role="tablist" aria-label="Event database view">
+                <button
+                  role="tab"
+                  aria-selected={eventView === "events"}
+                  className={eventView === "events" ? "active" : ""}
+                  onClick={() => setEventView("events")}
+                >
+                  {language === "zh" ? "事件时间线" : "Event timeline"}
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={eventView === "claims"}
+                  className={eventView === "claims" ? "active" : ""}
+                  onClick={() => setEventView("claims")}
+                >
+                  {language === "zh" ? "Claim 收件箱" : "Claims inbox"}
+                </button>
+              </div>
               <div className="metrics">
-                <article><span>Event candidates</span><strong>{events.length}</strong><small>from cold-start list</small></article>
-                <article><span>P0 events</span><strong>{p0Events}</strong><small>verify first</small></article>
-                <article><span>Unverified</span><strong>{unverifiedEvents}</strong><small>need Dymon / BBG</small></article>
+                <article><span>{language === "zh" ? "事件" : "Events"}</span><strong>{events.length}</strong><small>{p0Events} P0 · {unverifiedEvents} {language === "zh" ? "待验证" : "unverified"}</small></article>
+                <article><span>Claims</span><strong>{eventsPayload?.attention.claim_count || claims.length}</strong><small>{eventsPayload?.attention.unverified_claim_count || 0} {language === "zh" ? "进入验证队列" : "need verification"}</small></article>
+                <article><span>{language === "zh" ? "团队注意记录" : "Team notices"}</span><strong>{eventsPayload?.attention.notice_count || 0}</strong><small>{language === "zh" ? "谁在何时注意到事件" : "who noticed what, when"}</small></article>
               </div>
 
-              <div className="event-workbench">
+              {eventView === "events" ? <div className="event-workbench">
                 <aside className="event-filter-panel">
-                  <div className="section-title"><h2>Event types</h2><span>{eventsPayload?.stats.length || 0}</span></div>
+                  <div className="section-title"><h2>{language === "zh" ? "事件类型" : "Event types"}</h2><span>{eventsPayload?.stats.length || 0}</span></div>
                   <button className={!eventTypeFilter ? "event-filter active" : "event-filter"} onClick={() => setEventTypeFilter("")}>
-                    <strong>All</strong><span>{events.length}</span>
+                    <strong>{language === "zh" ? "全部" : "All"}</strong><span>{events.length}</span>
                   </button>
                   {(eventsPayload?.stats ?? []).map((stat) => (
                     <button
@@ -1018,13 +1093,15 @@ export function ResearchWorkspace() {
                   ))}
                   <div className="event-method-note">
                     <p className="eyebrow">METHOD</p>
-                    <p>These are candidate events, not confirmed facts. Use Dymon / BBG later to verify source evidence, actuals, consensus, and market reaction.</p>
+                    <p>{language === "zh"
+                      ? "Event 是现实世界的候选或已确认变化。验证不会把 Claim 覆盖掉；Claim 始终作为证据保留。"
+                      : "Events are candidate or confirmed changes in the world. Verification never overwrites the underlying Claims; they remain as evidence."}</p>
                   </div>
                 </aside>
 
                 <div className="event-list">
                   {!filteredEvents.length ? (
-                    <div className="empty-state"><h3>No matching events</h3><p>Try a different search term or event-type filter.</p></div>
+                    <div className="empty-state"><h3>{language === "zh" ? "没有匹配事件" : "No matching events"}</h3><p>{language === "zh" ? "尝试其他关键词或事件类型。" : "Try a different search term or event-type filter."}</p></div>
                   ) : filteredEvents.map((event) => {
                     const tags = parseTags(event.tags_json).slice(0, 5);
                     return (
@@ -1047,7 +1124,8 @@ export function ResearchWorkspace() {
                           {(event.metric_object || event.metric_name) && <div><dt>Metric</dt><dd>{event.metric_object || event.metric_name}</dd></div>}
                           {event.pm_relevance && <div><dt>PM relevance</dt><dd>{event.pm_relevance}</dd></div>}
                           {(event.verification_summary || event.verification_plan) && <div><dt>Verification</dt><dd>{event.verification_summary || event.verification_plan}</dd></div>}
-                          {(event.raw_claim || event.source_excerpt) && <div><dt>Raw claim</dt><dd>{event.raw_claim || event.source_excerpt}</dd></div>}
+                          <div><dt>Evidence</dt><dd>{Number(event.claim_count || 0)} claims · {Number(event.notice_count || 0)} team notices</dd></div>
+                          {event.latest_notice_summary && <div><dt>Team notice · {event.latest_notice_type}</dt><dd>{event.latest_notice_summary}</dd></div>}
                         </dl>
                         <div className="event-card-foot">
                           <span>{event.source_class || event.source_system}</span>
@@ -1058,7 +1136,67 @@ export function ResearchWorkspace() {
                     );
                   })}
                 </div>
-              </div>
+              </div> : <div className="event-workbench">
+                <aside className="event-filter-panel">
+                  <div className="section-title"><h2>Claim types</h2><span>{claimsPayload?.stats.length || 0}</span></div>
+                  <button className={!claimTypeFilter ? "event-filter active" : "event-filter"} onClick={() => setClaimTypeFilter("")}>
+                    <strong>{language === "zh" ? "全部" : "All"}</strong><span>{claims.length}</span>
+                  </button>
+                  {(claimsPayload?.stats ?? []).map((stat) => (
+                    <button
+                      key={stat.claim_type}
+                      className={claimTypeFilter === stat.claim_type ? "event-filter active" : "event-filter"}
+                      onClick={() => setClaimTypeFilter(stat.claim_type)}
+                    >
+                      <strong>{stat.claim_type.replaceAll("_", " ")}</strong>
+                      <span>{stat.count}</span>
+                    </button>
+                  ))}
+                  <div className="event-method-note">
+                    <p className="eyebrow">METHOD</p>
+                    <p>{language === "zh"
+                      ? "Claim 是某个来源的陈述、预测或解释。source verified 只说明来源和原话已核对，不代表其预测已经发生。"
+                      : "A Claim is a source's statement, forecast, or interpretation. Source verified means the source was checked—not that its prediction happened."}</p>
+                  </div>
+                </aside>
+                <div className="claim-list">
+                  {!filteredClaims.length ? (
+                    <div className="empty-state"><h3>{language === "zh" ? "没有匹配 Claim" : "No matching claims"}</h3><p>{language === "zh" ? "尝试其他关键词或 Claim 类型。" : "Try a different search term or claim type."}</p></div>
+                  ) : filteredClaims.map((claim) => {
+                    const eventIds = String(claim.event_ids || "").split(",").filter(Boolean);
+                    const relations = String(claim.relations || "").split(",").filter(Boolean);
+                    return (
+                      <article className="claim-card" key={claim.id}>
+                        <div className="event-card-top">
+                          <span className="tag">{claim.claim_type}</span>
+                          <span className={`verify-kind verify-kind-${claim.verification_kind}`}>{claim.verification_kind}</span>
+                          <span className={`claim-status claim-status-${claim.verification_status}`}>{claim.verification_status.replaceAll("_", " ")}</span>
+                        </div>
+                        <blockquote>{claim.claim_text}</blockquote>
+                        <div className="event-meta-line">
+                          <span>{claim.speaker || claim.source_system}</span>
+                          {claim.company && <span>{claim.company}</span>}
+                          {claim.ticker && <span>{claim.ticker}</span>}
+                          {claim.claimed_at && <span>{claim.claimed_at}</span>}
+                        </div>
+                        {claim.source_excerpt && <p className="claim-context">{claim.source_excerpt}</p>}
+                        <div className="claim-links">
+                          {eventIds.map((eventId, index) => (
+                            <span key={`${claim.id}-${eventId}`}>
+                              {relations[index] || "supports"} → {eventId}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="event-card-foot">
+                          <span>{claim.source_system}</span>
+                          <span>{claim.source_title || claim.source_locator}</span>
+                          <em>{claim.confidence} confidence</em>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>}
             </section>
           )}
 

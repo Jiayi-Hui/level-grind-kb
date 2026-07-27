@@ -35,3 +35,17 @@
 - [ ] Hybrid semantic/vector retrieval is production-ready.
 - [ ] Company Azure gateway is approved and reachable from the public app.
 - [ ] Additional filing-source adapters are validated.
+
+## Event knowledge increment
+
+- [x] Events, Claims, Claim–Event relations, and Team Notices are separate D1
+  objects.
+- [x] Existing Event ids and fields remain compatible.
+- [x] Source verification and Event verification use independent statuses.
+- [x] Dymon/BBG evidence is retained as Claims rather than overwriting the
+  originating candidate.
+- [x] Event timeline shows evidence and attention counts.
+- [x] Claims inbox shows type, source, confidence, status, relation, and linked
+  Event ids.
+- [x] Raw WeChat text is excluded from tracked seed data.
+- [x] Desktop and mobile layouts retain usable Event/Claim views.

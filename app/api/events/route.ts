@@ -46,7 +46,17 @@ export async function GET(request: NextRequest) {
             raw_claim, verification_plan, pm_relevance, analyst_notes,
             source_system, source_title, source_url, source_message_id,
             source_excerpt, verification_sources_json, tags_json, created_by,
-            created_at, updated_at
+            created_at, updated_at,
+            (SELECT COUNT(*) FROM research_event_claims ec WHERE ec.event_id = research_events.id) AS claim_count,
+            (SELECT COUNT(*) FROM research_event_notices en WHERE en.event_id = research_events.id) AS notice_count,
+            (SELECT en.notice_type
+             FROM research_event_notices en
+             WHERE en.event_id = research_events.id
+             ORDER BY en.noticed_at DESC LIMIT 1) AS latest_notice_type,
+            (SELECT en.summary
+             FROM research_event_notices en
+             WHERE en.event_id = research_events.id
+             ORDER BY en.noticed_at DESC LIMIT 1) AS latest_notice_summary
      FROM research_events
      ${whereSql}
      ORDER BY
@@ -60,8 +70,19 @@ export async function GET(request: NextRequest) {
     `SELECT event_type, COUNT(*) AS count
      FROM research_events GROUP BY event_type ORDER BY count DESC`
   ).all();
+  const attention = await env.DB.prepare(
+    `SELECT
+       (SELECT COUNT(*) FROM research_claims) AS claim_count,
+       (SELECT COUNT(*) FROM research_claims WHERE verification_status = 'unverified') AS unverified_claim_count,
+       (SELECT COUNT(*) FROM research_event_notices) AS notice_count`
+  ).first();
   const events = bindings.length ? await query.bind(...bindings).all() : await query.all();
-  return NextResponse.json({ user, events: events.results, stats: stats.results });
+  return NextResponse.json({
+    user,
+    events: events.results,
+    stats: stats.results,
+    attention: attention ?? { claim_count: 0, unverified_claim_count: 0, notice_count: 0 },
+  });
 }
 
 export async function POST(request: NextRequest) {

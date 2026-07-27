@@ -283,6 +283,30 @@ button { color: inherit; }
 .member-usage article b { color: var(--ink); }
 
 .events-board { margin-top: 30px; }
+.event-mode-switch {
+  display: inline-flex;
+  gap: 3px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #eceee9;
+}
+.event-mode-switch button {
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 14px;
+  color: #64726b;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.event-mode-switch button.active {
+  color: var(--green);
+  background: white;
+  box-shadow: 0 2px 8px rgba(16,37,31,.08);
+}
 .event-workbench {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -432,6 +456,57 @@ button { color: inherit; }
   color: var(--green);
   font-style: normal;
   font-weight: 700;
+}
+.claim-list { display: grid; gap: 12px; }
+.claim-card {
+  padding: 19px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(16,37,31,.035);
+}
+.claim-card blockquote {
+  margin: 16px 0 11px;
+  padding-left: 16px;
+  border-left: 3px solid #8aa696;
+  color: #263b33;
+  font: 500 17px/1.55 Georgia, serif;
+}
+.claim-status {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.claim-status-unverified { color: #8a642a; background: #eee7d2; }
+.claim-status-source_verified { color: #326245; background: #dceadf; }
+.claim-status-misquoted,
+.claim-status-retracted { color: #93472e; background: #f8e7e1; }
+.claim-context {
+  margin: 13px 0 0;
+  padding: 11px 12px;
+  border-radius: 8px;
+  color: #5c6963;
+  background: #f3f4ef;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.claim-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.claim-links span {
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: #496558;
+  background: #e9efea;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .task-board { margin-top: 30px; }
@@ -982,6 +1057,8 @@ button { color: inherit; }
   .history-list { max-height: 330px; }
   .chat-workspace { grid-template-columns: 1fr; }
   .chat-sidebar { grid-template-rows: auto minmax(120px, 220px) auto minmax(130px, 260px); }
+  .event-workbench { grid-template-columns: 1fr; }
+  .event-filter-panel { position: static; }
 }
 
 @media (max-width: 820px) {
@@ -1019,4 +1096,7 @@ button { color: inherit; }
   .chat-message.user .message-avatar, .chat-message.user .message-bubble { grid-column: 1; }
   .message-avatar { display: none; }
   .mode-picker.compact { grid-template-columns: 1fr; }
+  .event-fields { grid-template-columns: 1fr; }
+  .event-mode-switch { width: 100%; }
+  .event-mode-switch button { flex: 1; }
 }

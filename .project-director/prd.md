@@ -139,3 +139,25 @@ are treated as delivered.
   excerpt, capture time, and provenance but are not a licensed archival copy.
 - Existing routing/context tables remain in D1 for backwards compatibility,
   but they are removed from the product navigation.
+
+## V4.5 — Event Knowledge Model
+
+- FR-20: Event DB is Event-first for team consumption and Claim-first for
+  ingestion and verification.
+- FR-21: Claims remain independent source statements after verification; they
+  never mutate into Events.
+- FR-22: Claim–Event links record whether a Claim supports, contradicts,
+  predicts, explains, denies, or suggests an Event.
+- FR-23: Team attention is stored as a Team Notice with actor, time, channel,
+  notice type, and salience—not as an Event boolean.
+- FR-24: The product exposes an Event timeline and a Claims inbox while keeping
+  raw private chat content outside the shared repository.
+
+Acceptance:
+
+- AC-12: Existing 45 Events migrate without destructive changes.
+- AC-13: Dymon/BBG findings appear as source-verified Claims linked to the
+  relevant partially verified Events.
+- AC-14: Every cold-start Event has a privacy-preserving Team Notice.
+- AC-15: Event cards show Claim and Notice counts; Claims show source,
+  verification status, relation, and linked Event ids.

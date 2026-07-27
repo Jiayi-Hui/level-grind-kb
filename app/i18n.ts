@@ -13,7 +13,7 @@ export const copy = {
     heading: {
       inbox: ["RESEARCH FLOW", "Research inbox", "Capture material once and keep source, scope, and context attached."],
       library: ["SEARCHABLE FILINGS", "Report library", "Company filings stored once, indexed by page, and available from any device."],
-      events: ["EVENT MEMORY", "Event DB", "Track earnings-sensitive events, verification status, and PM-relevant implications."],
+      events: ["EVENT MEMORY", "Event DB", "Read the Event timeline, inspect source Claims, and see when the team noticed each change."],
       assistant: ["EVIDENCE WORKBENCH", "Ask research", "Combine company reports and current public-web evidence with traceable sources."],
       history: ["RESEARCH MEMORY", "Question history", "Reopen, export, and continue your previous research questions."],
       settings: ["WORKSPACE CONTROL", "Settings", "Language, research profile, storage, integrations, and team access."],
@@ -23,9 +23,9 @@ export const copy = {
     welcome: "Welcome back",
     whatsNew: "What’s new",
     releaseItems: [
-      "Bilingual research workspace",
-      "Saved Q&A history and Obsidian export",
-      "Report, web, and hybrid evidence modes",
+      "Event timeline and Claims verification inbox",
+      "Dymon / Bloomberg evidence retained with provenance",
+      "Privacy-preserving team attention records",
     ],
     dismiss: "Dismiss",
     capture: "Capture",
@@ -123,7 +123,7 @@ export const copy = {
     heading: {
       inbox: ["研究工作流", "研究收件箱", "资料只需保存一次，来源、范围和上下文会始终跟随。"],
       library: ["可检索公告", "报告库", "公司报告统一存储、逐页索引，并可从任何设备访问。"],
-      events: ["事件记忆", "事件库", "跟踪可能影响盈利预测、仓位判断和后续验证的关键事件。"],
+      events: ["事件记忆", "事件库", "查看事件时间线、来源 Claim，以及团队何时注意到每项变化。"],
       assistant: ["证据工作台", "研究问答", "结合公司报告与最新公开网络资料，并保留可追溯来源。"],
       history: ["研究记忆", "问答历史", "重新查看、导出并继续以前的研究问题。"],
       settings: ["工作区控制", "设置", "语言、研究偏好、存储、集成和团队权限。"],
@@ -133,9 +133,9 @@ export const copy = {
     welcome: "欢迎回来",
     whatsNew: "本次新增",
     releaseItems: [
-      "中英文双语研究界面",
-      "问答历史与 Obsidian 导出",
-      "报告、联网与混合证据模式",
+      "事件时间线与 Claim 验证收件箱",
+      "保留 Dymon / Bloomberg 证据与来源",
+      "脱敏的团队注意记录",
     ],
     dismiss: "知道了",
     capture: "添加资料",
