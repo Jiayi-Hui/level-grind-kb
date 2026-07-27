@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { strFromU8, unzipSync } from "fflate";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -54,13 +55,15 @@ test("persists preferences, private history, storage visibility, and governed ac
 });
 
 test("ships bounded research chats, project rename, multidimensional filters, and model operations", async () => {
-  const [workspace, css, sessions, models, modelMigration, modelTemplate] = await Promise.all([
+  const [workspace, css, sessions, models, modelMigration, modelTemplate, simpleModel, modelWorkbench] = await Promise.all([
     readFile(new URL("../app/research-workspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/api/research-sessions/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/models/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0012_model_workbench.sql", import.meta.url), "utf8"),
     readFile(new URL("../public/level-grind-model-template.xlsx", import.meta.url)),
+    readFile(new URL("../public/Simple_Valuation_Model_Demo.xlsx", import.meta.url)),
+    readFile(new URL("../app/model-workbench.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(css, /height: min\(980px, calc\(100dvh - 160px\)\)/);
   assert.match(css, /\.chat-thread \{ min-height: 0/);
@@ -75,6 +78,19 @@ test("ships bounded research chats, project rename, multidimensional filters, an
   assert.match(modelMigration, /CREATE TABLE IF NOT EXISTS model_workbooks/);
   assert.match(modelMigration, /CREATE TABLE IF NOT EXISTS model_update_queue/);
   assert.equal(modelTemplate.subarray(0, 2).toString(), "PK");
+  assert.equal(simpleModel.subarray(0, 2).toString(), "PK");
+  const simpleModelXml = Object.entries(unzipSync(simpleModel))
+    .filter(([name]) => name.endsWith(".xml"))
+    .map(([, bytes]) => strFromU8(bytes))
+    .join("\n");
+  assert.match(simpleModelXml, /name="Inputs"/);
+  assert.match(simpleModelXml, /name="Calculations"/);
+  assert.match(simpleModelXml, /name="Outputs"/);
+  assert.match(simpleModelXml, /revenue_2026/);
+  assert.match(simpleModelXml, /implied_share_price/);
+  assert.match(modelWorkbench, /const formElement = event\.currentTarget/);
+  assert.match(modelWorkbench, /formElement\.reset\(\)/);
+  assert.match(modelWorkbench, /Simple_Valuation_Model_Demo\.xlsx/);
 });
 
 test("ships the selected logo and honest provider quota snapshots", async () => {

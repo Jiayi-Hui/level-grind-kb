@@ -132,15 +132,16 @@ export function ModelWorkbench({
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setUploading(true);
     onError("");
     try {
-      const form = new FormData(event.currentTarget);
+      const form = new FormData(formElement);
       form.set("variablesJson", JSON.stringify(parsedVariables));
       const response = await authorizedFetch("/api/models", { method: "POST", body: form });
       const result = await response.json() as { id?: string; error?: string };
       if (!response.ok || !result.id) throw new Error(result.error || "Upload failed.");
-      event.currentTarget.reset();
+      formElement.reset();
       setParsedVariables([]);
       setTemplateCompatible(false);
       setRecognitionMode("archive-only");
@@ -234,7 +235,7 @@ export function ModelWorkbench({
       {primaryTab === "upload" && <section className="model-upload-panel">
         <header>
           <div><p className="eyebrow">AI-ASSISTED WORKBOOK MAPPING</p><h2>{language === "zh" ? "上传现有 Excel 模型" : "Upload an existing Excel model"}</h2><p>{language === "zh" ? "系统会识别假设、历史数据、计算和估值输出；识别结果由 analyst 审核后再写回。" : "The system maps assumptions, historical data, calculations, and valuation outputs for analyst review."}</p></div>
-          <a className="quiet-button" href="/SpaceX_BuySide_Valuation_Model_Demo.xlsx" download>↓ {language === "zh" ? "下载 SpaceX Demo" : "Download SpaceX demo"}</a>
+          <a className="quiet-button" href="/Simple_Valuation_Model_Demo.xlsx" download>↓ {language === "zh" ? "下载简单示例" : "Download simple demo"}</a>
         </header>
         <form className="model-upload" onSubmit={upload}>
           <input name="modelName" placeholder={language === "zh" ? "模型名称" : "Model name"} required />
