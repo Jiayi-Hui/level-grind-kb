@@ -47,7 +47,10 @@ async function verifiedTable(name: string) {
   return env.DB.prepare(
     `SELECT name, type, sql
      FROM sqlite_master
-     WHERE type = 'table' AND name = ?1 AND name NOT LIKE 'sqlite_%'`,
+     WHERE type = 'table'
+       AND name = ?1
+       AND name NOT LIKE 'sqlite_%'
+       AND name NOT LIKE '_cf_%'`,
   ).bind(name).first<SqliteObject>();
 }
 
@@ -56,7 +59,9 @@ async function manifest(request: NextRequest) {
   const tableRows = await env.DB.prepare(
     `SELECT name, type, sql
      FROM sqlite_master
-     WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+     WHERE type = 'table'
+       AND name NOT LIKE 'sqlite_%'
+       AND name NOT LIKE '_cf_%'
      ORDER BY name`,
   ).all<SqliteObject>();
 
