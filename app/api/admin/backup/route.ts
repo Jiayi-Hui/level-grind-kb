@@ -60,18 +60,17 @@ async function manifest(request: NextRequest) {
      ORDER BY name`,
   ).all<SqliteObject>();
 
-  const tables = await Promise.all(
-    (tableRows.results ?? []).map(async (table) => {
-      const count = await env.DB.prepare(
-        `SELECT COUNT(*) AS row_count FROM "${table.name}"`,
-      ).first<{ row_count: number }>();
-      return {
-        name: table.name,
-        sql: table.sql,
-        rowCount: Number(count?.row_count ?? 0),
-      };
-    }),
-  );
+  const tables = [];
+  for (const table of tableRows.results ?? []) {
+    const count = await env.DB.prepare(
+      `SELECT COUNT(*) AS row_count FROM "${table.name}"`,
+    ).first<{ row_count: number }>();
+    tables.push({
+      name: table.name,
+      sql: table.sql,
+      rowCount: Number(count?.row_count ?? 0),
+    });
+  }
 
   const listed = await env.FILES.list({
     limit: 1000,
