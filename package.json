@@ -14,7 +14,10 @@
     "db:generate": "drizzle-kit generate",
     "events:sql": "node scripts/events-to-sql.mjs",
     "events:knowledge": "node scripts/build-event-knowledge-seed.mjs",
-    "cninfo:fetch": "node scripts/cninfo-fetch.mjs"
+    "cninfo:fetch": "node scripts/cninfo-fetch.mjs",
+    "backup:export": "node scripts/export-production-backup.mjs",
+    "backup:verify": "node scripts/verify-production-backup.mjs",
+    "backup:restore": "node scripts/restore-production-backup.mjs"
   },
   "dependencies": {
     "@clerk/backend": "^3.13.0",
