@@ -1,0 +1,29 @@
+[
+  {
+    "id": "4f0be173-a22a-47ea-9b4b-1f57789994c2",
+    "user_email": "jiayihui01@gmail.com",
+    "project_id": "a0cff53d-972a-47ea-874f-2f8e437c6aee",
+    "title": "比较中兴通讯与光环新网2026对AI基础设施的最新表述",
+    "evidence_mode": "web",
+    "created_at": "2026-07-27T21:59:30.834Z",
+    "updated_at": "2026-07-27T21:59:53.830Z"
+  },
+  {
+    "id": "7986de4e-917b-4b36-b5cc-800917042a4b",
+    "user_email": "jiayihui01@gmail.com",
+    "project_id": "6296abd4-83e4-49f7-a6e6-6f15007cde5a",
+    "title": "请围绕这条报告进行分析，并结合个人知识库、事件库、报告库和公开网络交叉验证：2025年年度报告；巨人网络 · 2026-04-26T16:00:",
+    "evidence_mode": "hybrid",
+    "created_at": "2026-07-27T23:35:53.609Z",
+    "updated_at": "2026-07-27T23:36:20.537Z"
+  },
+  {
+    "id": "7fff2a74-307c-48f9-8abb-a34a0a49e14e",
+    "user_email": "jiayihui01@gmail.com",
+    "project_id": "91dc47e1-006a-4f13-bffd-7244fb278cc7",
+    "title": "请围绕这条事件进行分析，并结合个人知识库、事件库、报告库和公开网络交叉验证：910系列Q3继续生产及月均出货预测；国产AI芯片910系列",
+    "evidence_mode": "hybrid",
+    "created_at": "2026-07-27T23:56:46.627Z",
+    "updated_at": "2026-07-27T23:57:08.335Z"
+  }
+]

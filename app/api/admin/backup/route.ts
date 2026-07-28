@@ -1,14 +1,11 @@
 import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAppUser } from "../../../../lib/access";
-import { runtimeEnv } from "../../../../lib/runtime-env";
 
 export const dynamic = "force-dynamic";
 
 const SAFE_TABLE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const MAX_TABLE_PAGE = 500;
-const TEMPORARY_BACKUP_TOKEN_SHA256 =
-  "b15a7ad92ce3165a34139b3774d13e09a3e56ffcce8ae3f6a080c97e07bf7102";
 
 type SqliteObject = {
   name: string;
@@ -30,16 +27,6 @@ function forbidden() {
     { error: "Workspace owner or admin access is required." },
     { status: 403 },
   );
-}
-
-async function sha256(value: string) {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 async function verifiedTable(name: string) {
@@ -154,24 +141,9 @@ async function objectBody(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const configuredBackupToken = runtimeEnv("LEVEL_GRIND_BACKUP_TOKEN");
-  const suppliedBackupToken = request.headers.get("x-level-grind-backup-token");
-  const suppliedBackupTokenHash = suppliedBackupToken
-    ? await sha256(suppliedBackupToken)
-    : "";
-  const hasOneTimeBackupAccess = Boolean(
-    suppliedBackupToken &&
-      (
-        (configuredBackupToken && configuredBackupToken === suppliedBackupToken) ||
-        suppliedBackupTokenHash === TEMPORARY_BACKUP_TOKEN_SHA256
-      ),
-  );
-
-  if (!hasOneTimeBackupAccess) {
-    const { user, response } = await requireAppUser(request);
-    if (!user) return response;
-    if (user.role !== "owner" && user.role !== "admin") return forbidden();
-  }
+  const { user, response } = await requireAppUser(request);
+  if (!user) return response;
+  if (user.role !== "owner" && user.role !== "admin") return forbidden();
 
   const scope = request.nextUrl.searchParams.get("scope") ?? "manifest";
   if (scope === "manifest") return manifest(request);

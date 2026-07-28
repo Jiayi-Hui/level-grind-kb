@@ -1,0 +1,62 @@
+[
+  {
+    "id": "e4094a71-ee24-40a2-99b2-2d0e08f950e0",
+    "user_email": "jiayihui01@gmail.com",
+    "provider": "DeepSeek",
+    "model": "deepseek-v4-flash",
+    "input_tokens": 4003,
+    "output_tokens": 605,
+    "estimated_cost_usd": "0.00072982",
+    "latency_ms": 6393,
+    "status": "success",
+    "created_at": "2026-07-26T14:43:13.858Z"
+  },
+  {
+    "id": "a7c8ca05-71a4-448c-8d94-3c52f2f532db",
+    "user_email": "jiayihui01@gmail.com",
+    "provider": "DeepSeek",
+    "model": "deepseek-v4-flash",
+    "input_tokens": 4003,
+    "output_tokens": 499,
+    "estimated_cost_usd": "0.00015573",
+    "latency_ms": 5530,
+    "status": "success",
+    "created_at": "2026-07-26T14:43:24.880Z"
+  },
+  {
+    "id": "44673af2-9f55-4845-88c6-c4f9fd79576c",
+    "user_email": "jiayihui01@gmail.com",
+    "provider": "DeepSeek",
+    "model": "deepseek-v4-flash",
+    "input_tokens": 5559,
+    "output_tokens": 1800,
+    "estimated_cost_usd": "0.00128226",
+    "latency_ms": 16333,
+    "status": "success",
+    "created_at": "2026-07-27T21:59:53.620Z"
+  },
+  {
+    "id": "17a8d459-ce88-47da-b725-f689a9fc5d4e",
+    "user_email": "jiayihui01@gmail.com",
+    "provider": "DeepSeek",
+    "model": "deepseek-v4-flash",
+    "input_tokens": 9766,
+    "output_tokens": 1800,
+    "estimated_cost_usd": "0.00187124",
+    "latency_ms": 21322,
+    "status": "success",
+    "created_at": "2026-07-27T23:36:20.336Z"
+  },
+  {
+    "id": "39d4e81c-abb6-4cf6-b809-fb9cd3095e9d",
+    "user_email": "jiayihui01@gmail.com",
+    "provider": "DeepSeek",
+    "model": "deepseek-v4-flash",
+    "input_tokens": 6417,
+    "output_tokens": 1800,
+    "estimated_cost_usd": "0.00140238",
+    "latency_ms": 16310,
+    "status": "success",
+    "created_at": "2026-07-27T23:57:08.126Z"
+  }
+]

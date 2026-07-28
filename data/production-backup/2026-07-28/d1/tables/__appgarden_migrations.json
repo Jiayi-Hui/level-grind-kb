@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "name": "0000_conscious_lord_tyger.sql",
+    "applied_at": "2026-07-24 01:30:58"
+  },
+  {
+    "id": 2,
+    "name": "0001_useful_morlun.sql",
+    "applied_at": "2026-07-24 01:30:58"
+  },
+  {
+    "id": 3,
+    "name": "0002_loud_caretaker.sql",
+    "applied_at": "2026-07-24 07:55:16"
+  },
+  {
+    "id": 4,
+    "name": "0003_watery_onslaught.sql",
+    "applied_at": "2026-07-26 13:35:18"
+  },
+  {
+    "id": 5,
+    "name": "0004_smooth_texas_twister.sql",
+    "applied_at": "2026-07-26 13:35:18"
+  },
+  {
+    "id": 6,
+    "name": "0005_careless_johnny_blaze.sql",
+    "applied_at": "2026-07-26 13:35:18"
+  },
+  {
+    "id": 7,
+    "name": "0006_little_lionheart.sql",
+    "applied_at": "2026-07-26 13:35:18"
+  },
+  {
+    "id": 8,
+    "name": "0007_right_wolfsbane.sql",
+    "applied_at": "2026-07-26 15:15:57"
+  },
+  {
+    "id": 9,
+    "name": "0008_research_chat_sessions.sql",
+    "applied_at": "2026-07-27 09:56:13"
+  },
+  {
+    "id": 10,
+    "name": "0009_research_events.sql",
+    "applied_at": "2026-07-27 09:56:13"
+  },
+  {
+    "id": 11,
+    "name": "0010_research_claims_notices.sql",
+    "applied_at": "2026-07-27 09:56:13"
+  },
+  {
+    "id": 12,
+    "name": "0011_event_knowledge_seed.sql",
+    "applied_at": "2026-07-27 09:56:13"
+  },
+  {
+    "id": 13,
+    "name": "0012_model_workbench.sql",
+    "applied_at": "2026-07-27 22:35:43"
+  }
+]

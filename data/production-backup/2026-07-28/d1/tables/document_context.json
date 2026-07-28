@@ -1,0 +1,34 @@
+[
+  {
+    "document_id": "aea93b21-9d1b-4e90-8758-3bb3d5f4109b",
+    "context_scope": "personal",
+    "source_system": "web-search",
+    "topics": "Public web evidence",
+    "event_date": "2026-07-27",
+    "confidence": "medium"
+  },
+  {
+    "document_id": "c905ee82-7762-4d29-8c80-278547f2af8a",
+    "context_scope": "team",
+    "source_system": "web-search",
+    "topics": "Public web evidence",
+    "event_date": "2026-07-27",
+    "confidence": "medium"
+  },
+  {
+    "document_id": "fb17930b-b4a9-45bc-830e-b2592c68f6da",
+    "context_scope": "personal",
+    "source_system": "web-search",
+    "topics": "Public web evidence",
+    "event_date": "2026-07-27",
+    "confidence": "medium"
+  },
+  {
+    "document_id": "5c76b56c-972d-472a-94dc-612c093c861d",
+    "context_scope": "personal",
+    "source_system": "web-search",
+    "topics": "Public web evidence",
+    "event_date": "2026-07-27",
+    "confidence": "medium"
+  }
+]

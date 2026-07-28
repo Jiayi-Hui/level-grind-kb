@@ -58,6 +58,22 @@ idempotently from protected routes:
 PDF bytes live in R2. Searchable report metadata, page text, permissions, and AI
 usage live in D1.
 
+## 2.1 Production backup and restore
+
+The repository includes a complete 2026-07-28 snapshot under
+`data/production-backup/2026-07-28/`. It contains raw D1 rows, raw R2 objects,
+reconstructed PDFs, per-report page text, manifests, and checksums.
+
+```powershell
+npm run backup:verify -- data/production-backup/2026-07-28
+npm run backup:restore -- data/production-backup/2026-07-28
+```
+
+The second command prepares restore SQL without writing to a remote service.
+Add `--database`, `--bucket`, and `--apply` only after creating and reviewing
+the destination resources. Runtime API keys and authentication secrets are
+intentionally excluded.
+
 ## 3. Public model pilot
 
 Use a normal provider API key, never a Coding Plan or interactive OAuth token.

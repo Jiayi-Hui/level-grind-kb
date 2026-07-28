@@ -16,6 +16,7 @@ git pull --ff-only
 node --version
 npm ci
 Copy-Item dev.vars.example .dev.vars
+npm run backup:verify -- data/production-backup/2026-07-28
 ```
 
 Node.js must be 22.13 or newer. Edit `.dev.vars` locally with the Clerk,
@@ -30,6 +31,10 @@ npm run dev
 Open the local URL printed by the terminal. Local development uses project-local
 Cloudflare-compatible D1 and R2 state under ignored `.wrangler/` files. It does
 not modify production data.
+
+The production snapshot is already in
+`data/production-backup/2026-07-28/`. You do not need to find or re-upload the
+current reports, workbooks, knowledge records, or AskAI history.
 
 Before handing work back:
 
@@ -165,6 +170,17 @@ redistribution terms, or raw internal chats in Git.
 
 Tracked and portable:
 
+- `data/production-backup/2026-07-28/d1/tables/*.json`: all 25 production D1
+  application tables, 6,555 rows in total;
+- `data/production-backup/2026-07-28/r2/objects/`: all 45 production R2
+  objects, 82,033,505 bytes in total, with original keys and metadata retained
+  in `manifest.json`;
+- `data/production-backup/2026-07-28/reports/pdfs/`: 30 reconstructed,
+  directly openable report PDFs;
+- `data/production-backup/2026-07-28/reports/page-text/`: the same 30 reports
+  grouped into per-report, per-page JSON text;
+- `data/production-backup/2026-07-28/manifest.json` and `SHA256SUMS`: row
+  counts, object keys, byte sizes, metadata, and SHA-256 verification data;
 - `data/events/*.json` and generated SQL: sanitized Event, Claim, Team Notice,
   taxonomy, and verification seed data;
 - `public/*.xlsx`: the simple valuation workbook and SpaceX demo workbook;
@@ -172,16 +188,53 @@ Tracked and portable:
 - `scripts/`: seed generation and public CNINFO retrieval/import tools;
 - product code, tests, deployment examples, and documentation.
 
-Not included:
+The snapshot specifically includes:
 
-- live D1 rows and live R2 objects;
+- 4 personal/team knowledge records plus their context/scope rows;
+- 3 research projects, 3 chats, 6 messages, and 3 saved research queries;
+- 30 report records, 30 PDFs, and 6,218 extracted page chunks;
+- 2 uploaded model workbooks, model catalogue rows, and change-log/parser
+  state (the current parser produced zero mapped model variables, which is the
+  actual production state rather than omitted data);
+- the current member, personal profile, user preference, AI usage, and web
+  search usage rows;
+- all production R2 report parts and uploaded Excel workbooks.
+
+Still not included:
+
 - Clerk, DeepSeek, Tavily, Cloudflare, Bloomberg, or Dymon secrets;
 - raw WeChat messages and private source files;
-- local `.wrangler/`, `.dev.vars`, build output, and ignored CNINFO PDFs.
+- local `.wrangler/`, `.dev.vars`, and build output.
 
-GitHub is the source/schema relay, not a backup of the production database.
-Public reports can be fetched again with the tracked CNINFO scripts. Export live
-D1/R2 data separately before a full backend migration.
+GitHub now contains both the source relay and a point-in-time production
+backup. It is not an automatically updating mirror: run a new export before a
+later production migration if users have added data after 2026-07-28.
+
+## Verify or restore the production snapshot
+
+Verify every raw and materialized artifact:
+
+```powershell
+npm run backup:verify -- data/production-backup/2026-07-28
+```
+
+Generate a reviewable D1 restore SQL file without writing to any cloud:
+
+```powershell
+npm run backup:restore -- data/production-backup/2026-07-28
+```
+
+To restore into separately created Cloudflare resources after reviewing the
+plan:
+
+```powershell
+npm run backup:restore -- data/production-backup/2026-07-28 --database <D1_NAME> --bucket <R2_BUCKET> --apply
+```
+
+The restore script recreates every D1 table/row and uploads each R2 object under
+its original key. The reconstructed PDFs and page-text folders are convenient
+inspection copies; raw D1/R2 directories remain the authoritative restore
+source.
 
 ## Relevant files
 
@@ -194,12 +247,21 @@ D1/R2 data separately before a full backend migration.
 - Current Sites binding: `.openai/hosting.json`
 - Independent deployment notes: `DEPLOYMENT.md`, `wrangler.example.jsonc`
 - Hong Kong mirror: `deploy/tencent-hk-mirror/`
+- Production backup: `data/production-backup/2026-07-28/`
+- Backup/export/restore tools: `scripts/export-production-backup.mjs`,
+  `scripts/materialize-backup-reports.mjs`,
+  `scripts/verify-production-backup.mjs`,
+  `scripts/restore-production-backup.mjs`
 
 ## Recommended next-agent prompt
 
 ```text
 Continue Level Grind from HANDOVER_WORK_COMPUTER_2026-07-28.md on branch
-add-clerk-auth-alpha. First run npm ci and npm test. Then work in this order:
+add-clerk-auth-alpha. First run npm ci, verify
+data/production-backup/2026-07-28, and run npm test. The GitHub snapshot already
+contains current D1 rows, R2 objects, 30 report PDFs and page text, uploaded
+Excel files, knowledge records, users/preferences/usage, and AskAI history; do
+not re-upload them. Then work in this order:
 (1) import BBG/MCP event market reactions as a child table with T+1/T+5/T+20
 and benchmark excess returns; (2) make the Excel parser understand one real
 analyst workbook and preserve formulas on export; (3) validate the Tencent HK

@@ -16,6 +16,7 @@
     "events:knowledge": "node scripts/build-event-knowledge-seed.mjs",
     "cninfo:fetch": "node scripts/cninfo-fetch.mjs",
     "backup:export": "node scripts/export-production-backup.mjs",
+    "backup:materialize-reports": "node scripts/materialize-backup-reports.mjs",
     "backup:verify": "node scripts/verify-production-backup.mjs",
     "backup:restore": "node scripts/restore-production-backup.mjs"
   },

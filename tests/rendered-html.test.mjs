@@ -179,6 +179,8 @@ test("ships a resizable research chat and a cross-computer handover", async () =
   assert.match(styles, /\.chat-composer textarea[\s\S]*min-height: 112px/);
   assert.match(handover, /add-clerk-auth-alpha/);
   assert.match(handover, /The visual layout is normal React\/CSS and does \*\*not\*\* depend on ChatGPT Sites/);
-  assert.match(handover, /live D1 rows and live R2 objects/);
+  assert.match(handover, /all 25 production D1/);
+  assert.match(handover, /all 45 production R2/);
+  assert.match(handover, /30 reconstructed/);
   assert.match(handover, /T\+1, T\+5, and T\+20/);
 });

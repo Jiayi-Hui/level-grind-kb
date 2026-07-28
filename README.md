@@ -34,7 +34,12 @@ Conversation-routing principles are intentionally outside this product. Level
 Grind stores research material, evidence, preferences, and question history; it
 does not inspect or route a user's unrelated conversations.
 
-GitHub can synchronize validated source, schema, and product documentation between computers. Live D1 records and R2 attachments remain in the cloud deployment and are not committed to Git.
+GitHub synchronizes validated source, schema, product documentation, and the
+2026-07-28 production handover snapshot between computers. The snapshot
+contains all 25 D1 application tables, all 45 R2 objects, 30 directly openable
+report PDFs, per-report page text, uploaded Excel workbooks, knowledge records,
+AskAI projects/chats/history, model state, users/preferences, and usage rows.
+Runtime secrets are not committed.
 
 The tracked Event cold-start seed is sanitized: it includes Event definitions,
 Dymon/BBG verification findings, Claim provenance, and Team Notice metadata,
@@ -57,3 +62,9 @@ See `DEPLOYMENT.md` for Clerk, D1, and R2 setup notes.
 For a cross-computer continuation, current demo blockers, portable data
 boundary, and alternatives to Sites hosting, see
 `HANDOVER_WORK_COMPUTER_2026-07-28.md`.
+
+Verify the complete snapshot after cloning:
+
+```bash
+npm run backup:verify -- data/production-backup/2026-07-28
+```

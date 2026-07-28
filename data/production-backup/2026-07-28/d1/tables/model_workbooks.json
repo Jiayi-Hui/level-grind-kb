@@ -1,0 +1,36 @@
+[
+  {
+    "id": "99891bcb-22b9-4cbb-89ba-d6ff382a6cdf",
+    "model_name": "SpaceX Valuation Model",
+    "company": "SpaceX",
+    "ticker": "SPCX",
+    "sector": "",
+    "owner_email": "jiayihui01@gmail.com",
+    "owner_name": "Anna",
+    "version": "v1.0",
+    "status": "active",
+    "file_key": "models/99891bcb-22b9-4cbb-89ba-d6ff382a6cdf/SpaceX_Valuation_Model.xlsx",
+    "file_name": "SpaceX_Valuation_Model.xlsx",
+    "file_size": 136949,
+    "source_notes": "",
+    "created_at": "2026-07-27T23:15:00.123Z",
+    "updated_at": "2026-07-27T23:15:00.123Z"
+  },
+  {
+    "id": "246a54c7-9570-4356-b79e-7353c4542442",
+    "model_name": "test",
+    "company": "test",
+    "ticker": "test",
+    "sector": "test",
+    "owner_email": "jiayihui01@gmail.com",
+    "owner_name": "test",
+    "version": "v1.0",
+    "status": "active",
+    "file_key": "models/246a54c7-9570-4356-b79e-7353c4542442/Simple_Valuation_Model_Demo.xlsx",
+    "file_name": "Simple_Valuation_Model_Demo.xlsx",
+    "file_size": 7193,
+    "source_notes": "test",
+    "created_at": "2026-07-27T23:40:11.555Z",
+    "updated_at": "2026-07-27T23:40:11.555Z"
+  }
+]

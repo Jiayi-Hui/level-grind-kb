@@ -39,7 +39,30 @@ for (const entry of entries) {
   }
 }
 
+let reportSummary = "";
+try {
+  const reportManifest = JSON.parse(
+    await readFile(path.join(root, "reports", "manifest.json"), "utf8"),
+  );
+  for (const report of reportManifest.reports) {
+    const pdf = await readFile(path.join(root, report.pdfPath));
+    const pageText = await readFile(path.join(root, report.pageTextPath));
+    if (pdf.length !== report.pdfBytes || sha256(pdf) !== report.pdfSha256) {
+      throw new Error(`Materialized PDF mismatch: ${report.pdfPath}`);
+    }
+    if (
+      pageText.length !== report.pageTextBytes ||
+      sha256(pageText) !== report.pageTextSha256
+    ) {
+      throw new Error(`Materialized page-text mismatch: ${report.pageTextPath}`);
+    }
+  }
+  reportSummary = ` Materialized report library: ${reportManifest.reports.length} PDFs with per-report page text.`;
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
+}
+
 console.log(
   `Verified ${manifest.d1.tables.length} D1 tables (${manifest.d1.totalRows} rows) and ` +
-    `${manifest.r2.totalObjects} R2 objects (${manifest.r2.totalBytes} bytes).`,
+    `${manifest.r2.totalObjects} R2 objects (${manifest.r2.totalBytes} bytes).${reportSummary}`,
 );

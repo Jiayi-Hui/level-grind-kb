@@ -1,0 +1,765 @@
+{
+  "format": "level-grind-production-backup",
+  "formatVersion": 1,
+  "source": "https://level-grind-workspace.dingjingbo3747.chatgpt.site",
+  "exportedAt": "2026-07-28T00:13:37.112Z",
+  "d1": {
+    "tables": [
+      {
+        "name": "__appgarden_migrations",
+        "sql": "CREATE TABLE \"__appgarden_migrations\"(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE,applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)",
+        "rowCount": 13,
+        "path": "d1/tables/__appgarden_migrations.json",
+        "bytes": 1368,
+        "sha256": "99a0d7d806fac337e9c13c9d6980734cc4c959ef8df75cd7957884087246e4e5"
+      },
+      {
+        "name": "ai_usage_events",
+        "sql": "CREATE TABLE `ai_usage_events` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_email` text NOT NULL,\n\t`provider` text NOT NULL,\n\t`model` text NOT NULL,\n\t`input_tokens` integer DEFAULT 0 NOT NULL,\n\t`output_tokens` integer DEFAULT 0 NOT NULL,\n\t`estimated_cost_usd` text DEFAULT '0' NOT NULL,\n\t`latency_ms` integer DEFAULT 0 NOT NULL,\n\t`status` text NOT NULL,\n\t`created_at` text NOT NULL\n)",
+        "rowCount": 5,
+        "path": "d1/tables/ai_usage_events.json",
+        "bytes": 1754,
+        "sha256": "a74e4977d0b2ed8c7e1bdbfa0b8796c59bf7773d70818401b3d121ad24ecd903"
+      },
+      {
+        "name": "conversation_workstreams",
+        "sql": "CREATE TABLE `conversation_workstreams` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`owner_email` text NOT NULL,\n\t`project_name` text NOT NULL,\n\t`chat_title` text NOT NULL,\n\t`active_goal` text NOT NULL,\n\t`deliverable` text DEFAULT '' NOT NULL,\n\t`shift_reason` text DEFAULT '' NOT NULL,\n\t`recommended_action` text DEFAULT 'new-chat' NOT NULL,\n\t`handoff_summary` text DEFAULT '' NOT NULL,\n\t`status` text DEFAULT 'active' NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 0,
+        "path": "d1/tables/conversation_workstreams.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "name": "corpus_chunks",
+        "sql": "CREATE TABLE `corpus_chunks` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`document_id` text NOT NULL,\n\t`page_number` integer NOT NULL,\n\t`content` text NOT NULL,\n\tFOREIGN KEY (`document_id`) REFERENCES `corpus_documents`(`id`) ON UPDATE no action ON DELETE cascade\n)",
+        "rowCount": 6218,
+        "path": "d1/tables/corpus_chunks.json",
+        "bytes": 14301192,
+        "sha256": "ab8c2e04f69a766f3209f2ab4de10370f8aeabe6b55ea1bd24a89b6379173c97"
+      },
+      {
+        "name": "corpus_documents",
+        "sql": "CREATE TABLE `corpus_documents` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`security_code` text NOT NULL,\n\t`company_name` text NOT NULL,\n\t`title` text NOT NULL,\n\t`document_type` text NOT NULL,\n\t`published_at` text NOT NULL,\n\t`source_url` text NOT NULL,\n\t`file_key` text NOT NULL,\n\t`file_name` text NOT NULL,\n\t`file_size` integer NOT NULL,\n\t`page_count` integer DEFAULT 0 NOT NULL,\n\t`uploaded_by` text NOT NULL,\n\t`created_at` text NOT NULL\n)",
+        "rowCount": 30,
+        "path": "d1/tables/corpus_documents.json",
+        "bytes": 18829,
+        "sha256": "9212879362399c2d289f1dd69785fbd3285516905a23539646ae918da998482f"
+      },
+      {
+        "name": "document_context",
+        "sql": "CREATE TABLE `document_context` (\n\t`document_id` text PRIMARY KEY NOT NULL,\n\t`context_scope` text DEFAULT 'team' NOT NULL,\n\t`source_system` text DEFAULT 'manual' NOT NULL,\n\t`topics` text DEFAULT '' NOT NULL,\n\t`event_date` text,\n\t`confidence` text DEFAULT 'medium' NOT NULL,\n\tFOREIGN KEY (`document_id`) REFERENCES `documents`(`id`) ON UPDATE no action ON DELETE cascade\n)",
+        "rowCount": 4,
+        "path": "d1/tables/document_context.json",
+        "bytes": 927,
+        "sha256": "bd1af38d03de162c72c3c68946c93680bda4c88cb7435d84c898d403e0b7da2f"
+      },
+      {
+        "name": "documents",
+        "sql": "CREATE TABLE `documents` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`title` text NOT NULL,\n\t`kind` text NOT NULL,\n\t`body` text DEFAULT '' NOT NULL,\n\t`source_url` text,\n\t`author_email` text NOT NULL,\n\t`author_name` text NOT NULL,\n\t`project` text DEFAULT 'General' NOT NULL,\n\t`importance` text DEFAULT 'normal' NOT NULL,\n\t`visibility` text DEFAULT 'team' NOT NULL,\n\t`file_key` text,\n\t`file_name` text,\n\t`file_type` text,\n\t`file_size` integer,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 4,
+        "path": "d1/tables/documents.json",
+        "bytes": 19706,
+        "sha256": "9016900d7fc42d7f122ee9ed04761e616a2cc8289f9fecdc59531100c6d12da6"
+      },
+      {
+        "name": "model_change_log",
+        "sql": "CREATE TABLE model_change_log (\n  id TEXT PRIMARY KEY,\n  model_id TEXT NOT NULL REFERENCES model_workbooks(id) ON DELETE CASCADE,\n  actor_email TEXT NOT NULL,\n  action TEXT NOT NULL,\n  summary TEXT NOT NULL,\n  created_at TEXT NOT NULL\n)",
+        "rowCount": 2,
+        "path": "d1/tables/model_change_log.json",
+        "bytes": 576,
+        "sha256": "0be3987379c917e6558d9cb9d96617a278cff0237008e6edd328240147f1377a"
+      },
+      {
+        "name": "model_update_queue",
+        "sql": "CREATE TABLE model_update_queue (\n  id TEXT PRIMARY KEY,\n  model_id TEXT NOT NULL REFERENCES model_workbooks(id) ON DELETE CASCADE,\n  variable_id TEXT NOT NULL REFERENCES model_variables(id) ON DELETE CASCADE,\n  source_type TEXT NOT NULL,\n  source_id TEXT NOT NULL,\n  source_label TEXT NOT NULL,\n  source_date TEXT,\n  proposed_value TEXT NOT NULL DEFAULT '',\n  status TEXT NOT NULL DEFAULT 'pending',\n  reviewed_by TEXT,\n  reviewed_at TEXT,\n  created_at TEXT NOT NULL\n)",
+        "rowCount": 0,
+        "path": "d1/tables/model_update_queue.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "name": "model_variables",
+        "sql": "CREATE TABLE model_variables (\n  id TEXT PRIMARY KEY,\n  model_id TEXT NOT NULL REFERENCES model_workbooks(id) ON DELETE CASCADE,\n  variable_key TEXT NOT NULL,\n  label TEXT NOT NULL,\n  kind TEXT NOT NULL,\n  sheet_name TEXT NOT NULL,\n  cell_ref TEXT NOT NULL,\n  value TEXT NOT NULL DEFAULT '',\n  formula TEXT NOT NULL DEFAULT '',\n  unit TEXT NOT NULL DEFAULT '',\n  period TEXT NOT NULL DEFAULT '',\n  source_system TEXT NOT NULL DEFAULT '',\n  source_url TEXT NOT NULL DEFAULT '',\n  source_date TEXT,\n  is_stale INTEGER NOT NULL DEFAULT 0,\n  updated_at TEXT NOT NULL\n)",
+        "rowCount": 0,
+        "path": "d1/tables/model_variables.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "name": "model_workbooks",
+        "sql": "CREATE TABLE model_workbooks (\n  id TEXT PRIMARY KEY,\n  model_name TEXT NOT NULL,\n  company TEXT NOT NULL,\n  ticker TEXT NOT NULL DEFAULT '',\n  sector TEXT NOT NULL DEFAULT '',\n  owner_email TEXT NOT NULL,\n  owner_name TEXT NOT NULL DEFAULT '',\n  version TEXT NOT NULL DEFAULT 'v1',\n  status TEXT NOT NULL DEFAULT 'active',\n  file_key TEXT NOT NULL,\n  file_name TEXT NOT NULL,\n  file_size INTEGER NOT NULL,\n  source_notes TEXT NOT NULL DEFAULT '',\n  created_at TEXT NOT NULL,\n  updated_at TEXT NOT NULL\n)",
+        "rowCount": 2,
+        "path": "d1/tables/model_workbooks.json",
+        "bytes": 1125,
+        "sha256": "24ae7a8e55f8e2062aade0664279684f569b2803c86269b7a98c8c3d2f1a1739"
+      },
+      {
+        "name": "personal_contexts",
+        "sql": "CREATE TABLE `personal_contexts` (\n\t`email` text PRIMARY KEY NOT NULL,\n\t`display_name` text NOT NULL,\n\t`coverage` text DEFAULT '' NOT NULL,\n\t`output_preferences` text DEFAULT '' NOT NULL,\n\t`working_method` text DEFAULT '' NOT NULL,\n\t`private_memory` text DEFAULT '' NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 1,
+        "path": "d1/tables/personal_contexts.json",
+        "bytes": 727,
+        "sha256": "18552600333b91ee57aae5f3aadf50c1897f142b287c2f274904678df4f3ed37"
+      },
+      {
+        "name": "research_chats",
+        "sql": "CREATE TABLE `research_chats` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_email` text NOT NULL,\n\t`project_id` text NOT NULL,\n\t`title` text NOT NULL,\n\t`evidence_mode` text DEFAULT 'hybrid' NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 3,
+        "path": "d1/tables/research_chats.json",
+        "bytes": 1316,
+        "sha256": "7a7a992a0a6f034a716308cf66e32b676e52c9d1a500043b0d67950ff5e28773"
+      },
+      {
+        "name": "research_claims",
+        "sql": "CREATE TABLE `research_claims` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`claim_text` text NOT NULL,\n\t`claim_type` text DEFAULT 'fact' NOT NULL,\n\t`claimed_at` text,\n\t`speaker` text,\n\t`company` text,\n\t`ticker` text,\n\t`source_system` text DEFAULT 'manual' NOT NULL,\n\t`source_title` text,\n\t`source_url` text,\n\t`source_locator` text,\n\t`source_excerpt` text,\n\t`verification_status` text DEFAULT 'unverified' NOT NULL,\n\t`verification_kind` text DEFAULT 'candidate' NOT NULL,\n\t`confidence` text DEFAULT 'medium' NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 62,
+        "path": "d1/tables/research_claims.json",
+        "bytes": 45109,
+        "sha256": "fb03cbf399282d4fffb14f80765af1cb1e6fe869e301073db1977d7dc31b3cf6"
+      },
+      {
+        "name": "research_event_claims",
+        "sql": "CREATE TABLE `research_event_claims` (\n\t`event_id` text NOT NULL,\n\t`claim_id` text NOT NULL,\n\t`relation` text DEFAULT 'supports' NOT NULL,\n\t`created_at` text NOT NULL,\n\tPRIMARY KEY (`event_id`,`claim_id`),\n\tFOREIGN KEY (`event_id`) REFERENCES `research_events`(`id`) ON UPDATE no action ON DELETE cascade,\n\tFOREIGN KEY (`claim_id`) REFERENCES `research_claims`(`id`) ON UPDATE no action ON DELETE cascade\n)",
+        "rowCount": 106,
+        "path": "d1/tables/research_event_claims.json",
+        "bytes": 17109,
+        "sha256": "f3cb8f4d8bafc1b8c60e571dc7233cae0c51e41363041bc8b9919085ef36efdf"
+      },
+      {
+        "name": "research_event_notices",
+        "sql": "CREATE TABLE `research_event_notices` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`event_id` text NOT NULL,\n\t`noticed_by` text NOT NULL,\n\t`noticed_at` text NOT NULL,\n\t`channel` text DEFAULT 'manual' NOT NULL,\n\t`notice_type` text DEFAULT 'shared' NOT NULL,\n\t`salience` text DEFAULT 'normal' NOT NULL,\n\t`summary` text DEFAULT '' NOT NULL,\n\t`source_message_id` text,\n\t`created_by` text NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL,\n\tFOREIGN KEY (`event_id`) REFERENCES `research_events`(`id`) ON UPDATE no action ON DELETE cascade\n)",
+        "rowCount": 45,
+        "path": "d1/tables/research_event_notices.json",
+        "bytes": 22049,
+        "sha256": "e5744432bb567227b99199e5d07eaf95257f0ec5f7ca064b42df0f074bd5a63c"
+      },
+      {
+        "name": "research_events",
+        "sql": "CREATE TABLE `research_events` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`title` text NOT NULL,\n\t`event_type` text NOT NULL,\n\t`event_date` text,\n\t`effective_period` text,\n\t`company` text,\n\t`ticker` text,\n\t`sector` text,\n\t`geography` text,\n\t`summary` text DEFAULT '' NOT NULL,\n\t`event_nature` text DEFAULT 'actual' NOT NULL,\n\t`impact_type` text DEFAULT 'fundamental' NOT NULL,\n\t`impact_direction` text DEFAULT 'mixed' NOT NULL,\n\t`priority` text DEFAULT 'P1' NOT NULL,\n\t`verification_status` text DEFAULT 'unverified' NOT NULL,\n\t`verification_kind` text DEFAULT 'candidate' NOT NULL,\n\t`verification_summary` text,\n\t`confidence` text DEFAULT 'medium' NOT NULL,\n\t`metric_name` text,\n\t`metric_object` text,\n\t`expected_value` text,\n\t`actual_value` text,\n\t`unit` text,\n\t`supplier` text,\n\t`customer` text,\n\t`product` text,\n\t`date_precision` text,\n\t`source_class` text,\n\t`source_week` text,\n\t`source_locator` text,\n\t`raw_claim` text,\n\t`verification_plan` text,\n\t`pm_relevance` text,\n\t`analyst_notes` text,\n\t`source_system` text DEFAULT 'manual' NOT NULL,\n\t`source_title` text,\n\t`source_url` text,\n\t`source_message_id` text,\n\t`source_excerpt` text,\n\t`verification_sources_json` text DEFAULT '[]' NOT NULL,\n\t`tags_json` text DEFAULT '[]' NOT NULL,\n\t`created_by` text NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 45,
+        "path": "d1/tables/research_events.json",
+        "bytes": 97037,
+        "sha256": "94dd5829f17dedcc9177165b0efcdd0f2a42af42ab2cc487e20dcbd38ca324ab"
+      },
+      {
+        "name": "research_messages",
+        "sql": "CREATE TABLE `research_messages` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`chat_id` text NOT NULL,\n\t`user_email` text NOT NULL,\n\t`role` text NOT NULL,\n\t`content` text NOT NULL,\n\t`citations_json` text DEFAULT '[]' NOT NULL,\n\t`web_results_json` text DEFAULT '[]' NOT NULL,\n\t`provider` text,\n\t`model` text,\n\t`input_tokens` integer DEFAULT 0 NOT NULL,\n\t`output_tokens` integer DEFAULT 0 NOT NULL,\n\t`estimated_cost_usd` text DEFAULT '0' NOT NULL,\n\t`created_at` text NOT NULL\n)",
+        "rowCount": 6,
+        "path": "d1/tables/research_messages.json",
+        "bytes": 152241,
+        "sha256": "528f906318a06470b7f8e9aceec99385e55b2bc9c39c79ea3260a62d1e42613b"
+      },
+      {
+        "name": "research_projects",
+        "sql": "CREATE TABLE `research_projects` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_email` text NOT NULL,\n\t`title` text NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 3,
+        "path": "d1/tables/research_projects.json",
+        "bytes": 686,
+        "sha256": "1ada8d3ecdbc81cebbc40cc58b4bc48c5c46eaf4247b4f606175b6c196520ab7"
+      },
+      {
+        "name": "research_queries",
+        "sql": "CREATE TABLE `research_queries` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`user_email` text NOT NULL,\n\t`question` text NOT NULL,\n\t`answer` text NOT NULL,\n\t`evidence_mode` text DEFAULT 'reports' NOT NULL,\n\t`citations_json` text DEFAULT '[]' NOT NULL,\n\t`web_results_json` text DEFAULT '[]' NOT NULL,\n\t`provider` text NOT NULL,\n\t`model` text NOT NULL,\n\t`input_tokens` integer DEFAULT 0 NOT NULL,\n\t`output_tokens` integer DEFAULT 0 NOT NULL,\n\t`estimated_cost_usd` text DEFAULT '0' NOT NULL,\n\t`created_at` text NOT NULL\n)",
+        "rowCount": 3,
+        "path": "d1/tables/research_queries.json",
+        "bytes": 150897,
+        "sha256": "e1f842bcae385c8aa71f1376a1461bb7d7ce4d7a43451f6a709a2a457788e966"
+      },
+      {
+        "name": "routing_policies",
+        "sql": "CREATE TABLE `routing_policies` (\n\t`email` text PRIMARY KEY NOT NULL,\n\t`reminder_enabled` integer DEFAULT true NOT NULL,\n\t`trigger_rules` text DEFAULT 'Remind me when the goal, deliverable, repository, data boundary, permissions, or long-term workstream changes.' NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 0,
+        "path": "d1/tables/routing_policies.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "name": "task_contexts",
+        "sql": "CREATE TABLE `task_contexts` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`title` text NOT NULL,\n\t`objective` text NOT NULL,\n\t`topic` text DEFAULT 'General' NOT NULL,\n\t`status` text DEFAULT 'ready' NOT NULL,\n\t`owner_email` text NOT NULL,\n\t`context_scope` text DEFAULT 'personal+team' NOT NULL,\n\t`output_format` text DEFAULT 'Concise brief with sources' NOT NULL,\n\t`guardrails` text DEFAULT '' NOT NULL,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 0,
+        "path": "d1/tables/task_contexts.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "name": "team_members",
+        "sql": "CREATE TABLE `team_members` (\n\t`email` text PRIMARY KEY NOT NULL,\n\t`display_name` text DEFAULT '' NOT NULL,\n\t`role` text DEFAULT 'member' NOT NULL,\n\t`status` text DEFAULT 'active' NOT NULL,\n\t`invited_by` text,\n\t`created_at` text NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 1,
+        "path": "d1/tables/team_members.json",
+        "bytes": 255,
+        "sha256": "63ffb223ab009e1a3be11321f5abe9d9b6438cfbf2d044d7351b39b9eb04720b"
+      },
+      {
+        "name": "user_preferences",
+        "sql": "CREATE TABLE `user_preferences` (\n\t`email` text PRIMARY KEY NOT NULL,\n\t`language` text DEFAULT 'en' NOT NULL,\n\t`storage_quota_bytes` integer DEFAULT 5368709120 NOT NULL,\n\t`updated_at` text NOT NULL\n)",
+        "rowCount": 1,
+        "path": "d1/tables/user_preferences.json",
+        "bytes": 156,
+        "sha256": "e818e47d4732fda6eb66e13662c964c28d3023ce904b4b25afd94df712edb8ae"
+      },
+      {
+        "name": "web_usage_events",
+        "sql": "CREATE TABLE web_usage_events (\n    id TEXT PRIMARY KEY,\n    user_email TEXT NOT NULL,\n    provider TEXT NOT NULL,\n    search_depth TEXT NOT NULL,\n    credits_estimated INTEGER NOT NULL DEFAULT 0,\n    created_at TEXT NOT NULL\n  )",
+        "rowCount": 1,
+        "path": "d1/tables/web_usage_events.json",
+        "bytes": 235,
+        "sha256": "7cc60d956a99128bab435a22cacc2fbcc6d7c5f4cf6d06c95f8bf62ec52131b6"
+      }
+    ],
+    "totalRows": 6555
+  },
+  "r2": {
+    "objects": [
+      {
+        "key": "corpus/000063/230bc04c-5c15-4c85-ab1e-0db904e246cc/parts/0000",
+        "size": 3000000,
+        "etag": "4ab3a59450b34b429638dc530cf662f7",
+        "uploaded": "2026-07-26T14:43:15.912Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/2c832797093cfe6d9b70--0000",
+        "sha256": "32f568fac7dca6e6ebed7fc973da278965aa913bfee018794f40087b0f209478"
+      },
+      {
+        "key": "corpus/000063/230bc04c-5c15-4c85-ab1e-0db904e246cc/parts/0001",
+        "size": 2681464,
+        "etag": "72f5b662faed3d601e948bb98ce9cd3a",
+        "uploaded": "2026-07-26T14:43:22.861Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/bd3ced7ca9634aae2e80--0001",
+        "sha256": "ef325431f9e8032eedf02c0e52261189ae127bca2c857de76f2bc25dacbf945d"
+      },
+      {
+        "key": "corpus/000063/4bee066c-bcfa-44da-9a3e-c7334a4aea79/parts/0000",
+        "size": 3000000,
+        "etag": "d6a36e8fb2f9d9d577d12bf33e2a105f",
+        "uploaded": "2026-07-26T14:41:33.572Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/15f8c7de0e9c476c5a66--0000",
+        "sha256": "c5d424628f4ad9afd9e9f556440ca209d15f1bd35d3a2bfe47094dead76655ac"
+      },
+      {
+        "key": "corpus/000063/4bee066c-bcfa-44da-9a3e-c7334a4aea79/parts/0001",
+        "size": 3000000,
+        "etag": "e66710044b18961ee251b514ea3ac6ef",
+        "uploaded": "2026-07-26T14:41:55.500Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/f085adffbdbe8fae9dac--0001",
+        "sha256": "eaccfcbd7638d9a8d5621972471657f284575410cbf730106c5638424389b33f"
+      },
+      {
+        "key": "corpus/000063/4bee066c-bcfa-44da-9a3e-c7334a4aea79/parts/0002",
+        "size": 214910,
+        "etag": "caa746b765fccd2a439198752e55bc27",
+        "uploaded": "2026-07-26T14:41:57.330Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/2f97ca3845437fade1ba--0002",
+        "sha256": "04cf80037267d015e1f8a5839e71840274c0b21a567fa670f1a299bd6bf0392c"
+      },
+      {
+        "key": "corpus/002558/49e31b03-d79c-41f9-b8d3-60615b099edc/parts/0000",
+        "size": 3000000,
+        "etag": "72ef66148d067b1dc47ac24db4ab556f",
+        "uploaded": "2026-07-26T14:50:08.605Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/e69dda123f5387623b9c--0000",
+        "sha256": "ba97101d53bafb26c877b1ee34efbce2e671467c01e729c6d6debd750bc18730"
+      },
+      {
+        "key": "corpus/002558/49e31b03-d79c-41f9-b8d3-60615b099edc/parts/0001",
+        "size": 3000000,
+        "etag": "44f195732e4f3b07b82c7d35071256f2",
+        "uploaded": "2026-07-26T14:50:13.604Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/bf51ff10de7d85c029c6--0001",
+        "sha256": "f228ae6178a6a6132472bf1b00398144136ea13d96d469d8438d63c498ab9f2b"
+      },
+      {
+        "key": "corpus/002558/49e31b03-d79c-41f9-b8d3-60615b099edc/parts/0002",
+        "size": 14132,
+        "etag": "1f4d8b40e3a4b083197de7bf74695609",
+        "uploaded": "2026-07-26T14:50:14.619Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/154c7005dea21442b970--0002",
+        "sha256": "1c6a5dd0e81fe5c77e7e4522a6a27f7e4dbdceca49731640e6162bcec4eb8e78"
+      },
+      {
+        "key": "corpus/002558/4c4fb504-42d6-4ec4-b37c-b6781dd3be34/parts/0000",
+        "size": 3000000,
+        "etag": "6f43c9c5e035f101a3d268f8b165fe51",
+        "uploaded": "2026-07-26T14:50:26.765Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/2441ba2556d174500c10--0000",
+        "sha256": "57bca71597656243593169d8beab37b83e72e5e5389d5557cf4e06e9d69c38d6"
+      },
+      {
+        "key": "corpus/002558/4c4fb504-42d6-4ec4-b37c-b6781dd3be34/parts/0001",
+        "size": 1828265,
+        "etag": "c3da64be177c5c7deac11eeb88ef3de8",
+        "uploaded": "2026-07-26T14:50:29.442Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/e0f5c0826f3d77069fc8--0001",
+        "sha256": "886fe1232aa18558a05a6acaaa49bb30b282aa4e7f22e62b812af1d382d6aed2"
+      },
+      {
+        "key": "corpus/002602/c6d1332a-f3d8-4d1c-adc7-4f59a7ba2b5d/parts/0000",
+        "size": 2048378,
+        "etag": "572d7fbdcae9229880d2cc819f89ff97",
+        "uploaded": "2026-07-26T14:49:39.672Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/8c78ef9cf118cd9fda55--0000",
+        "sha256": "9a1a8175f9949af08a3b864fbc64ec03457b69286bb38d0caaad0ad7950904c3"
+      },
+      {
+        "key": "corpus/002602/fa323d31-0884-415e-9238-de22e935617a/parts/0000",
+        "size": 1766817,
+        "etag": "21fc2be29b5d60179a525b72cac2b7d4",
+        "uploaded": "2026-07-26T14:49:53.883Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/aa24b04e62cba8dead1b--0000",
+        "sha256": "539c271412621545b14bfbc32996f514372c78adfe27984f0e77cb80fa1a2fcb"
+      },
+      {
+        "key": "corpus/002946/46ca8d1b-9a12-49ad-87a6-df5342ae183a/parts/0000",
+        "size": 1040232,
+        "etag": "69722ad89cee75d6a4a000c3892e00b0",
+        "uploaded": "2026-07-26T14:44:18.716Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/e835b3f35cf7123bfb67--0000",
+        "sha256": "0eec3750bb7a13f2681929c21ed09c32fa3b72686736c512165c02c996bf34d7"
+      },
+      {
+        "key": "corpus/002946/8cf14946-c7b3-44b9-8498-d253d4034603/parts/0000",
+        "size": 3000000,
+        "etag": "2fc4f919f76f24aafa71abb1fe5cb697",
+        "uploaded": "2026-07-26T14:43:48.741Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/89127ee3947574f18daf--0000",
+        "sha256": "24a05bde3eb98ac13ad0ec1d074cc8a33d7978da1fd6586e4e0d2a6e0cf2b9e2"
+      },
+      {
+        "key": "corpus/002946/8cf14946-c7b3-44b9-8498-d253d4034603/parts/0001",
+        "size": 1860558,
+        "etag": "17600e34d5923678d12505f164274981",
+        "uploaded": "2026-07-26T14:43:50.392Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/ff38e02902c7fe8f6d63--0001",
+        "sha256": "651f28cc218057424c4b6a200a1593e6c48892c58680d8f6492600a8f19408e0"
+      },
+      {
+        "key": "corpus/002956/8de76876-0c8e-4c5c-ad47-796005a3419d/parts/0000",
+        "size": 3000000,
+        "etag": "2153ceb82a1631aee780d8e9a5c7439b",
+        "uploaded": "2026-07-26T14:49:00.571Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/bb8c640a7fccdcd46694--0000",
+        "sha256": "170c74213a9c81386596d74dd33aabd780be30e64df9d6f93513269fd74abfe9"
+      },
+      {
+        "key": "corpus/002956/8de76876-0c8e-4c5c-ad47-796005a3419d/parts/0001",
+        "size": 939150,
+        "etag": "5438cb88b92e520f9153dbb9969b8991",
+        "uploaded": "2026-07-26T14:49:04.446Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/0eef5f1c6b9fdec76d60--0001",
+        "sha256": "73c6ee46110aae0cd7dd79059887c9817a28a8dce3ae5278e5a9ac03155d002f"
+      },
+      {
+        "key": "corpus/002956/d353a14f-04aa-44d4-bdfc-06fcc49b3aa5/parts/0000",
+        "size": 1538451,
+        "etag": "80440c766ad87dc946976c56b08a6d86",
+        "uploaded": "2026-07-26T14:49:19.750Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/36fdda6fe3b759326d2f--0000",
+        "sha256": "cb03e2454ce919006ca9fc6e6a847a5dda0bea9d9d341a38149f3c184a9639c5"
+      },
+      {
+        "key": "corpus/300383/617fdff3-30f2-40b5-a3d7-88a82b80d702/parts/0000",
+        "size": 3000000,
+        "etag": "591c3b132d20d5a16a05f6b6abc335d5",
+        "uploaded": "2026-07-26T14:52:46.407Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/b71779a6f6b9496a90c7--0000",
+        "sha256": "71b6e3b7937fa3b56011f6a599bfc35f8482d5e6999a82213633ac51ffeb9bd4"
+      },
+      {
+        "key": "corpus/300383/617fdff3-30f2-40b5-a3d7-88a82b80d702/parts/0001",
+        "size": 1491992,
+        "etag": "c5e898c500c07caf301279376ed880f2",
+        "uploaded": "2026-07-26T14:52:51.509Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/8210aa6e2c09059638d4--0001",
+        "sha256": "750ced52291fea87a02025f5f8db6a47566b3ae89bf8f288dd0ea4f153784627"
+      },
+      {
+        "key": "corpus/300383/f7b34d92-fc0e-4e1c-a0f9-622c70119be0/parts/0000",
+        "size": 3000000,
+        "etag": "a62c90e4073a9f737133380008f4717a",
+        "uploaded": "2026-07-26T14:53:10.505Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/22ab8fedbc86b8acf938--0000",
+        "sha256": "9f260e0404c66d5dee94ba26b5fb86486f93115229a154cf372f7b1a42367e4c"
+      },
+      {
+        "key": "corpus/300383/f7b34d92-fc0e-4e1c-a0f9-622c70119be0/parts/0001",
+        "size": 1115012,
+        "etag": "e207f98fc2994b1db7e10488202eb404",
+        "uploaded": "2026-07-26T14:53:12.219Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/a3ac88057d06468e1f3d--0001",
+        "sha256": "78c66feb54ac5110d8be505e6ad95c3b066104094103dda44cada586ad553d26"
+      },
+      {
+        "key": "corpus/300442/17ee6120-846f-45c5-a0af-2a10f75933c6/parts/0000",
+        "size": 1362652,
+        "etag": "798f56745c8f19aa38f15216c068e235",
+        "uploaded": "2026-07-26T14:50:41.784Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/263679507fa7188d533b--0000",
+        "sha256": "83350ce667699d2624240585bff0e30b7d2d7d63aff938365c02bee95efd201f"
+      },
+      {
+        "key": "corpus/300442/458f822b-775e-4bb4-a996-9f4bebaa12d0/parts/0000",
+        "size": 932744,
+        "etag": "fa2b753a2e87f6310b63a34dff1a877f",
+        "uploaded": "2026-07-26T14:51:05.190Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/c0a758743eb623e1242c--0000",
+        "sha256": "547e08d54ddca8b3849fc8e4c9dc77e722d11788dbcf40c822194c1fa99797e9"
+      },
+      {
+        "key": "corpus/300972/2d94e4a7-a281-432a-ab03-efbcef82571d/parts/0000",
+        "size": 2121591,
+        "etag": "4d3fc2d920d4b0400925ccee29b538f6",
+        "uploaded": "2026-07-26T14:48:21.468Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/a09a693cfc509712ee9a--0000",
+        "sha256": "02db108b29064704e13d8f7f5183a9555b2f4e6e8e015f0bb2c15e307f470f82"
+      },
+      {
+        "key": "corpus/300972/e1db4941-7336-4ced-a282-b67590b60c49/parts/0000",
+        "size": 1513070,
+        "etag": "3eacb5ff18a9e7b54d76677b570570a1",
+        "uploaded": "2026-07-26T14:48:41.544Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/5f4e0f231e9506552e2b--0000",
+        "sha256": "7ffd3c6c8db2d026896f909c5fcee6c63a9fecb5f80fb2cbd5c47a7b89f2bfad"
+      },
+      {
+        "key": "corpus/301526/69f9b296-9cca-4116-b417-cdfef94010e5/parts/0000",
+        "size": 3000000,
+        "etag": "140c5c76553f8c94447e57c340c8bb18",
+        "uploaded": "2026-07-26T14:56:58.716Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/c851b0c270be855d3508--0000",
+        "sha256": "b23084666be10147f938b08102cee2f1bdf0d3a5461a98d1de5f694c9de425a1"
+      },
+      {
+        "key": "corpus/301526/69f9b296-9cca-4116-b417-cdfef94010e5/parts/0001",
+        "size": 1712784,
+        "etag": "103328aaaa611ad5f012b39e4c28add0",
+        "uploaded": "2026-07-26T14:57:05.044Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/c15186a0507131cbca27--0001",
+        "sha256": "9f753482d3cae19d6c7c64b8995e07c578f166680167ca5de3d81df5b592cff6"
+      },
+      {
+        "key": "corpus/301526/906e87d8-a246-4677-8c96-0dd58742b426/parts/0000",
+        "size": 3000000,
+        "etag": "8632007710214271f9f693ea91747182",
+        "uploaded": "2026-07-26T14:56:18.446Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/c5738f6a0755e7d8e5a4--0000",
+        "sha256": "81318470af4dc46222552dff9b422aae15c5b312150d8a4c700557adb5162603"
+      },
+      {
+        "key": "corpus/301526/906e87d8-a246-4677-8c96-0dd58742b426/parts/0001",
+        "size": 3000000,
+        "etag": "b86a9ae3a840dd5f4a9388f9d3f5054a",
+        "uploaded": "2026-07-26T14:56:28.812Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/67cb9b731eceda9699e1--0001",
+        "sha256": "9891bbf33e382a5878965bb8218d8cdadfa10fe6ca1f598014dd06e8fe34b5e5"
+      },
+      {
+        "key": "corpus/301526/906e87d8-a246-4677-8c96-0dd58742b426/parts/0002",
+        "size": 283782,
+        "etag": "c7cfdf7ac6c7bee4eafe55e0815763b2",
+        "uploaded": "2026-07-26T14:56:30.529Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/ffd326cb07fd91f4ae85--0002",
+        "sha256": "1f01d51c488f30589b02c25558109d9778bb157aa7cbe738d03c415eeb4d87f1"
+      },
+      {
+        "key": "corpus/600183/2c04065b-ff4b-4b47-af5a-b92bf562d524/parts/0000",
+        "size": 1799800,
+        "etag": "8084816ee577e90b57fdcd833a083601",
+        "uploaded": "2026-07-26T14:57:16.990Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/9427ba97db74c33ca7f0--0000",
+        "sha256": "cf39d9c7014358ef47ff0e38d3ae91cb9827c22432309b501165eafa95f00435"
+      },
+      {
+        "key": "corpus/600183/8a88b5fd-d817-45b5-adbb-04d61c45209e/parts/0000",
+        "size": 1188227,
+        "etag": "d73a0d83a95d975e0ee3abaf837c06cf",
+        "uploaded": "2026-07-26T14:57:37.215Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/bd0116edd6898b40abbe--0000",
+        "sha256": "c8b60bc7e939065f4de5270a2c138fcf662991b8fc172a50155fab44e0858ec4"
+      },
+      {
+        "key": "corpus/600378/b8be3f11-e87d-44c2-920b-539ab13b3b23/parts/0000",
+        "size": 1395381,
+        "etag": "ce2d5254b050b7498181cfb1ecb585ea",
+        "uploaded": "2026-07-26T14:53:43.314Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/b71856aca0f1d073c6ae--0000",
+        "sha256": "e7f76d4b8e14ea045a29f58f6a463085b1fb8ce62730348ce08b2b0326174dec"
+      },
+      {
+        "key": "corpus/600378/caf8b8ec-8bee-4377-b8dc-50612659c687/parts/0000",
+        "size": 2151098,
+        "etag": "f55f5d62929281477632bedd4b893df0",
+        "uploaded": "2026-07-26T14:53:26.439Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/8327b9d16239a6af8da8--0000",
+        "sha256": "0493a2740fec2746f92a2121b503616b24dc0527b7f8a381b99b2d92e58482e7"
+      },
+      {
+        "key": "corpus/600673/8592e334-4d4a-4b89-a53e-1b126b2e8bbb/parts/0000",
+        "size": 1234301,
+        "etag": "2d9e288fa9ce750dc8e8d4caba0cc549",
+        "uploaded": "2026-07-26T14:52:07.384Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/f6414f2f667b20531f16--0000",
+        "sha256": "fefc4f31ceff25ff0f4f6e07f8731a74355060cccb1d29f8272b391e7169ec4f"
+      },
+      {
+        "key": "corpus/600673/ebc60c4a-1331-405d-93cd-a8c2135610ad/parts/0000",
+        "size": 1712229,
+        "etag": "b4f2ca24f484ad2b91c239632a0719c2",
+        "uploaded": "2026-07-26T14:51:38.446Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/501aa0dd6ab633a9534f--0000",
+        "sha256": "a8e2a13be86d3b3cad6dea2ac88b4ecc13e1057547c54621b6b81404f6fbfaad"
+      },
+      {
+        "key": "corpus/601208/7569a0a3-828d-40b5-8e76-939dd9d4503d/parts/0000",
+        "size": 1202324,
+        "etag": "1ab0045375a1a681502d0356e737e7c3",
+        "uploaded": "2026-07-26T14:54:56.296Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/6366fe49c41c7fc22521--0000",
+        "sha256": "1a33b0c10f1ef6f0c9dbef8bdd79b8c831eacfa35bdc730cd4d22cf595c6603a"
+      },
+      {
+        "key": "corpus/601208/8897eb5e-dcd1-4fce-8a6d-5068d0277239/parts/0000",
+        "size": 1894814,
+        "etag": "18c345465b092a8cca91e4e118d6ad1c",
+        "uploaded": "2026-07-26T14:54:33.272Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/13346fbf946e7598444a--0000",
+        "sha256": "b242191220bcff051fbad9e4c19bacfacc1bde85caa45c96492d953939d34cf7"
+      },
+      {
+        "key": "corpus/605589/7cc09c04-666b-4525-b4ee-ca4a9345db77/parts/0000",
+        "size": 1338698,
+        "etag": "14d1cea3c9e60f9adfdeef1e4d999c09",
+        "uploaded": "2026-07-26T14:54:16.704Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/dd31ca669d9188e16164--0000",
+        "sha256": "b7d13f33257fb3e09cd80ffb6b493b94c57dd7532f9f506394cfb6f47edb1495"
+      },
+      {
+        "key": "corpus/605589/800204b3-cebc-4fec-8119-0c6fae45269e/parts/0000",
+        "size": 1925987,
+        "etag": "579de9a5b4b5488300e4ae5772286360",
+        "uploaded": "2026-07-26T14:54:00.327Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/2830ec5c263d91fa03ed--0000",
+        "sha256": "33cda1ac846a1c6b116e272dc57a4972cc32895b6a1241aee0300c48ab5e6c40"
+      },
+      {
+        "key": "corpus/688300/8bd94632-282c-4ad9-9113-ac929171112e/parts/0000",
+        "size": 1166569,
+        "etag": "9570122f8ffc7cf8c2040b873f2fc5a4",
+        "uploaded": "2026-07-26T14:55:51.871Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/9d1fb82f8e9bb9024654--0000",
+        "sha256": "9fd163a58e494f3adfce1f647c812319a5a20708e8f0b9142ec1bbabaa523071"
+      },
+      {
+        "key": "corpus/688300/9b51c4e5-9c67-4cba-b2d0-b28a0a8d4c72/parts/0000",
+        "size": 1413951,
+        "etag": "371ea4e4b86562ce56b6c1592b0f44e2",
+        "uploaded": "2026-07-26T14:55:37.569Z",
+        "httpMetadata": {
+          "contentType": "application/octet-stream"
+        },
+        "customMetadata": {},
+        "path": "r2/objects/c6b09729593085577a9d--0000",
+        "sha256": "38b9b096a3c48b2905097abc8aa10a043eead996330fa58fb0762bb2a61e74af"
+      },
+      {
+        "key": "models/246a54c7-9570-4356-b79e-7353c4542442/Simple_Valuation_Model_Demo.xlsx",
+        "size": 7193,
+        "etag": "41464ddf36c1ff45e3b07740fdd54c24",
+        "uploaded": "2026-07-27T23:40:12.463Z",
+        "httpMetadata": {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "contentDisposition": "attachment; filename=\"Simple_Valuation_Model_Demo.xlsx\""
+        },
+        "customMetadata": {
+          "modelId": "246a54c7-9570-4356-b79e-7353c4542442",
+          "owner": "jiayihui01@gmail.com"
+        },
+        "path": "r2/objects/20e41a3dd5e8f1564b93--Simple_Valuation_Model_Demo.xlsx",
+        "sha256": "e0d8cc8c2a4016571521514b8a08689f6e1dc9a0040fa36e6a789a5005c521b7"
+      },
+      {
+        "key": "models/99891bcb-22b9-4cbb-89ba-d6ff382a6cdf/SpaceX_Valuation_Model.xlsx",
+        "size": 136949,
+        "etag": "4c2f383c58978ce8e8da6310fcb679af",
+        "uploaded": "2026-07-27T23:15:00.628Z",
+        "httpMetadata": {
+          "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "contentDisposition": "attachment; filename=\"SpaceX_Valuation_Model.xlsx\""
+        },
+        "customMetadata": {
+          "modelId": "99891bcb-22b9-4cbb-89ba-d6ff382a6cdf",
+          "owner": "jiayihui01@gmail.com"
+        },
+        "path": "r2/objects/e0b8f335d76e0dc3f03f--SpaceX_Valuation_Model.xlsx",
+        "sha256": "08cc9b7896ad66db49b9b51d136128aa3ac9dd0eabf9ed72b16570edd68d7811"
+      }
+    ],
+    "totalObjects": 45,
+    "totalBytes": 82033505
+  }
+}
