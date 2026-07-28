@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAppUser } from "../../../../lib/access";
+import { runtimeEnv } from "../../../../lib/runtime-env";
 
 export const dynamic = "force-dynamic";
 
@@ -137,9 +138,19 @@ async function objectBody(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { user, response } = await requireAppUser(request);
-  if (!user) return response;
-  if (user.role !== "owner" && user.role !== "admin") return forbidden();
+  const configuredBackupToken = runtimeEnv("LEVEL_GRIND_BACKUP_TOKEN");
+  const suppliedBackupToken = request.headers.get("x-level-grind-backup-token");
+  const hasOneTimeBackupAccess = Boolean(
+    configuredBackupToken &&
+      suppliedBackupToken &&
+      configuredBackupToken === suppliedBackupToken,
+  );
+
+  if (!hasOneTimeBackupAccess) {
+    const { user, response } = await requireAppUser(request);
+    if (!user) return response;
+    if (user.role !== "owner" && user.role !== "admin") return forbidden();
+  }
 
   const scope = request.nextUrl.searchParams.get("scope") ?? "manifest";
   if (scope === "manifest") return manifest(request);

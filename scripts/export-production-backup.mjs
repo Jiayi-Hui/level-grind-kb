@@ -31,6 +31,7 @@ async function apiFetch(baseUrl, token, query) {
   return fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "x-level-grind-backup-token": token,
       Accept: "application/json",
     },
   });
