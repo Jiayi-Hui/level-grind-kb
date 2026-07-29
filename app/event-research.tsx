@@ -142,6 +142,12 @@ function median(values: NullableNumber[]) {
   return valid.length % 2 ? valid[middle] : (valid[middle - 1] + valid[middle]) / 2;
 }
 
+function primaryIndustry(data: EventResearchPayload, eventId: string) {
+  return data.sectorSummaries
+    .filter((row) => row.event_id === eventId && row.median_return_1d !== null)
+    .sort((a, b) => Math.abs(b.median_return_1d || 0) - Math.abs(a.median_return_1d || 0))[0]?.track_name_cn || "未分类";
+}
+
 function investmentReadThrough(event: HistoricalEvent) {
   if (event.demand_assessment === "actual_deterioration") {
     return {
@@ -223,7 +229,7 @@ export function EventResearch({
       shocks: [...new Set(data.events.map((event) => event.primary_shock))].sort(),
       demands: [...new Set(data.events.map((event) => event.demand_assessment))].sort(),
       quarters: [...new Set(data.events.map((event) => eventQuarter(event.event_date)))].sort().reverse(),
-      industries: [...new Set(data.sectorSummaries.map((row) => row.track_name_cn))]
+      industries: [...new Set(data.events.map((event) => primaryIndustry(data, event.event_id)))]
         .sort((a, b) => a.localeCompare(b, "zh-CN")),
       companies,
     };
@@ -236,20 +242,22 @@ export function EventResearch({
       const related = data.eventReturns
         .filter((row) => row.event_id === event.event_id)
         .flatMap((row) => [row.ticker, row.name_cn, row.name_en]);
+      const relatedIndustries = data.sectorSummaries
+        .filter((row) => row.event_id === event.event_id)
+        .map((row) => row.track_name_cn);
       const matchesSearch = !needle || [
         event.event_name_cn,
         event.trigger,
         event.initial_market_narrative,
         event.positioning_assessment,
         ...related,
+        ...relatedIndustries,
       ].some((value) => value?.toLocaleLowerCase("zh-CN").includes(needle));
       return matchesSearch
         && (shock === "all" || event.primary_shock === shock)
         && (demand === "all" || event.demand_assessment === demand)
         && (quarter === "all" || eventQuarter(event.event_date) === quarter)
-        && (industry === "all" || data.sectorSummaries.some(
-          (row) => row.event_id === event.event_id && row.track_name_cn === industry,
-        ))
+        && (industry === "all" || primaryIndustry(data, event.event_id) === industry)
         && (company === "all" || data.eventReturns.some(
           (row) => row.event_id === event.event_id && row.ticker === company,
         ));
@@ -258,9 +266,20 @@ export function EventResearch({
 
   const selected = filtered.find((event) => event.event_id === selectedId) || filtered[0];
   const filteredReadThrough = useMemo(() => {
-    const t1 = median(filtered.map((event) => event.median_return_1d));
-    const t5 = median(filtered.map((event) => event.median_return_5d));
-    const t20 = median(filtered.map((event) => event.median_return_20d));
+    const selectedCompanyReturns = company === "all" || !data
+      ? []
+      : data.eventReturns.filter((row) => (
+        row.ticker === company && filtered.some((event) => event.event_id === row.event_id)
+      ));
+    const t1 = median(company === "all"
+      ? filtered.map((event) => event.median_return_1d)
+      : selectedCompanyReturns.map((row) => row.return_1d));
+    const t5 = median(company === "all"
+      ? filtered.map((event) => event.median_return_5d)
+      : selectedCompanyReturns.map((row) => row.return_5d));
+    const t20 = median(company === "all"
+      ? filtered.map((event) => event.median_return_20d)
+      : selectedCompanyReturns.map((row) => row.return_20d));
     const intact = filtered.filter((event) => (
       event.demand_assessment === "demand_intact" || event.demand_assessment === "ai_intact_non_ai_weak"
     )).length;
@@ -275,7 +294,7 @@ export function EventResearch({
           ? "优先研究回撤充分、盈利兑现度高的龙头"
           : "保持选择性，避免把主题回撤直接视为买点";
     return { t1, t5, t20, intact, stance };
-  }, [filtered]);
+  }, [company, data, filtered]);
 
   if (error) return <div className="empty-state"><h3>{error}</h3><p>请检查事件研究快照是否已随版本发布。</p></div>;
   if (!data) return <div className="event-research-loading"><i className="button-spinner" /> 正在载入事件与价格路径…</div>;
@@ -293,7 +312,10 @@ export function EventResearch({
         <div className="live-claim-list">
           {liveClaims.slice(0, 3).map((claim) => (
             <article key={claim.id}>
-              <span>{exactDate(claim.claimed_at)} · {claim.speaker || "WeChat Group"}</span>
+              <span>
+                {exactDate(claim.claimed_at)} · 来源 {claim.source_system === "wechat-group" ? "WeChat Group" : claim.source_system}
+                {claim.speaker ? ` · ${claim.speaker}` : ""}
+              </span>
               <strong>{claim.company || claim.ticker || "待识别主体"}</strong>
               <p>{claim.claim_text}</p>
             </article>
@@ -357,20 +379,25 @@ export function EventResearch({
       </section>
 
       <div className="event-research-index">
-        {filtered.map((event) => (
-          <button
-            key={event.event_id}
-            className={selected?.event_id === event.event_id ? "selected" : ""}
-            onClick={() => setSelectedId(event.event_id)}
-          >
-            <span>{exactDate(event.event_date)}</span>
-            <strong>{event.event_name_cn}</strong>
-            <em>{shockLabels[event.primary_shock] || event.primary_shock}</em>
-            <b className={tone(event.median_return_1d)}>{pct(event.median_return_1d)}</b>
-            <b className={tone(event.median_return_5d)}>{pct(event.median_return_5d)}</b>
-            <b className={tone(event.median_return_20d)}>{pct(event.median_return_20d)}</b>
-          </button>
-        ))}
+        {filtered.map((event) => {
+          const companyReaction = company === "all"
+            ? null
+            : data.eventReturns.find((row) => row.event_id === event.event_id && row.ticker === company);
+          return (
+            <button
+              key={event.event_id}
+              className={selected?.event_id === event.event_id ? "selected" : ""}
+              onClick={() => setSelectedId(event.event_id)}
+            >
+              <span>{exactDate(event.event_date)}</span>
+              <strong>{event.event_name_cn}</strong>
+              <em>{shockLabels[event.primary_shock] || event.primary_shock} · {primaryIndustry(data, event.event_id)}</em>
+              <b className={tone(companyReaction?.return_1d ?? event.median_return_1d)}>{pct(companyReaction?.return_1d ?? event.median_return_1d)}</b>
+              <b className={tone(companyReaction?.return_5d ?? event.median_return_5d)}>{pct(companyReaction?.return_5d ?? event.median_return_5d)}</b>
+              <b className={tone(companyReaction?.return_20d ?? event.median_return_20d)}>{pct(companyReaction?.return_20d ?? event.median_return_20d)}</b>
+            </button>
+          );
+        })}
         {!filtered.length && <div className="live-empty">没有匹配的事件，请减少筛选条件。</div>}
       </div>
 
@@ -378,6 +405,7 @@ export function EventResearch({
         <EventResearchDetail
           event={selected}
           data={data}
+          companyTicker={company === "all" ? "" : company}
           onAsk={() => onAsk(
             selected.event_name_cn,
             `${selected.trigger}；历史 T+1 ${pct(selected.median_return_1d)}、T+5 ${pct(selected.median_return_5d)}、T+20 ${pct(selected.median_return_20d)}。`,
@@ -391,10 +419,12 @@ export function EventResearch({
 function EventResearchDetail({
   event,
   data,
+  companyTicker,
   onAsk,
 }: {
   event: HistoricalEvent;
   data: EventResearchPayload;
+  companyTicker: string;
   onAsk: () => void;
 }) {
   const pricePath = data.eventPricePaths
@@ -412,6 +442,9 @@ function EventResearchDetail({
   const securities = data.eventReturns
     .filter((row) => row.event_id === event.event_id && row.role === "asia_core")
     .sort((a, b) => (a.return_1d || 0) - (b.return_1d || 0));
+  const selectedSecurity = companyTicker
+    ? data.eventReturns.find((row) => row.event_id === event.event_id && row.ticker === companyTicker)
+    : null;
   const sources = data.sources.filter((source) => source.event_id === event.event_id);
   const readThrough = investmentReadThrough(event);
 
@@ -427,9 +460,9 @@ function EventResearchDetail({
 
       <div className="event-reaction-strip">
         {[
-          ["T+1", event.median_return_1d],
-          ["T+5", event.median_return_5d],
-          ["T+20", event.median_return_20d],
+          [selectedSecurity ? `${selectedSecurity.name_cn} T+1` : "T+1 中位数", selectedSecurity?.return_1d ?? event.median_return_1d],
+          [selectedSecurity ? `${selectedSecurity.name_cn} T+5` : "T+5 中位数", selectedSecurity?.return_5d ?? event.median_return_5d],
+          [selectedSecurity ? `${selectedSecurity.name_cn} T+20` : "T+20 中位数", selectedSecurity?.return_20d ?? event.median_return_20d],
           ["20日最大回撤", event.median_max_drawdown_20d],
         ].map(([label, value]) => (
           <article key={String(label)} className={tone(value as NullableNumber)}>
@@ -462,7 +495,10 @@ function EventResearchDetail({
 
       <div className="event-chart-grid">
         <section>
-          <div className="event-chart-heading"><h3>事件后股价路径</h3><span>亚洲核心股票中位数</span></div>
+          <div className="event-chart-heading">
+            <h3>事件后股价路径</h3>
+            <span>{selectedSecurity ? `${selectedSecurity.name_cn}关键节点见上方 · 曲线为亚洲核心股票中位数` : "亚洲核心股票中位数"}</span>
+          </div>
           <div className="event-chart-frame">
             <ResponsiveContainer width="100%" height={310}>
               <LineChart data={pricePath} margin={{ top: 18, right: 20, bottom: 8, left: 0 }}>
@@ -502,7 +538,7 @@ function EventResearchDetail({
               <thead><tr><th>股票</th><th>T+1</th><th>T+5</th><th>T+20</th><th>首日超额</th></tr></thead>
               <tbody>
                 {securities.map((row) => (
-                  <tr key={row.ticker}>
+                  <tr key={row.ticker} className={row.ticker === companyTicker ? "selected-security" : ""}>
                     <td><strong>{row.name_cn}</strong><small>{row.ticker}</small></td>
                     <td className={tone(row.return_1d)}>{pct(row.return_1d)}</td>
                     <td className={tone(row.return_5d)}>{pct(row.return_5d)}</td>

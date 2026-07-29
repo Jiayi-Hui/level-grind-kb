@@ -97,8 +97,13 @@
 
 - [x] Level Grind contains the validated 10-event / 410-security research
   snapshot from event-db.
-- [x] Cross-event search covers event narrative, trigger, company name, and
-  ticker; shock, demand, and year filters compose.
+- [x] Cross-event search covers event narrative, trigger, company name, ticker,
+  and related industry; event type, company, primary industry, and quarter
+  filters compose.
+- [x] Selecting a company switches event-return metrics to that security rather
+  than merely filtering the event list.
+- [x] Industry filtering uses each event's primary affected industry rather
+  than matching every industry represented in the underlying snapshot.
 - [x] Selected events show T+1, T+5, T+20, drawdown, breadth, price path,
   benchmark-relative path, sector dispersion, securities, and sources.
 - [x] Investment read-throughs distinguish demand deterioration, policy damage,
@@ -106,6 +111,11 @@
 - [x] Claim Inbox uses a server-only secret and idempotent WeChat message ids.
 - [x] Event and Claim state refreshes every three seconds while the Event DB is
   visible.
-- [ ] Hosted Claim Inbox secret is configured and one real WeChat → Codex →
-  D1 round-trip is captured as delivery evidence.
-- [ ] EdgeOne fronting / Mainland mobile access is verified on a real network.
+- [x] Hosted Claim Inbox secret is configured and rejects unauthorized calls;
+  an authorized validation request reaches schema validation without writing
+  test data.
+- [x] `level-grind.com` routes over HTTPS to the protected Sites deployment.
+- [ ] One real WeChat → Codex → D1 round-trip is captured as delivery evidence.
+- [ ] Hong Kong no-VPN access is verified on the PM's physical device.
+- [ ] Mainland access remains outside tomorrow's acceptance scope; the tested
+  EdgeOne reverse-proxy origin returned 403 and is not used for production.

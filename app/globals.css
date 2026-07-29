@@ -1534,6 +1534,8 @@ button { color: inherit; }
 .event-security-table th:first-child,
 .event-security-table td:first-child { text-align: left; }
 .event-security-table th { position: sticky; top: 0; color: var(--muted); background: #f2f5f1; z-index: 1; }
+.event-security-table tr.selected-security td { background: #edf4ef; }
+.event-security-table tr.selected-security td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .event-security-table td strong,
 .event-security-table td small { display: block; }
 .event-security-table td small { margin-top: 2px; color: var(--muted); }

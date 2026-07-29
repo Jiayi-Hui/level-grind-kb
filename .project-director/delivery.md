@@ -137,3 +137,26 @@ and explicit Report/Web/Hybrid evidence modes.
   plus Tavily free-credit usage.
 - Keeps dated console snapshots separate from the application's live D1 usage
   ledger so stale provider numbers are never presented as real-time readings.
+
+## V5.0 PM Event Research Demo
+
+- Integrates the validated event-db snapshot: 10 events, 410 security returns,
+  182 price paths, and 31 attributed sources.
+- Adds cross-event search and event type, company, primary industry, and quarter
+  filters. Company selection changes the displayed return metrics; industry
+  filtering uses the event's primary affected industry.
+- Shows T+1/T+5/T+20 moves, drawdown, breadth, aggregate and
+  benchmark-relative paths, security-level reactions, industry dispersion, and
+  source evidence.
+- Generates deterministic investment read-throughs without presenting them as
+  trading instructions or model-generated facts.
+- Adds a secret-protected, idempotent Claim Inbox endpoint and three-second
+  Event/Claim refresh while the Event DB is visible.
+- Live Claim rows state the source as WeChat Group and name the speaker only
+  when that provenance exists.
+- `level-grind.com` routes directly to the protected Sites deployment over
+  HTTPS. The failed EdgeOne reverse-proxy path is not used in production.
+- Production release evidence includes a successful build, 13/13 tests,
+  unauthorized and authorized-validation Claim API probes, and domain health.
+- Two physical checks remain explicit: one real WeChat/Codex/D1 round-trip and
+  one no-VPN visit from the PM's Hong Kong device.

@@ -106,7 +106,7 @@
 - [x] Generate and visually validate a formula-backed sample workbook.
 - [x] Add responsive desktop/tablet/mobile layouts.
 - [x] Publish the validated source and verify the production deployment.
-- [x] Attach `level-grind.com`; DNS validation is pending at the domain provider.
+- [x] Attach and validate `level-grind.com` with HTTPS routing to Sites.
 
 ## V5.0 — Tomorrow PM Event Demo
 
@@ -116,7 +116,10 @@
   read-throughs.
 - [x] Add a secret-protected, idempotent Claim Inbox API.
 - [x] Poll live Event and Claim data while the Event DB is visible.
-- [ ] Configure the hosted secret and connect the existing WeChat/Codex bridge.
-- [ ] Publish the validated source.
-- [ ] Put EdgeOne in front of the hosted app and test Mainland desktop/mobile.
+- [x] Configure the hosted Claim Inbox secret and validate the protected route.
+- [ ] Connect and exercise the existing WeChat/Codex bridge with one real claim.
+- [x] Publish the validated source.
+- [x] Route `level-grind.com` directly to the Sites custom-domain endpoint for
+  the Hong Kong demo; do not use the failed EdgeOne reverse proxy.
+- [ ] Test no-VPN access on the PM's physical Hong Kong device.
 - [ ] Rehearse one deterministic WeChat message and one fallback replay payload.

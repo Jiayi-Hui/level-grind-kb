@@ -155,3 +155,20 @@ Pending release check: authenticated desktop and phone walkthrough requires the
 user's Clerk session. Localhost intentionally fails closed without its public
 key, and the shared in-app browser correctly reached the production sign-in
 gate but did not have an authenticated account.
+
+## V5.0 PM Event Research Demo Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Historical snapshot | Pass | 10 events, 410 security returns, 182 price paths, and 31 attributed sources |
+| Multidimensional discovery | Pass | Search plus event type, company, primary industry, and quarter filters |
+| Company metric semantics | Pass | Selecting a security switches T+1/T+5/T+20 and event-index values to that security |
+| Industry semantics | Pass | Primary affected industry is derived from the largest absolute first-day industry reaction |
+| Price reaction | Pass | Numeric returns, security table, aggregate event path, benchmark-relative path, and dispersion are visible |
+| Investment read-through | Pass | Deterministic states distinguish deterioration, policy damage, crowding/intact demand, and insufficient evidence |
+| Live Claim provenance | Pass | Exact timestamp, WeChat Group source, and speaker display only when present |
+| Claim security | Pass | Server-only secret rejects unauthorized requests; authorized empty payload reaches validation without a database write |
+| Automated validation | Pass | Production build and 13/13 focused tests pass |
+| Custom domain | Pass | `level-grind.com` returns HTTPS 200 and protected APIs remain authenticated |
+| Real connector round-trip | Pending | Requires one actual message through the existing company-side WeChat/Codex bridge |
+| PM device access | Pending | Requires a no-VPN check on the PM's physical Hong Kong device |

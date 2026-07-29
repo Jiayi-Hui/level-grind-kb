@@ -16,6 +16,9 @@ test("ships historical event reactions and an investment read-through", async ()
   assert.match(component, /全部行业/);
   assert.match(component, /全部季度/);
   assert.match(component, /当前筛选/);
+  assert.match(component, /primaryIndustry/);
+  assert.match(component, /来源.*WeChat Group/);
+  assert.match(component, /companyTicker/);
   assert.match(component, /事件后股价路径/);
   assert.match(component, /投资含义/);
   assert.match(component, /研究辅助，不构成自动买卖指令/);
