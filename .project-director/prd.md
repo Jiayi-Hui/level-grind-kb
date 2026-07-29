@@ -218,6 +218,27 @@ Acceptance:
   speaker only when present, and a verification source only when supplied.
 - FR-39: Personal Knowledge, Report Library, and Event DB expose “Ask about this”
   launchers that prefill scope in one canonical Research Q&A history.
+
+## V5.0 — PM Event Research Demo
+
+- FR-40: Event DB opens on a cross-event research surface with search by event,
+  trigger, company, and ticker plus filters for shock, demand state, and year.
+- FR-41: A selected historical event shows T+1/T+5/T+20 returns, maximum
+  drawdown, breadth, benchmark-relative price path, sector dispersion, security
+  reactions, and source links.
+- FR-42: Each event exposes a clearly labeled investment read-through with
+  stance, causal logic, falsification conditions, and a non-advice disclaimer.
+- FR-43: A secret-protected Claim Inbox accepts WeChat Bot → Codex messages
+  idempotently and persists them in D1 without requiring a site rebuild.
+- FR-44: While Event DB is open, the browser refreshes Event and Claim state
+  every three seconds and shows the newest WeChat-derived Claims prominently.
+
+Non-goals for the demo:
+
+- automatic execution of trades;
+- treating an unverified WeChat statement as a confirmed Event;
+- exposing the claim-ingestion secret to the browser or repository;
+- replacing the full analyst verification workflow with generated commentary.
 - FR-40: Model Workbench stores an Excel model registry with company, owner,
   version, update time, stale-variable count, sources, and change history.
 - FR-41: A standard `.xlsx` template maps Inputs, Calculations, and Outputs for

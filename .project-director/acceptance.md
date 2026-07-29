@@ -92,3 +92,20 @@
 - [x] Event cards omit internal-model labels, coarse week labels, generated
   notice prose, and seed filenames.
 - [x] Event and Claim typography is readable for mixed Chinese/English content.
+
+## V5.0 PM Event Research Demo
+
+- [x] Level Grind contains the validated 10-event / 410-security research
+  snapshot from event-db.
+- [x] Cross-event search covers event narrative, trigger, company name, and
+  ticker; shock, demand, and year filters compose.
+- [x] Selected events show T+1, T+5, T+20, drawdown, breadth, price path,
+  benchmark-relative path, sector dispersion, securities, and sources.
+- [x] Investment read-throughs distinguish demand deterioration, policy damage,
+  intact demand/crowding, and insufficient-evidence states.
+- [x] Claim Inbox uses a server-only secret and idempotent WeChat message ids.
+- [x] Event and Claim state refreshes every three seconds while the Event DB is
+  visible.
+- [ ] Hosted Claim Inbox secret is configured and one real WeChat → Codex →
+  D1 round-trip is captured as delivery evidence.
+- [ ] EdgeOne fronting / Mainland mobile access is verified on a real network.

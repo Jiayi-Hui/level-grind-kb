@@ -107,3 +107,16 @@
 - [x] Add responsive desktop/tablet/mobile layouts.
 - [x] Publish the validated source and verify the production deployment.
 - [x] Attach `level-grind.com`; DNS validation is pending at the domain provider.
+
+## V5.0 — Tomorrow PM Event Demo
+
+- [x] Keep the whole Level Grind product as the demo container.
+- [x] Integrate the validated event-db historical price-reaction snapshot.
+- [x] Add cross-event search, classification, price paths, and investment
+  read-throughs.
+- [x] Add a secret-protected, idempotent Claim Inbox API.
+- [x] Poll live Event and Claim data while the Event DB is visible.
+- [ ] Configure the hosted secret and connect the existing WeChat/Codex bridge.
+- [ ] Publish the validated source.
+- [ ] Put EdgeOne in front of the hosted app and test Mainland desktop/mobile.
+- [ ] Rehearse one deterministic WeChat message and one fallback replay payload.

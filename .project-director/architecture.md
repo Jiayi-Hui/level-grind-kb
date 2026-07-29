@@ -68,6 +68,7 @@ attachments and report bytes.
 | Model registry | `GET/POST /api/models` | selected id / workbook multipart form | model list, variable map, queue, history / created model | 400, 401, 404 |
 | Model operations | `PATCH /api/models` | update input, scan sources, or approve update | saved state or pending count | 400, 401, 404 |
 | Model file | `GET /api/models/files/:id` | authorized model id | original `.xlsx` from R2 | 401, 404 |
+| Claim inbox | `POST /api/claims/inbox` | secret header + WeChat/Codex claim payload | idempotent persisted Claim | 400, 401 |
 
 ## Frontend Flow
 
@@ -112,3 +113,25 @@ attachments and report bytes.
 - Export rewrites mapped input cells and enables full recalculation in Excel.
   This preserves Excel as the authoritative calculation engine while the web
   application governs metadata, review, and lineage.
+
+## PM Event Demo Flow
+
+```text
+WeChat Bot
+  -> existing local WeChat/Codex bridge
+  -> Claim Inbox API (server-side shared secret)
+  -> D1 research_claims (+ optional Claim–Event relation)
+  -> authenticated Event DB polling every 3 seconds
+  -> live Claim band + Claims inbox
+
+event-db validated research snapshot
+  -> portable sanitized event-research.json
+  -> Level Grind Event Research
+  -> cross-event search, price paths, sector/security dispersion
+  -> deterministic investment read-through
+  -> scoped AskAI handoff for deeper synthesis
+```
+
+The historical price-reaction snapshot is sanitized and versioned with source
+code. Live Claims remain in D1. The shared ingestion secret is configured only
+in the hosted runtime and the local Codex bridge.

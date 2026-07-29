@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { copy, Language } from "./i18n";
+import { EventResearch } from "./event-research";
 import { MarkdownAnswer } from "./markdown-answer";
 import { ModelWorkbench } from "./model-workbench";
 
@@ -503,7 +504,7 @@ export function ResearchWorkspace() {
   const [eventDimension, setEventDimension] = useState<"type" | "company" | "quarter" | "sector">("type");
   const [eventDimensionFilter, setEventDimensionFilter] = useState("");
   const [claimTypeFilter, setClaimTypeFilter] = useState("");
-  const [eventView, setEventView] = useState<"events" | "claims">("events");
+  const [eventView, setEventView] = useState<"research" | "events" | "claims">("research");
   const [reportCompanyFilter, setReportCompanyFilter] = useState("");
   const [reportSectorFilter, setReportSectorFilter] = useState("");
   const [reportTypeFilter, setReportTypeFilter] = useState("");
@@ -646,6 +647,25 @@ export function ResearchWorkspace() {
     const timer = window.setInterval(() => void refreshUsage(), 30_000);
     return () => window.clearInterval(timer);
   }, [active, authorizedFetch, context?.user.role]);
+
+  useEffect(() => {
+    if (active !== "events" || !context) return;
+    const refreshEventData = async () => {
+      try {
+        const [eventsResponse, claimsResponse] = await Promise.all([
+          authorizedFetch("/api/events"),
+          authorizedFetch("/api/claims"),
+        ]);
+        if (eventsResponse.ok) setEventsPayload(await eventsResponse.json() as EventsPayload);
+        if (claimsResponse.ok) setClaimsPayload(await claimsResponse.json() as ClaimsPayload);
+      } catch {
+        // Keep the last visible snapshot if a background refresh is interrupted.
+      }
+    };
+    void refreshEventData();
+    const timer = window.setInterval(() => void refreshEventData(), 3_000);
+    return () => window.clearInterval(timer);
+  }, [active, authorizedFetch, context]);
 
   useEffect(() => {
     if (!asking) return;
@@ -1452,6 +1472,14 @@ export function ResearchWorkspace() {
               <div className="event-mode-switch" role="tablist" aria-label="Event database view">
                 <button
                   role="tab"
+                  aria-selected={eventView === "research"}
+                  className={eventView === "research" ? "active" : ""}
+                  onClick={() => setEventView("research")}
+                >
+                  {language === "zh" ? "事件研究" : "Event research"}
+                </button>
+                <button
+                  role="tab"
                   aria-selected={eventView === "events"}
                   className={eventView === "events" ? "active" : ""}
                   onClick={() => setEventView("events")}
@@ -1464,7 +1492,7 @@ export function ResearchWorkspace() {
                   className={eventView === "claims" ? "active" : ""}
                   onClick={() => setEventView("claims")}
                 >
-                  {language === "zh" ? "说法与来源" : "Claims & sources"}
+                  {language === "zh" ? "实时 Claim Inbox" : "Claims & sources · Live"}
                 </button>
               </div>
               <div className="metrics event-summary-metrics">
@@ -1472,7 +1500,12 @@ export function ResearchWorkspace() {
                 <article><span>{language === "zh" ? "来源说法" : "Source claims"}</span><strong>{eventsPayload?.attention.claim_count || claims.length}</strong><small>{eventsPayload?.attention.unverified_claim_count || 0} {language === "zh" ? "条待核实" : "need verification"}</small></article>
               </div>
 
-              {eventView === "events" ? <div className="event-workbench">
+              {eventView === "research" ? (
+                <EventResearch
+                  liveClaims={claims}
+                  onAsk={(title, detail) => askAbout("event", title, detail)}
+                />
+              ) : eventView === "events" ? <div className="event-workbench">
                 <aside className="event-filter-panel">
                   <div className="event-dimension-tabs">
                     {([
