@@ -123,3 +123,18 @@
   the Hong Kong demo; do not use the failed EdgeOne reverse proxy.
 - [ ] Test no-VPN access on the PM's physical Hong Kong device.
 - [ ] Rehearse one deterministic WeChat message and one fallback replay payload.
+
+## V5.1 — AI Capex Dashboard
+
+- [x] Read the research handoff, export contract, evidence framework, and Epoch
+  snapshot manifest.
+- [x] Inspect the Level Grind navigation, client-view, styling, build, and test
+  patterns without modifying unrelated work.
+- [x] Define the portable `aidc-capex.v1` contract and evidence/freshness rules.
+- [x] Implement and verify the repeatable AIDC sync.
+- [x] Add AI Capex navigation, bilingual headings, and mobile access.
+- [x] Build source-attributed KPIs, owner/timeline/status charts, matrix,
+  project detail, and source ledger.
+- [x] Add all loading/error/empty/partial/stale states and responsive styles.
+- [x] Run targeted tests, lint, build, and desktop/mobile browser review.
+- [x] Record QA/delivery evidence and create a local commit only.

@@ -160,3 +160,28 @@ and explicit Report/Web/Hybrid evidence modes.
   unauthorized and authorized-validation Claim API probes, and domain health.
 - Two physical checks remain explicit: one real WeChat/Codex/D1 round-trip and
   one no-VPN visit from the PM's Hong Kong device.
+
+## V5.1 AI Capex Dashboard
+
+- Adds AI Capex as a first-class Level Grind workspace beside Event DB and
+  Model Workbench, including bilingual labels and the existing mobile
+  navigation path.
+- Adds a repeatable research-to-product sync that emits tracked, publishable,
+  checksummed JSON and can fall back to the committed snapshot when the sibling
+  research repository is unavailable.
+- Preserves the reviewed Epoch dataset boundary: 75 campuses, 424 timeline
+  rows, 205 site-chip-date rows, 176 hardware rows, supporting cooling/chip
+  datasets, and 296 exact source records.
+- Delivers source-attributed KPI, owner capacity, status/freshness, historical
+  versus planned capacity, project screening, project detail, milestone, method,
+  and source-ledger views.
+- Separates observation date, source date, research cutoff, and Level Grind
+  sync time. Freshness is calculated from observation date, never from import
+  time.
+- Does not invent reviewed p10/p50/p90 forecasts, building-stage status, delay
+  probabilities, next-four-quarter building MW, or company Capex Momentum.
+- Browser review passed at 1280 × 720 and 390 × 844 with no page-level
+  horizontal overflow; interaction and stale-data filtering were exercised.
+- Final validation: 17/17 tests, lint, production build, and diff hygiene pass.
+- Delivery is a local commit only. It is intentionally not pushed or deployed
+  until user confirmation.

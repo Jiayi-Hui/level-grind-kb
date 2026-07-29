@@ -119,3 +119,25 @@
 - [ ] Hong Kong no-VPN access is verified on the PM's physical device.
 - [ ] Mainland access remains outside tomorrow's acceptance scope; the tested
   EdgeOne reverse-proxy origin returned 403 and is not used for production.
+
+## V5.1 AI Capex Dashboard
+
+- [x] AI Capex is a peer left-panel and mobile navigation item between Event DB
+  and Model Workbench.
+- [x] A repeatable sync emits versioned, checksummed portable JSON to tracked
+  data and public runtime folders without a browser/runtime sibling-repo
+  dependency.
+- [x] The snapshot preserves 75 campuses, 424 timeline records, 205
+  site-chip-date records, 176 hardware records, and exact source lineage.
+- [x] KPI, owner comparison, buildout timeline, status pipeline, project
+  matrix, project detail, and Sources & Freshness views render.
+- [x] Owner, country, status, confidence, and freshness filters compose.
+- [x] Every chart/KPI/material conclusion carries metric-specific sources,
+  observation date, data cutoff, sync time, and methodology.
+- [x] Historical/current records and Epoch baseline plans are visually distinct;
+  no unsupported p10/p50/p90, delay, building-stage, or Capex Momentum data is
+  invented.
+- [x] Loading, error, empty, partial-data, and stale states are complete.
+- [x] English/Chinese desktop and mobile browser checks pass without clipping,
+  overflow, empty charts, or hidden source references.
+- [x] Targeted tests, lint, and production build pass.

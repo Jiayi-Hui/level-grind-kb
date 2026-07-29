@@ -135,3 +135,53 @@ event-db validated research snapshot
 The historical price-reaction snapshot is sanitized and versioned with source
 code. Live Claims remain in D1. The shared ingestion secret is configured only
 in the hosted runtime and the local Codex bridge.
+
+## AI Capex portable research boundary
+
+```text
+aidc-capex-tracker (research source)
+  -> Epoch AI open CSV snapshot + reviewed Level Grind exports when present
+  -> scripts/sync-aidc-capex.mjs (build-time only)
+  -> data/aidc-capex/dashboard.json + manifest.json
+  -> public/data/aidc-capex/dashboard.json + manifest.json
+  -> AICapex client view fetches portable JSON
+```
+
+The browser never reads CSV and never references the sibling repository. The
+tracked `data/` copy is the handover/fallback source; the `public/` copy is the
+runtime asset.
+
+### `aidc-capex.v1` contract
+
+- metadata: `schemaVersion`, `generatedAt`, `syncedAtHkt`, `dataCutoff`,
+  `modelVersion`, review state, limitations, and file integrity;
+- sourceSnapshots and sources: dataset-level attribution plus exact
+  project-support URLs or safe asset identifiers;
+- kpis and owners: current Epoch baseline for campus count, IT MW, H100e, and
+  estimated 2025-USD capital cost;
+- capacityTimeline: quarter-end project snapshots separated into historical
+  and Epoch-baseline planned values;
+- statusPipeline: campus counts and current IT MW by evidence-aware baseline
+  status;
+- projects: location, current metrics, status, confidence, observation date,
+  freshness, timeline, chip quantities, calculation link, and source ids;
+- reviewedForecasts: empty until the research export contains approved
+  p10/p50/p90 records.
+
+### Dates and freshness
+
+- observation date comes from the latest applicable project timeline record;
+- source date comes from the source itself and remains null when unavailable;
+- data cutoff is the research inclusion boundary;
+- synced at is the product import time and never determines source freshness.
+
+Baseline freshness uses observation age against the data cutoff: Current
+`<=120` days, Aging `121–240`, Stale `>240`, Unknown when no reliable
+observation date exists. This rule is exported as method metadata.
+
+### Compatibility
+
+The integration is additive: one client component, one portable-data sync
+script, navigation/i18n additions, styles, and focused tests. It adds no D1/R2
+schema and does not alter existing Event DB, Model Workbench, authentication,
+or report-storage contracts.

@@ -172,3 +172,25 @@ gate but did not have an authenticated account.
 | Custom domain | Pass | `level-grind.com` returns HTTPS 200 and protected APIs remain authenticated |
 | Real connector round-trip | Pending | Requires one actual message through the existing company-side WeChat/Codex bridge |
 | PM device access | Pending | Requires a no-VPN check on the PM's physical Hong Kong device |
+
+## V5.1 AI Capex Dashboard Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Portable research snapshot | Pass | `aidc-capex.v1` contains schema/model versions, generated/synced/cutoff dates, input snapshots, record counts, and SHA-256 checksums |
+| Research record integrity | Pass | 75 campuses, 424 timeline rows, 205 site-chip-date rows, 176 hardware rows, 143 chiller rows, 527 cooling-tower rows, and 899 chip-owner rows |
+| Source lineage | Pass | 296 numbered records retain publisher, exact title, source/observation/access dates when supplied, rights, verification, and exact URL or asset id |
+| Runtime independence | Pass | Browser reads generated JSON only; the sibling research repository is needed only when explicitly re-running the sync |
+| Navigation and localization | Pass | AI Capex is between Event DB and Model Workbench in desktop/mobile navigation; English and Chinese labels/headings are present |
+| Decision views | Pass | Six KPIs, owner capacity, status/freshness, capacity timeline, project matrix, project detail charts, milestones, methods, and source ledger render |
+| Evidence honesty | Pass | Historical/current data is solid green; future Epoch baseline is dashed/amber; unavailable reviewed forecasts and Capex Momentum are explicitly marked research-pilot gaps |
+| Interaction | Pass | Owner metric toggles, owner/country/status/confidence/freshness filters, and project selection were exercised in the browser |
+| Responsive desktop | Pass | 1280 × 720 review showed no page-level horizontal overflow; charts had non-zero dimensions and wide evidence tables scroll within their panels |
+| Responsive mobile | Pass | 390 × 844 review showed no page-level horizontal overflow; KPI cards stack and wide project/source tables retain local horizontal scrolling |
+| State coverage | Pass | Loading, error/retry, empty-filter, partial-data, stale, unknown, and chart-empty states are implemented |
+| Automated validation | Pass | 17/17 tests, lint, and production build pass; lint retains one unrelated pre-existing warning in `scripts/export-production-backup.mjs` |
+
+The browser review used a development-only visual harness because local Clerk
+credentials are intentionally absent. The harness was removed before delivery;
+the production AI Capex view remains integrated in the authenticated
+`ResearchWorkspace` switch. No deployment or push was performed.

@@ -263,3 +263,61 @@ Acceptance:
   inputs/outputs, source lineage, an update queue, and a change-log sheet.
 - AC-21: Export applies reviewed input values to their mapped cells and tells
   Excel to recalculate formulas on open.
+
+## V5.1 AI Capex Dashboard
+
+### Objective
+
+Add AI Capex as a peer Level Grind workspace, using the reviewed/open exports
+from `aidc-capex-tracker` to answer where AI data-center power, compute, and
+estimated physical capital are concentrated and how the buildout changes over
+time.
+
+### Users and decisions
+
+- PM: compare owner capacity and identify projects that merit follow-up.
+- Analyst: inspect project history, metric lineage, freshness, and exact sources.
+- Research operator: rerun a deterministic import without creating a runtime
+  dependency on the research repository.
+
+### Functional requirements
+
+- FR-44: AI Capex appears between Event DB and Model Workbench in desktop and
+  mobile navigation and renders inside the existing right-side workspace.
+- FR-45: `scripts/sync-aidc-capex.mjs` reads the sibling research repository and
+  writes a versioned portable snapshot to both `data/aidc-capex/` and
+  `public/data/aidc-capex/`.
+- FR-46: The snapshot records schema/model versions, generation and cutoff
+  dates, source snapshots, record counts, known limitations, and SHA-256
+  integrity information.
+- FR-47: The dashboard shows source-attributed KPIs, owner comparison,
+  historical/planned capacity timeline, status pipeline, project matrix,
+  project detail, and source/freshness ledger.
+- FR-48: Owner, country, status, confidence, and freshness filters compose.
+- FR-49: Every material metric exposes its own source references, observation
+  date, data cutoff, Level Grind sync time, and method.
+- FR-50: Historical/current observations and Epoch baseline plans use distinct
+  visual treatments. Reviewed p10/p50/p90 bands render only when an approved
+  forecast export exists.
+
+### Explicit non-goals
+
+- No building-level stage, geometry, delay probability, four-quarter forecast,
+  or company Capex Momentum is inferred for this release.
+- No browser-side CSV parsing and no runtime reads from the sibling repository.
+- Epoch estimates are not presented as company-reported accounting Capex.
+- No decorative map without source-backed building geometry.
+
+### Acceptance
+
+- AC-22: Navigation order is Personal Knowledge, Report Library, Event DB,
+  AI Capex, Model Workbench, AskAI, Settings in both languages.
+- AC-23: The portable snapshot contains the 75-campus baseline, 424 project
+  timeline rows, 205 site-chip-date records, 176 hardware records, source
+  lineage, and file checksums.
+- AC-24: At least three decision-useful charts plus the project matrix render
+  without unsupported forecast or delay data.
+- AC-25: Loading, error, empty, partial-data, and stale states are visible and
+  actionable without dead controls.
+- AC-26: Desktop and phone layouts keep filters, charts, table, project detail,
+  and source references readable.

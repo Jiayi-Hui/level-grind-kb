@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "aidc-capex.v1",
+  "generatedAt": "2026-07-29T17:36:00.231Z",
+  "dataCutoff": "2026-07-29",
+  "modelVersion": "epoch-baseline-2026-07-29",
+  "sourceSnapshots": [
+    {
+      "id": "epoch-ai-2026-07-29",
+      "publisher": "Epoch AI",
+      "accessedAt": "2026-07-29",
+      "licence": "CC BY 4.0"
+    }
+  ],
+  "recordCounts": {
+    "campuses": 75,
+    "timelineRecords": 424,
+    "siteChipDateRecords": 205,
+    "hardwareRecords": 176,
+    "chillerRecords": 143,
+    "coolingTowerRecords": 527,
+    "chipOwnerQuarterRecords": 384,
+    "chipOwnerCumulativeRecords": 515,
+    "sources": 296,
+    "reviewedForecasts": 0
+  },
+  "files": [
+    {
+      "path": "dashboard.json",
+      "sha256": "96bc093d8d4038aa9475cdbd1b10455f07c2b7f0d7205945bb5329f2197ca92f",
+      "bytes": 456468
+    }
+  ]
+}

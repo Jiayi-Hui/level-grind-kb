@@ -10,11 +10,12 @@ import {
   useState,
 } from "react";
 import { copy, Language } from "./i18n";
+import { AICapex } from "./ai-capex";
 import { EventResearch } from "./event-research";
 import { MarkdownAnswer } from "./markdown-answer";
 import { ModelWorkbench } from "./model-workbench";
 
-type View = "inbox" | "library" | "events" | "models" | "assistant" | "settings";
+type View = "inbox" | "library" | "events" | "aidc" | "models" | "assistant" | "settings";
 type EvidenceMode = "reports" | "web" | "hybrid";
 
 const deepSeekEstimateBaseline = {
@@ -300,6 +301,7 @@ const navIcons: Record<View, string> = {
   inbox: "⌂",
   library: "▤",
   events: "◇",
+  aidc: "▥",
   models: "▦",
   assistant: "✦",
   settings: "⚙",
@@ -1638,6 +1640,8 @@ export function ResearchWorkspace() {
               onToast={setToast}
             />
           )}
+
+          {active === "aidc" && <AICapex language={language} />}
 
           {active === "assistant" && (
             <section className="assistant-board">
