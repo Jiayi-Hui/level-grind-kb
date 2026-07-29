@@ -138,3 +138,20 @@
 - [x] Add all loading/error/empty/partial/stale states and responsive styles.
 - [x] Run targeted tests, lint, build, and desktop/mobile browser review.
 - [x] Record QA/delivery evidence and create a local commit only.
+
+## V5.2 — Tencent Hong Kong Continuity Cutover
+
+- [x] Reproduce the Hong Kong access failure before authentication.
+- [x] Reject the EdgeOne reverse-proxy design after its Sites origin returned
+  HTTP 403.
+- [x] Build a Tencent-native continuity bundle with Event Research and AI
+  Capex data included.
+- [x] Publish and browser-check the bundle on an `edgeone.dev` deployment.
+- [x] Bind `www.level-grind.com`, provision managed HTTPS, redirect the apex,
+  and remove the `chatgpt.site` request path.
+- [x] Verify the apex redirect, custom domain, core JSON assets, and desktop
+  browser flow.
+- [ ] Confirm one physical Hong Kong no-VPN visit after DNS propagation.
+- [ ] Migrate Clerk-equivalent authentication, write APIs, D1/R2 exports,
+  reports, AskAI, Model Workbench, and Claim Inbox to a Tencent-compatible
+  full-stack runtime after the access-critical demo.

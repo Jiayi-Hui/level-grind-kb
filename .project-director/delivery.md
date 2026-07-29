@@ -185,3 +185,26 @@ and explicit Report/Web/Hybrid evidence modes.
 - Final validation: 17/17 tests, lint, production build, and diff hygiene pass.
 - Delivery is a local commit only. It is intentionally not pushed or deployed
   until user confirmation.
+
+## V5.2 Tencent Hong Kong Continuity
+
+- The previous direct Sites domain and the EdgeOne-to-Sites reverse proxy both
+  retain `chatgpt.site` in the request path and cannot satisfy the verified
+  Hong Kong no-VPN requirement.
+- `deploy/edgeone-demo` now builds a standalone Tencent-hostable surface from
+  the real Event Research and AI Capex components and published JSON.
+- Tencent project `level-grind-hk-demo` (`makers-izlj942dw6n9`) deployed
+  successfully in 17 seconds and rendered both modules from Tencent-hosted
+  assets.
+- `www.level-grind.com` is the Tencent-hosted canonical domain. Cloudflare
+  terminates and redirects the apex so users can continue sharing
+  `level-grind.com`; neither route uses a Sites origin.
+- Final deployment `dpow9ya5eggq` succeeded in 18 seconds. Tencent reports the
+  custom domain Effective and the free certificate Deployed; homepage and both
+  published research JSON paths returned HTTP 200.
+- The continuity surface intentionally disables authentication and write
+  modules instead of presenting nonfunctional controls. Full D1/R2, report,
+  knowledge, AskAI, Model Workbench, and Claim Inbox migration remains a
+  separate full-stack phase.
+- Exact operating and rollback instructions are in
+  `docs/TENCENT_EDGEONE_HANDOFF_2026-07-30.md`.

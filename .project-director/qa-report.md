@@ -194,3 +194,18 @@ The browser review used a development-only visual harness because local Clerk
 credentials are intentionally absent. The harness was removed before delivery;
 the production AI Capex view remains integrated in the authenticated
 `ResearchWorkspace` switch. No deployment or push was performed.
+
+## V5.2 Tencent Hong Kong Continuity Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Failure isolation | Pass | Direct Sites and EdgeOne-to-Sites both retained a blocked `chatgpt.site` upstream; authentication was not the cause |
+| Tencent-native bundle | Pass | Event Research and AI Capex components load their published JSON from the EdgeOne Pages deployment |
+| Honest feature boundary | Pass | Knowledge, reports, AskAI, Model Workbench, authentication, and writes are disabled and marked `迁移中` |
+| Latest deployment | Pass | Production deployment `dpow9ya5eggq` completed successfully in 18 seconds |
+| Custom domain | Pass | `www.level-grind.com` is Effective; Tencent free certificate is Deployed with automatic renewal |
+| Share URL | Pass | Fresh `level-grind.com` navigation reaches the Tencent-hosted Research OS and contains no `chatgpt.site` URL |
+| Core data paths | Pass | Homepage, `/data/event-research.json`, and `/data/aidc-capex/dashboard.json` return HTTP 200 |
+| Browser interaction | Pass | Event Research renders ten events and AI Capex renders the 75-campus baseline from Tencent-hosted assets |
+| Automated validation | Pass | Lint has zero errors and one unrelated existing warning; 17/17 tests, full build, and continuity build pass |
+| Physical Hong Kong phone | Pending user confirmation | DNS and HTTPS are effective; final carrier-specific validation must be performed on the user's phone with VPN disabled |

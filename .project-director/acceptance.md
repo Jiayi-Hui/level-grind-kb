@@ -141,3 +141,18 @@
 - [x] English/Chinese desktop and mobile browser checks pass without clipping,
   overflow, empty charts, or hidden source references.
 - [x] Targeted tests, lint, and production build pass.
+
+## V5.2 Tencent Hong Kong Continuity
+
+- [x] The Tencent deployment serves Event Research and AI Capex without
+  requesting or redirecting to `chatgpt.site`.
+- [x] The published bundle contains the current event and AIDC JSON assets.
+- [x] Disabled dynamic modules are visibly marked as migrating and expose no
+  dead write controls.
+- [x] `level-grind.com` redirects to the Tencent-hosted canonical domain;
+  `www.level-grind.com` is Effective with a deployed managed certificate.
+- [x] Homepage, Event Research JSON, and AI Capex JSON return HTTP 200 from
+  EdgeOne Pages and fresh browser navigation contains no `chatgpt.site` URL.
+- [ ] A physical Hong Kong phone opens the apex domain with VPN disabled.
+- [ ] Full authenticated D1/R2-backed functionality is not considered
+  migrated until the write runtime and backups have been imported and tested.

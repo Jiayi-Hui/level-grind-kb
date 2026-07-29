@@ -1,0 +1,103 @@
+.continuity-app .nav-item small {
+  margin-left: auto;
+  color: #758b82;
+  font-size: 8px;
+}
+
+.continuity-app .nav-item:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+}
+
+.continuity-app .nav-item:disabled:hover {
+  background: transparent;
+}
+
+.continuity-app .live-claim-band,
+.continuity-app .ask-context-button {
+  display: none;
+}
+
+.continuity-note {
+  margin-top: auto;
+  padding: 14px 13px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid #2c493f;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.continuity-note span {
+  color: #dc9879;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.continuity-note strong {
+  color: #e9efec;
+  font-size: 11px;
+}
+
+.continuity-note small {
+  color: #8da198;
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.continuity-search {
+  flex: 1;
+  max-width: 720px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 10px;
+  color: #6f7a74;
+  background: rgba(231, 231, 224, .78);
+  font-size: 11px;
+}
+
+.continuity-live {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #64736b;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.continuity-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4e9773;
+  box-shadow: 0 0 0 4px rgba(78, 151, 115, .13);
+}
+
+@media (max-width: 820px) {
+  .continuity-app .sidebar {
+    z-index: 50;
+  }
+
+  .continuity-app .topbar {
+    padding-right: 14px;
+  }
+
+  .continuity-search span:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .continuity-live {
+    font-size: 0;
+  }
+
+  .continuity-live::after {
+    content: "腾讯节点";
+    font-size: 8px;
+  }
+}
