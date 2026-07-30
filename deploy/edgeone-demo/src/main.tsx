@@ -39,8 +39,11 @@ const viewCopy = {
 
 // Clerk publishable keys are designed for browser bundles. Authentication
 // secrets and authorization decisions remain outside this static deployment.
+// EdgeOne can override this at build time, while the production key keeps
+// manual-upload builds attached to level-grind.com instead of Clerk dev mode.
 const clerkPublishableKey =
-  "pk_test_YWR2YW5jZWQtc3RvcmstNy5jbGVyay5hY2NvdW50cy5kZXYk";
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+  || "pk_live_Y2xlcmsubGV2ZWwtZ3JpbmQuY29tJA";
 
 function ContinuityApp() {
   const [view, setView] = useState<DemoView>("events");
