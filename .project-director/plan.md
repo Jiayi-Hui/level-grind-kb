@@ -199,3 +199,16 @@
 - [x] Add a current-data demo-question guide.
 - [x] Run targeted tests, lint, and the Tencent production build.
 - [x] Publish to Tencent after release approval and verify the canonical domain.
+
+## V5.9 — Shared research state and automatic Claim tracking
+
+- [ ] Replace device-local Claim add/edit/delete state with authenticated shared
+  persistence so authorized users see the same records.
+- [ ] Move AskAI projects, chats, and saved Personal Knowledge from browser-only
+  storage to user/team-scoped persistence.
+- [ ] Require or resolve company, ticker, Yahoo symbol, and event timestamp when
+  a Claim should be market-tracked.
+- [ ] Create the initial event-price baseline and refresh future trading sessions
+  automatically, with missing mappings and provider failures shown explicitly.
+- [ ] Preserve editor identity, timestamps, change history, privacy aliases, and
+  conflict-safe updates.

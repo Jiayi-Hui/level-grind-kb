@@ -247,3 +247,12 @@
 - [x] Demo questions identify current evidence overlaps and validation limits.
 - [x] Tencent production deployment is live and canonical-domain assets are
   verified.
+
+## V5.9 Shared persistence and tracking backlog
+
+- [ ] An authorized edit is visible to another authorized user after refresh.
+- [ ] The same user sees persisted research state on another device.
+- [ ] A market-trackable Claim stores a resolved public symbol and event time.
+- [ ] Yahoo refresh begins from an observed baseline and never invents missing
+  returns.
+- [ ] Every shared mutation has actor, timestamp, and change-history evidence.
