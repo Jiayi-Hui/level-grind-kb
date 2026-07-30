@@ -23,9 +23,9 @@ ChatGPT Sites.
   `deploy/edgeone-demo/level-grind-edgeone-demo.zip`
 - Tencent preview:
   `https://level-grind-hk-demo.edgeone.dev`
-- Current deployment: `dph9nmikv34j`
+- Current deployment: `dpy72u46jgy1`
 - Deployment preview:
-  `https://level-grind-hk-demo-dpow9ya5eggq.edgeone.dev`
+  `https://level-grind-hk-demo-dpy72u46jgy1.edgeone.dev`
 - Canonical custom domain: `https://www.level-grind.com`
 - Share URL: `https://level-grind.com` (Cloudflare 301 to the canonical domain)
 
