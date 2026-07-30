@@ -1,6 +1,6 @@
 {
   "schemaVersion": "aidc-capex.v1",
-  "generatedAt": "2026-07-30T09:18:17.038Z",
+  "generatedAt": "2026-07-30T11:41:15.529Z",
   "dataCutoff": "2026-07-29",
   "modelVersion": "epoch-baseline-2026-07-29",
   "sourceSnapshots": [
@@ -26,7 +26,7 @@
   "files": [
     {
       "path": "dashboard.json",
-      "sha256": "6c4984270141cf07e10ca84dbad05758d14d197cb178d28c14fc53e687285123",
+      "sha256": "bb3da66d50cf667c18142f243aae3dfbd9719916a483c453333dfb9284ae177a",
       "bytes": 456468
     }
   ]

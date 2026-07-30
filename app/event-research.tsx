@@ -12,6 +12,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  searchClaimsByVector,
+  type ClaimVectorSearchResult,
+} from "../lib/local-claim-vector-search";
 
 type Horizon = { date: string | null; close: number | null; return: number | null; abnormal: number | null };
 type ClaimMapping = {
@@ -77,7 +81,6 @@ type LiveMarketSeries = {
   marketTime: string | null;
   prices: Array<{ date: string; close: number; source: string }>;
 };
-
 const horizons = ["t0", "t1", "t3", "t5"] as const;
 const horizonLabels = { t0: "T+0", t1: "T+1", t3: "T+3", t5: "T+5" };
 const emptyDraft: Draft = {
@@ -208,6 +211,8 @@ export function EventResearch({
   const [livePrices, setLivePrices] = useState<Record<string, LiveMarketSeries>>({});
   const [marketUpdatedAt, setMarketUpdatedAt] = useState("");
   const [marketStatus, setMarketStatus] = useState("正在连接 Yahoo Finance…");
+  const [searchResults, setSearchResults] = useState<ClaimVectorSearchResult[] | null>(null);
+  const [searchStatus, setSearchStatus] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [deletedIds, setDeletedIds] = useState<string[]>(() => loadLocalEdits().deletedIds);
   const [overrides, setOverrides] = useState<Record<string, Draft>>(() => loadLocalEdits().overrides);
@@ -311,18 +316,98 @@ export function EventResearch({
     tickers: [...new Set(claims.flatMap((claim) => claim.mappings.map((mapping) => mapping.ticker)))].sort(),
   }), [claims]);
 
+  const searchDocuments = useMemo(() => claims.map((claim) => {
+    const dimensions = claimDimensions(claim);
+    const securities = claim.mappings.flatMap((mapping) => [
+      mapping.ticker,
+      mapping.security,
+      mapping.benchmark,
+      mapping.mappingType,
+    ]).filter(Boolean);
+    return {
+      id: claim.claimId,
+      text: [
+        claim.originalClaim,
+        claim.title,
+        claim.entity,
+        dimensions.company,
+        dimensions.industry,
+        claim.speaker,
+        claim.verificationStatus,
+        ...securities,
+      ].filter(Boolean).join("；"),
+      exact: [
+        claim.entity,
+        dimensions.company,
+        dimensions.industry,
+        claim.speaker,
+        ...securities,
+      ].filter(Boolean).join("；"),
+    };
+  }), [claims]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      const reset = window.setTimeout(() => {
+        setSearchResults(null);
+        setSearchStatus("");
+      }, 0);
+      return () => window.clearTimeout(reset);
+    }
+    let active = true;
+    const task = window.setTimeout(async () => {
+      setSearchStatus("正在加载本地向量检索…");
+      try {
+        const results = await searchClaimsByVector(
+          trimmed,
+          searchDocuments,
+          (message) => {
+            if (active) setSearchStatus(message);
+          },
+        );
+        if (!active) return;
+        setSearchResults(results);
+        setSearchStatus("本地 BGE 向量检索");
+      } catch {
+        if (!active) return;
+        setSearchResults(null);
+        setSearchStatus("本地语义模型暂不可用，已回退关键词检索");
+      }
+    }, 300);
+    return () => {
+      active = false;
+      window.clearTimeout(task);
+    };
+  }, [query, searchDocuments]);
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
+    const semanticIds = searchResults ? new Set(searchResults.map((result) => result.id)) : null;
     return claims.filter((claim) => {
       const dimensions = claimDimensions(claim);
+      const literalMatch = !needle || [
+        claim.originalClaim,
+        claim.title,
+        claim.entity,
+        claim.speaker,
+        dimensions.company,
+        dimensions.industry,
+        ...claim.mappings.flatMap((item) => [item.ticker, item.security]),
+      ].filter(Boolean).join(" ").toLowerCase().includes(needle);
       return (
-        (!needle || [claim.originalClaim, claim.title, claim.entity, claim.speaker, ...claim.mappings.map((item) => item.ticker)].filter(Boolean).join(" ").toLowerCase().includes(needle))
+        (literalMatch || Boolean(semanticIds?.has(claim.claimId)))
         && (speaker === "all" || claim.speaker === speaker)
         && (company === "all" || dimensions.company === company)
         && (industry === "all" || dimensions.industry === industry)
         && (ticker === "all" || claim.mappings.some((mapping) => mapping.ticker === ticker))
       );
     }).sort((left, right) => {
+      if (needle && searchResults) {
+        const scores = new Map(searchResults.map((result) => [result.id, result.score]));
+        const relevance = (scores.get(right.claimId) || 0) - (scores.get(left.claimId) || 0);
+        if (relevance) return relevance;
+      }
       const leftValue = claimSortValue(left, sortField);
       const rightValue = claimSortValue(right, sortField);
       if (leftValue === null || !Number.isFinite(leftValue)) return rightValue === null || !Number.isFinite(rightValue) ? 0 : 1;
@@ -330,7 +415,7 @@ export function EventResearch({
       const ordered = sortDirection === "asc" ? leftValue - rightValue : rightValue - leftValue;
       return ordered || right.claimDateStart.localeCompare(left.claimDateStart);
     });
-  }, [claims, company, industry, query, sortDirection, sortField, speaker, ticker]);
+  }, [claims, company, industry, query, searchResults, sortDirection, sortField, speaker, ticker]);
 
   const selected = filtered.find((claim) => claim.claimId === selectedId) || filtered[0] || null;
 
@@ -381,7 +466,7 @@ export function EventResearch({
   return (
     <section className="claim-workbench">
       <div className="claim-toolbar-primary">
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索 Claim、公司、发言人、股票代码" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="语义搜索 Claim、公司、行业、主题或股票代码" />
         <button onClick={() => startEdit("new")}>＋ 添加 Claim</button>
       </div>
       <div className="claim-filter-row">
@@ -396,7 +481,7 @@ export function EventResearch({
         <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
           <option value="desc">从高到低 / 最新</option><option value="asc">从低到高 / 最早</option>
         </select>
-        <span>{filtered.length} 条 · {marketStatus}{marketUpdatedAt ? ` · ${new Date(marketUpdatedAt).toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit" })}` : ""}</span>
+        <span>{filtered.length} 条{searchStatus ? ` · ${searchStatus}` : ""} · {marketStatus}{marketUpdatedAt ? ` · ${new Date(marketUpdatedAt).toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit" })}` : ""}</span>
       </div>
 
       <div className="claim-table-wrap">

@@ -9,7 +9,13 @@ and falsifiable investment read-throughs.
 ## Eight-minute path
 
 1. **Open Event DB / 事件研究**
-   - Search `DeepSeek`, `TSMC`, or a ticker to demonstrate cross-event search.
+   - Search `国产算力` to demonstrate semantic retrieval: the result set should
+     include 910/950, domestic AI-chip, testing, and supercomputing-related
+     Claims even when the exact phrase does not appear.
+   - The first semantic search may take several seconds while the browser loads
+     and caches the local open-source BGE model. Wait until the status reads
+     `本地 BGE 向量检索`.
+   - Search `DeepSeek`, `TSMC`, or a ticker to demonstrate exact entity search.
    - Filter by shock type and demand state.
 2. **Select one historical analogue**
    - Read T+1/T+5/T+20, drawdown, breadth, benchmark-relative price path,

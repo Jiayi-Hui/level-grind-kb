@@ -44,12 +44,25 @@ ChatGPT Sites.
 - Agentic research panels embedded in Event DB and AI Capex, with device-local
   Projects/Chats, Personal Knowledge saves, Markdown download, and Obsidian
   export.
+- Event DB semantic search runs locally in the browser with the MIT-licensed
+  `BAAI/bge-small-zh-v1.5` model, using the browser-compatible
+  `Xenova/bge-small-zh-v1.5` ONNX conversion. It ranks Claims with a hybrid of
+  vector similarity and literal matches, so concepts such as `国产算力` can
+  retrieve 910/950, domestic AI-chip, supercomputing, and other semantically
+  related records even when the exact phrase is absent.
 - Authenticated Tencent `/api/agent-chat` function. Tavily and the non-secret
   DeepSeek runtime settings are configured in Tencent.
 
 The build copies the versioned JSON and static assets into the Tencent-hosted
 bundle. Browser requests do not depend on a sibling repository or
 `chatgpt.site`.
+
+The semantic model and ONNX WebAssembly runtime are also part of the static
+bundle under `/models/bge-small-zh-v1.5/` and `/transformers-wasm/`. The first
+semantic search downloads roughly 45 MB and builds the 45-Claim vector index;
+the browser then caches the files and keeps the vectors in memory for the
+session. Claim text and search queries are not sent to Hugging Face or another
+embedding API.
 
 ## Deliberate continuity limits
 
