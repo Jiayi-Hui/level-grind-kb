@@ -198,4 +198,4 @@
 - [x] Update the AskAI labels and examples to expose cross-database research.
 - [x] Add a current-data demo-question guide.
 - [x] Run targeted tests, lint, and the Tencent production build.
-- [ ] Publish to Tencent after release approval.
+- [x] Publish to Tencent after release approval and verify the canonical domain.

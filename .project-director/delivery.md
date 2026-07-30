@@ -296,4 +296,6 @@ and explicit Report/Web/Hybrid evidence modes.
   Capex, with explicit dataset labels and balanced six-plus-six context.
 - Adds `docs/DEMO_ASKAI_QUESTIONS.md` with grounded single-library and
   cross-library prompts, expected evidence, and claims the demo must not make.
-- The Tencent bundle is validated locally and awaits release approval.
+- Tencent deployment `dpxzfw1jstlt` is live. The canonical domain serves JS
+  `index-CoRPDsVF.js`; production probes confirmed the cross-library AskAI copy,
+  removed filter controls, and the Yahoo market function.

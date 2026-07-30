@@ -296,4 +296,4 @@ the production AI Capex view remains integrated in the authenticated
 | Scope disclosure | Pass | Empty state and internal-data mode describe the two-library evidence boundary |
 | Demo evidence | Pass | The tracked question guide uses current Claim and campus overlaps and states non-verifiable boundaries |
 | Automated validation | Pass | Lint has no errors, 7/7 targeted tests pass, and the Tencent production build succeeds |
-| Production release | Pending approval | No Tencent deployment was started in this change |
+| Production release | Pass | Deployment `dpxzfw1jstlt` succeeded; `level-grind.com` serves JS `index-CoRPDsVF.js`, cross-library copy, and the simplified filter bundle |

@@ -245,4 +245,5 @@
 - [x] Internal-data mode and empty-state copy accurately describe the
   two-library evidence scope.
 - [x] Demo questions identify current evidence overlaps and validation limits.
-- [ ] Tencent production deployment awaits release approval.
+- [x] Tencent production deployment is live and canonical-domain assets are
+  verified.
