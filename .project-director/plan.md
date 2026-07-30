@@ -189,3 +189,13 @@
 - [x] Preserve an explicit verified-snapshot fallback.
 - [x] Add regression tests and validate live Yahoo responses.
 - [x] Complete browser QA, deploy Tencent, and verify the canonical domain.
+
+## V5.8 — Cross-database AskAI
+
+- [x] Remove confidence and freshness from AI Capex matrix filters.
+- [x] Retrieve ranked evidence from Event DB and AI Capex for every internal or
+  hybrid question.
+- [x] Update the AskAI labels and examples to expose cross-database research.
+- [x] Add a current-data demo-question guide.
+- [x] Run targeted tests, lint, and the Tencent production build.
+- [ ] Publish to Tencent after release approval.

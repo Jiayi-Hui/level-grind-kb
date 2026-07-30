@@ -235,3 +235,14 @@
 - [x] Yahoo failure visibly falls back to the verified snapshot.
 - [x] Missing horizons remain null; sentinel values are never rendered.
 - [x] Production deployment and canonical-domain probe are complete.
+
+## V5.8 Cross-database AskAI
+
+- [x] AI Capex project-matrix filters omit confidence and freshness.
+- [x] Confidence and freshness remain visible data fields where useful.
+- [x] AskAI retrieves up to six ranked Event DB and six ranked AI Capex records
+  for both Event DB-initiated and AI Capex-initiated questions.
+- [x] Internal-data mode and empty-state copy accurately describe the
+  two-library evidence scope.
+- [x] Demo questions identify current evidence overlaps and validation limits.
+- [ ] Tencent production deployment awaits release approval.

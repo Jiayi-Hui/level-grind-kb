@@ -161,7 +161,7 @@ async function deepSeekAnswer(input, webResults, env) {
             "",
             `Question:\n${input.question}`,
             "",
-            `Current-module evidence:\n${context || "(not included in this mode)"}`,
+            `Level Grind evidence (Event DB + AI Capex):\n${context || "(not included in this mode)"}`,
             "",
             `Public-web evidence:\n${web || "(not included in this mode)"}`,
           ].join("\n"),

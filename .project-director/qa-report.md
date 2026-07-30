@@ -286,3 +286,14 @@ the production AI Capex view remains integrated in the authenticated
 | Local browser | Pass | Event DB shows `BossX`, contains no visible `Xu Lei`, preserves separated company/industry filters, and renders no `-100.0%` sentinel |
 | Automated validation | Pass | Lint, Tencent production build, and 21/21 tests pass |
 | Tencent production | Pass | Deployment `dpy1coemr2uo` completed in 29 seconds; `level-grind.com` serves JS `index-CdsZown2.js`, the aliased Claim JSON, and the Yahoo function |
+
+## V5.8 Cross-database AskAI QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| AI Capex filter density | Pass | Owner, country, and status remain; confidence and freshness are removed from the interactive filter row |
+| Cross-database retrieval | Pass | Both launch scopes retrieve six ranked Event DB and six ranked AI Capex entries |
+| Scope disclosure | Pass | Empty state and internal-data mode describe the two-library evidence boundary |
+| Demo evidence | Pass | The tracked question guide uses current Claim and campus overlaps and states non-verifiable boundaries |
+| Automated validation | Pass | Lint has no errors, 7/7 targeted tests pass, and the Tencent production build succeeds |
+| Production release | Pending approval | No Tencent deployment was started in this change |

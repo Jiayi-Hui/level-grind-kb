@@ -60,8 +60,8 @@ test("adds a compact AI Capex workspace with real matrix and mapped projects", (
   assert.match(component, /setOwner/);
   assert.match(component, /setCountry/);
   assert.match(component, /setStatus/);
-  assert.match(component, /setConfidence/);
-  assert.match(component, /setFreshness/);
+  assert.doesNotMatch(component, /setConfidence/);
+  assert.doesNotMatch(component, /setFreshness/);
   assert.match(component, /loading|Loading/);
   assert.match(component, /aidc-state-error/);
   assert.match(component, /aidc-empty-state/);

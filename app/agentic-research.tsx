@@ -153,52 +153,55 @@ function terms(question: string) {
   )].slice(0, 14);
 }
 
-async function scopeContext(scope: ResearchScope, question: string): Promise<ContextEntry[]> {
+function rankContext(entries: ContextEntry[], question: string) {
   const needles = terms(question);
-  if (scope === "events") {
-    const response = await fetch("/data/claim-ledger-dashboard.json", { cache: "no-store" });
-    if (!response.ok) return [];
-    const payload = await response.json() as {
-      claims: Array<{
-        claimId: string;
-        claimDateStart: string;
-        claimTimeHkt?: string | null;
-        speaker?: string | null;
-        entity?: string | null;
-        originalClaim: string;
-        mappings: Array<{
-          security: string;
-          ticker: string;
-          returns: Record<string, { return: number | null; date: string | null }>;
-        }>;
-      }>;
-    };
-    return payload.claims.map((claim) => {
-      const mapped = claim.mappings.map((mapping) => {
-        const returns = ["t0", "t1", "t3", "t5"].map((horizon) => {
-          const value = mapping.returns[horizon]?.return;
-          return `${horizon.toUpperCase()}=${value === null || value === undefined ? "NA" : `${(value * 100).toFixed(1)}%`}`;
-        }).join(", ");
-        return `${mapping.security} (${mapping.ticker}): ${returns}`;
-      }).join("; ");
-      return {
-        id: claim.claimId,
-        title: `${claim.claimDateStart} · ${claim.entity || "未标注公司"}`,
-        content: [
-          `Claim: ${claim.originalClaim}`,
-          `Speaker: ${claim.speaker || "unknown"}; Time: ${claim.claimTimeHkt || claim.claimDateStart}`,
-          mapped ? `Observed public price windows: ${mapped}` : "No publishable price mapping.",
-        ].join("\n"),
-      };
-    }).sort((a, b) => {
-      const score = (entry: ContextEntry) => needles.reduce(
-        (sum, needle) => sum + (`${entry.title} ${entry.content}`.toLowerCase().includes(needle) ? needle.length : 0),
-        0,
-      );
-      return score(b) - score(a);
-    }).slice(0, 10);
-  }
+  const score = (entry: ContextEntry) => needles.reduce(
+    (sum, needle) => sum + (`${entry.title} ${entry.content}`.toLowerCase().includes(needle) ? needle.length : 0),
+    0,
+  );
+  return entries.sort((a, b) => score(b) - score(a));
+}
 
+async function eventContext(question: string): Promise<ContextEntry[]> {
+  const response = await fetch("/data/claim-ledger-dashboard.json", { cache: "no-store" });
+  if (!response.ok) return [];
+  const payload = await response.json() as {
+    claims: Array<{
+      claimId: string;
+      claimDateStart: string;
+      claimTimeHkt?: string | null;
+      speaker?: string | null;
+      entity?: string | null;
+      originalClaim: string;
+      mappings: Array<{
+        security: string;
+        ticker: string;
+        returns: Record<string, { return: number | null; date: string | null }>;
+      }>;
+    }>;
+  };
+  return rankContext(payload.claims.map((claim) => {
+    const mapped = claim.mappings.map((mapping) => {
+      const returns = ["t0", "t1", "t3", "t5"].map((horizon) => {
+        const value = mapping.returns[horizon]?.return;
+        return `${horizon.toUpperCase()}=${value === null || value === undefined ? "NA" : `${(value * 100).toFixed(1)}%`}`;
+      }).join(", ");
+      return `${mapping.security} (${mapping.ticker}): ${returns}`;
+    }).join("; ");
+    return {
+      id: `events:${claim.claimId}`,
+      title: `[Event DB] ${claim.claimDateStart} · ${claim.entity || "未标注公司"}`,
+      content: [
+        "Dataset: Event DB",
+        `Claim: ${claim.originalClaim}`,
+        `Speaker: ${claim.speaker || "unknown"}; Time: ${claim.claimTimeHkt || claim.claimDateStart}`,
+        mapped ? `Observed public price windows: ${mapped}` : "No publishable price mapping.",
+      ].join("\n"),
+    };
+  }), question);
+}
+
+async function aidcContext(question: string): Promise<ContextEntry[]> {
   const response = await fetch("/data/aidc-capex/dashboard.json", { cache: "no-store" });
   if (!response.ok) return [];
   const payload = await response.json() as {
@@ -219,23 +222,25 @@ async function scopeContext(scope: ResearchScope, question: string): Promise<Con
       latestMilestone?: string | null;
     }>;
   };
-  return payload.projects.map((project) => ({
-    id: project.id,
-    title: `${project.name} · ${project.owner}`,
+  return rankContext(payload.projects.map((project) => ({
+    id: `aidc:${project.id}`,
+    title: `[AI Capex] ${project.name} · ${project.owner}`,
     content: [
+      "Dataset: AI Capex",
       `Location: ${project.address || project.country}; country=${project.country}`,
       `Current IT MW=${project.currentItMw ?? "NA"}; H100e=${project.currentH100e ?? "NA"}; estimated capital cost (2025 USD bn)=${project.estimatedCapitalCostUsdBn ?? "NA"}`,
       `Chips=${project.currentChipTypes.join(", ") || "NA"}; status=${project.status}; confidence=${project.confidence}`,
       `Observation date=${project.observationDate || "unknown"}; research cutoff=${payload.dataCutoff}`,
       project.latestMilestone ? `Latest milestone: ${project.latestMilestone}` : "",
     ].filter(Boolean).join("\n"),
-  })).sort((a, b) => {
-    const score = (entry: ContextEntry) => needles.reduce(
-      (sum, needle) => sum + (`${entry.title} ${entry.content}`.toLowerCase().includes(needle) ? needle.length : 0),
-      0,
-    );
-    return score(b) - score(a);
-  }).slice(0, 10);
+  })), question);
+}
+
+async function scopeContext(scope: ResearchScope, question: string): Promise<ContextEntry[]> {
+  const [events, aidc] = await Promise.all([eventContext(question), aidcContext(question)]);
+  const primary = scope === "events" ? events : aidc;
+  const secondary = scope === "events" ? aidc : events;
+  return [...primary.slice(0, 6), ...secondary.slice(0, 6)];
 }
 
 export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
@@ -498,7 +503,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
 
         <div className="agentic-chat">
           <div className="agentic-messages" ref={scrollRef}>
-            {!activeChat?.messages.length && <div className="agentic-chat-empty">输入问题后，系统会先读取当前模块数据，再按所选模式检索公开网络。</div>}
+            {!activeChat?.messages.length && <div className="agentic-chat-empty">输入问题后，系统会联动事件库与 AI Capex，再按所选模式检索公开网络。</div>}
             {activeChat?.messages.map((message, index) => (
               <article key={message.id} className={`agentic-message ${message.role}`}>
                 <span>{message.role === "user" ? "You" : "AI"}</span>
@@ -525,10 +530,10 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           <form className="agentic-composer" onSubmit={ask}>
             <div className="agentic-modes">
               <button type="button" className={mode === "hybrid" ? "active" : ""} onClick={() => setMode("hybrid")}>混合</button>
-              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>当前库</button>
+              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>内部数据</button>
               <button type="button" className={mode === "web" ? "active" : ""} onClick={() => setMode("web")}>联网</button>
             </div>
-            <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "events" ? "例如：比较这几条 Claim 的 T+5 价格反应，并查找最新公开证据" : "例如：哪些园区的建设状态最近可能发生变化？"} />
+            <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "events" ? "例如：哪些事件可以用 AI Capex 的园区和容量数据交叉验证？" : "例如：哪些事件库 Claim 能由 AI Capex 数据支持或反驳？"} />
             <button type="submit" disabled={!question.trim() || !!thinkingSince}>{thinkingSince ? "分析中" : "发送"}</button>
           </form>
           {(error || notice) && <p className={error ? "agentic-status error" : "agentic-status"}>{error || notice}</p>}

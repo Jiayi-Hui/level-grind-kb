@@ -288,3 +288,12 @@ and explicit Report/Web/Hybrid evidence modes.
 - Tencent deployment `dpy1coemr2uo` is live on `level-grind.com`. The canonical
   domain serves JS `index-CdsZown2.js`; production probes verified 45 claims,
   16 `BossX` references, no `Xu Lei`, and live GOOGL/0700.HK price series.
+
+## V5.8 Cross-database AskAI candidate
+
+- Simplifies the AI Capex matrix filters to owner, country, and status.
+- Makes the unified AskAI retrieve ranked evidence from both Event DB and AI
+  Capex, with explicit dataset labels and balanced six-plus-six context.
+- Adds `docs/DEMO_ASKAI_QUESTIONS.md` with grounded single-library and
+  cross-library prompts, expected evidence, and claims the demo must not make.
+- The Tencent bundle is validated locally and awaits release approval.

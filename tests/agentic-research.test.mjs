@@ -20,6 +20,12 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /obsidian:\/\/new/);
   assert.match(source, /\/data\/claim-ledger-dashboard\.json/);
   assert.match(source, /\/data\/aidc-capex\/dashboard\.json/);
+  assert.match(source, /Promise\.all\(\[eventContext\(question\), aidcContext\(question\)\]\)/);
+  assert.match(source, /\[\.\.\.primary\.slice\(0, 6\), \.\.\.secondary\.slice\(0, 6\)\]/);
+  assert.match(source, /\[Event DB\]/);
+  assert.match(source, /\[AI Capex\]/);
+  assert.match(source, /系统会联动事件库与 AI Capex/);
+  assert.match(source, />内部数据</);
   assert.match(source, /\/api\/agent-chat/);
 });
 

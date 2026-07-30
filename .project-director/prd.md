@@ -424,3 +424,16 @@ client-side authentication protects static JSON assets.
   minutes, recalculating T+0/T+1/T+3/T+5 from observed trading dates.
 - If Yahoo is unavailable, the UI states that it is using the verified
   snapshot; missing horizons remain null and never become sentinel returns.
+
+## V5.8 — Cross-database AskAI
+
+- The AI Capex project matrix keeps owner, country, and status filters;
+  confidence and freshness remain record metadata but are not primary filter
+  controls.
+- AskAI retrieves evidence from both Event DB and AI Capex regardless of which
+  module opened the unified workspace.
+- Cross-database answers state what the second dataset can support, challenge,
+  or only partially validate. Campus estimates are not proof of reported
+  Capex, utilization, or specific chip shipments.
+- A tracked demo-question guide provides event-only, AI-Capex-only, and
+  cross-database prompts grounded in the current datasets.

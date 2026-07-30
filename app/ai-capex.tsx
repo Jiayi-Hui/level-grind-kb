@@ -186,8 +186,6 @@ export function AICapex({ language }: { language: Language }) {
   const [owner, setOwner] = useState("all");
   const [country, setCountry] = useState("all");
   const [status, setStatus] = useState("all");
-  const [confidence, setConfidence] = useState("all");
-  const [freshness, setFreshness] = useState("all");
   const [sortField, setSortField] = useState<CapexSortField>("currentItMw");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedId, setSelectedId] = useState("");
@@ -213,8 +211,6 @@ export function AICapex({ language }: { language: Language }) {
       owners: [...new Set(projects.map((item) => item.owner))].sort(),
       countries: [...new Set(projects.map((item) => item.country))].sort(),
       statuses: [...new Set(projects.map((item) => item.status))].sort(),
-      confidences: [...new Set(projects.map((item) => item.confidence))].sort(),
-      freshness: [...new Set(projects.map((item) => item.freshness))].sort(),
     };
   }, [data]);
 
@@ -225,8 +221,6 @@ export function AICapex({ language }: { language: Language }) {
       && (owner === "all" || project.owner === owner)
       && (country === "all" || project.country === country)
       && (status === "all" || project.status === status)
-      && (confidence === "all" || project.confidence === confidence)
-      && (freshness === "all" || project.freshness === freshness)
     )).sort((left, right) => {
       const leftValue = sortField === "observationDate"
         ? (left.observationDate ? Date.parse(left.observationDate) : null)
@@ -245,7 +239,7 @@ export function AICapex({ language }: { language: Language }) {
         : Number(leftValue) - Number(rightValue);
       return sortDirection === "asc" ? ordered : -ordered;
     });
-  }, [confidence, country, data, freshness, owner, query, sortDirection, sortField, status]);
+  }, [country, data, owner, query, sortDirection, sortField, status]);
 
   const selected = filtered.find((project) => project.id === selectedId) || filtered[0] || null;
   const sourceMap = new Map((data?.sources || []).map((source) => [source.id, source]));
@@ -278,7 +272,7 @@ export function AICapex({ language }: { language: Language }) {
         <header className="aidc-panel-head">
           <div><p className="eyebrow">PROJECT MATRIX</p><h2>项目矩阵</h2><span>{filtered.length} / {data.projects.length}</span></div>
           <button className="quiet-button" onClick={() => {
-            setQuery(""); setOwner("all"); setCountry("all"); setStatus("all"); setConfidence("all"); setFreshness("all");
+            setQuery(""); setOwner("all"); setCountry("all"); setStatus("all");
           }}>清除筛选</button>
         </header>
         <div className="aidc-filters aidc-filters-dense">
@@ -287,8 +281,6 @@ export function AICapex({ language }: { language: Language }) {
             ["业主", owner, setOwner, options.owners],
             ["国家", country, setCountry, options.countries],
             ["状态", status, setStatus, options.statuses],
-            ["置信度", confidence, setConfidence, options.confidences],
-            ["新鲜度", freshness, setFreshness, options.freshness],
           ].map(([label, value, setter, values]) => (
             <label key={String(label)}><span>{String(label)}</span>
               <select value={String(value)} onChange={(event) => (setter as (next: string) => void)(event.target.value)}>
