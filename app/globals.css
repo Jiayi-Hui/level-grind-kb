@@ -1983,6 +1983,15 @@ button { color: inherit; }
 .aidc-filters label { display: grid; gap: 5px; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
 .aidc-filters select { min-width: 0; padding: 8px 9px; border: 1px solid #d7dbd5; border-radius: 7px; background: white; color: var(--ink); font-size: 10px; }
 .aidc-table-wrap { width: 100%; overflow: auto; }
+.aidc-matrix-panel .aidc-table-wrap {
+  max-height: min(430px, 56dvh);
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.aidc-matrix-panel .aidc-table-wrap:focus-visible {
+  outline: 2px solid rgba(47, 107, 84, .42);
+  outline-offset: -2px;
+}
 .aidc-project-table, .aidc-sources-table { width: 100%; border-collapse: collapse; font-size: 9px; }
 .aidc-project-table { min-width: 1240px; }
 .aidc-sources-table { min-width: 1360px; }
@@ -2560,6 +2569,7 @@ button { color: inherit; }
   .claim-horizon-strip { grid-template-columns: repeat(2, 1fr); }
   .claim-horizon-strip em { grid-column: 1 / -1; justify-self: start; padding: 10px 14px; }
   .aidc-filters-dense { grid-template-columns: 1fr 1fr; }
+  .aidc-matrix-panel .aidc-table-wrap { max-height: min(360px, 52dvh); }
   .aidc-world-map { padding: 5px; overflow-x: auto; }
   .aidc-world-map svg { min-width: 700px; }
   .aidc-project-visual { grid-template-columns: 1fr; }

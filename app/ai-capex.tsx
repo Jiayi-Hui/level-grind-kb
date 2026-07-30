@@ -322,7 +322,7 @@ export function AICapex({ language }: { language: Language }) {
             </select>
           </label>
         </div>
-        <div className="aidc-table-wrap">
+        <div className="aidc-table-wrap" tabIndex={0} aria-label="AI Capex 项目列表，可上下滚动">
           <table className="aidc-project-table">
             <thead><tr><th>项目</th><th>业主</th><th>国家 / 地址</th><th>IT MW</th><th>H100e</th><th>芯片</th><th>估算成本</th><th>状态</th><th>观察日</th><th>新鲜度</th></tr></thead>
               <tbody>
@@ -346,17 +346,6 @@ export function AICapex({ language }: { language: Language }) {
               </tbody>
           </table>
         </div>
-      </section>
-
-      <section className="aidc-panel aidc-map-panel">
-        <header className="aidc-panel-head">
-          <div>
-            <p className="eyebrow">GLOBAL BUILDOUT</p>
-            <h2>全球建设进展</h2>
-            <span>{locatedProjectCount} 个已定位园区 · {unresolvedProjectCount} 个待定位</span>
-          </div>
-        </header>
-        <WorldMap projects={filtered} geocodes={geocodes} selectedId={selected?.id || ""} onSelect={setSelectedId} />
       </section>
 
       {selected && (
@@ -415,6 +404,17 @@ export function AICapex({ language }: { language: Language }) {
           </div>
         </section>
       )}
+
+      <section className="aidc-panel aidc-map-panel">
+        <header className="aidc-panel-head">
+          <div>
+            <p className="eyebrow">GLOBAL BUILDOUT</p>
+            <h2>全球建设进展</h2>
+            <span>{locatedProjectCount} 个已定位园区 · {unresolvedProjectCount} 个待定位</span>
+          </div>
+        </header>
+        <WorldMap projects={filtered} geocodes={geocodes} selectedId={selected?.id || ""} onSelect={setSelectedId} />
+      </section>
     </section>
   );
 }

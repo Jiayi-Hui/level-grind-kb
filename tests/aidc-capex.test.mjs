@@ -66,6 +66,10 @@ test("adds a compact AI Capex workspace with real matrix and mapped projects", (
   assert.match(component, /aidc-state-error/);
   assert.match(component, /aidc-empty-state/);
   assert.match(component, /地址待补/);
+  assert.match(component, /AI Capex 项目列表，可上下滚动/);
+  assert.ok(component.indexOf("aidc-detail-panel") < component.indexOf("aidc-map-panel"));
+  assert.match(styles, /\.aidc-matrix-panel \.aidc-table-wrap\s*\{[^}]*max-height:/s);
+  assert.match(styles, /\.aidc-project-table th,[\s\S]*position: sticky; top: 0/);
   assert.match(styles, /\.freshness-stale/);
   assert.equal(Object.values(geocodes).filter((entry) => entry.latitude !== null).length, 75);
   assert.ok(Object.values(geocodes).every((entry) => (
