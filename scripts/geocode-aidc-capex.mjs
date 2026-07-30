@@ -17,13 +17,25 @@ try {
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 const result = { ...cached };
 const retryUnresolved = process.argv.includes("--retry-unresolved");
+const projectFilter = process.argv.find((argument) => argument.startsWith("--project="))?.split("=")[1] || "";
+
+// Nominatim does not consistently resolve English brand/campus names in China.
+// Keep explicit place-name fallbacks here so the published point is still
+// reproducible from a public geocoder instead of using an unexplained coordinate.
+const fallbackQueries = {
+  "aidc-083981c2ef7f": ["Horinger County, Inner Mongolia, China"],
+  "aidc-fc2dfaa647e3": ["Bayin, Ulanqab, Inner Mongolia, China"],
+  "aidc-7ac8b712ec76": ["Zhangbei County, Zhangjiakou, Hebei, China"],
+};
 
 for (const project of dashboard.projects) {
+  if (projectFilter && project.id !== projectFilter) continue;
   if (result[project.id] && (!retryUnresolved || result[project.id].latitude !== null)) continue;
 
   const queries = [
     project.address ? `${project.address}, ${project.country}` : null,
     `${project.name}, ${project.country}`,
+    ...(fallbackQueries[project.id] || []),
   ].filter(Boolean);
 
   let match = null;

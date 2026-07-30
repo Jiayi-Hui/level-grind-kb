@@ -299,3 +299,18 @@ and explicit Report/Web/Hybrid evidence modes.
 - Tencent deployment `dpxzfw1jstlt` is live. The canonical domain serves JS
   `index-CoRPDsVF.js`; production probes confirmed the cross-library AskAI copy,
   removed filter controls, and the Yahoo market function.
+
+## V5.10 AI Capex map coverage and AskAI hierarchy
+
+- Explains and fixes the missing China map points: the research records were
+  present, but Nominatim did not recognize the English brand/campus queries.
+- Adds reproducible place-name fallbacks for Huawei Horinger, VNET Bayin
+  Ulanqab, and Alibaba Zhangbei, improving coverage from 51 to 54 campuses.
+- Documents the 21 records that remain unresolved and keeps them off-map until
+  a verifiable location exists.
+- Renders AskAI assistant content as Markdown and adds compact research-oriented
+  hierarchy for conclusions, headings, bullets, links, citations, and bold
+  emphasis.
+- Updates the DeepSeek instruction to return concise, structured Markdown.
+- Targeted tests, lint, and the Tencent build pass. This candidate is not yet
+  pushed or deployed.

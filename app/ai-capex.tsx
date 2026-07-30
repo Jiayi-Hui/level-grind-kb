@@ -243,6 +243,12 @@ export function AICapex({ language }: { language: Language }) {
 
   const selected = filtered.find((project) => project.id === selectedId) || filtered[0] || null;
   const sourceMap = new Map((data?.sources || []).map((source) => [source.id, source]));
+  const locatedProjectCount = data.projects.filter((project) => {
+    const location = geocodes[project.id];
+    return location?.latitude !== null && location?.latitude !== undefined
+      && location?.longitude !== null && location?.longitude !== undefined;
+  }).length;
+  const unresolvedProjectCount = data.projects.length - locatedProjectCount;
 
   if (loading) return <div className="aidc-state"><i className="button-spinner" />正在载入 75 个园区…</div>;
   if (error || !data) return <div className="aidc-state aidc-state-error">{error || "AI Capex 数据暂时不可用"}</div>;
@@ -330,7 +336,11 @@ export function AICapex({ language }: { language: Language }) {
 
       <section className="aidc-panel aidc-map-panel">
         <header className="aidc-panel-head">
-          <div><p className="eyebrow">GLOBAL BUILDOUT</p><h2>全球建设进展</h2><span>{Object.values(geocodes).filter((item) => item.latitude !== null).length} 个已定位园区</span></div>
+          <div>
+            <p className="eyebrow">GLOBAL BUILDOUT</p>
+            <h2>全球建设进展</h2>
+            <span>{locatedProjectCount} 个已定位园区 · {unresolvedProjectCount} 个待定位</span>
+          </div>
         </header>
         <WorldMap projects={filtered} geocodes={geocodes} selectedId={selected?.id || ""} onSelect={setSelectedId} />
       </section>

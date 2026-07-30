@@ -212,3 +212,14 @@
   automatically, with missing mappings and provider failures shown explicitly.
 - [ ] Preserve editor identity, timestamps, change history, privacy aliases, and
   conflict-safe updates.
+
+## V5.10 — AI Capex map coverage and AskAI readability
+
+- [x] Identify every unresolved AI Capex map record.
+- [x] Add reproducible place-name fallbacks for all three China campuses.
+- [x] Show located and unresolved campus counts in the map header.
+- [x] Render AskAI assistant responses through the shared Markdown component.
+- [x] Add readable heading, list, link, and bold emphasis styles.
+- [x] Ask the model for concise, consistently structured Markdown.
+- [x] Run targeted tests, lint, and the Tencent production build.
+- [ ] Publish after explicit release approval.

@@ -390,24 +390,24 @@
     "geocodedAt": "2026-07-30T00:25:11.098Z"
   },
   "aidc-083981c2ef7f": {
-    "latitude": null,
-    "longitude": null,
-    "precision": "unresolved",
-    "displayName": null,
-    "query": "Huawei Horinger, China",
+    "latitude": 40.2952478,
+    "longitude": 111.9044975,
+    "precision": "place",
+    "displayName": "Horinger County, Hohhot City, Inner Mongolia, 011500, China",
+    "query": "Horinger County, Inner Mongolia, China",
     "source": "OpenStreetMap Nominatim",
-    "sourceUrl": null,
-    "geocodedAt": "2026-07-30T00:29:19.277Z"
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=40.2952478&mlon=111.9044975#map=12/40.2952478/111.9044975",
+    "geocodedAt": "2026-07-30T03:28:44.891Z"
   },
   "aidc-fc2dfaa647e3": {
-    "latitude": null,
-    "longitude": null,
-    "precision": "unresolved",
-    "displayName": null,
-    "query": "VNET Bayin Ulanqab, China",
+    "latitude": 41.6241526,
+    "longitude": 112.6325011,
+    "precision": "place",
+    "displayName": "Bayin, Qahar Right Middle Banner, Ulanqab City, Inner Mongolia, 013500, China",
+    "query": "Bayin, Ulanqab, Inner Mongolia, China",
     "source": "OpenStreetMap Nominatim",
-    "sourceUrl": null,
-    "geocodedAt": "2026-07-30T00:29:22.736Z"
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.6241526&mlon=112.6325011#map=12/41.6241526/112.6325011",
+    "geocodedAt": "2026-07-30T03:28:50.755Z"
   },
   "aidc-83fe006ae422": {
     "latitude": 32.5376266,
@@ -550,14 +550,14 @@
     "geocodedAt": "2026-07-30T00:25:43.268Z"
   },
   "aidc-7ac8b712ec76": {
-    "latitude": null,
-    "longitude": null,
-    "precision": "unresolved",
-    "displayName": null,
-    "query": "Alibaba Zhangbei, China",
+    "latitude": 41.287775,
+    "longitude": 114.769295,
+    "precision": "place",
+    "displayName": "Zhangbei County, Zhangjiakou, Hebei, China",
+    "query": "Zhangbei County, Zhangjiakou, Hebei, China",
     "source": "OpenStreetMap Nominatim",
-    "sourceUrl": null,
-    "geocodedAt": "2026-07-30T00:29:35.317Z"
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.2877750&mlon=114.7692950#map=12/41.2877750/114.7692950",
+    "geocodedAt": "2026-07-30T03:28:56.404Z"
   },
   "aidc-47ebdf4c8d0f": {
     "latitude": null,

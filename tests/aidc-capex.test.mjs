@@ -68,8 +68,14 @@ test("adds a compact AI Capex workspace with real matrix and mapped projects", (
   assert.match(component, /地址待补/);
   assert.match(styles, /\.freshness-stale/);
   assert.ok(Object.values(geocodes).filter((entry) => entry.latitude !== null).length >= 50);
+  const chinaProjects = dashboard.projects.filter((project) => project.country === "China");
+  assert.equal(chinaProjects.length, 3);
+  assert.ok(chinaProjects.every((project) => Number.isFinite(geocodes[project.id]?.latitude)));
+  assert.ok(chinaProjects.every((project) => Number.isFinite(geocodes[project.id]?.longitude)));
+  assert.match(component, /个待定位/);
   assert.match(geocodeScript, /nominatim\.openstreetmap\.org/);
   assert.match(geocodeScript, /retry-unresolved/);
+  assert.match(geocodeScript, /Horinger County, Inner Mongolia, China/);
 });
 
 test("sync is build-time only and supports a tracked fallback", () => {

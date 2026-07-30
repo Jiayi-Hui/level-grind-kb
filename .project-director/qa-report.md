@@ -297,3 +297,15 @@ the production AI Capex view remains integrated in the authenticated
 | Demo evidence | Pass | The tracked question guide uses current Claim and campus overlaps and states non-verifiable boundaries |
 | Automated validation | Pass | Lint has no errors, 7/7 targeted tests pass, and the Tencent production build succeeds |
 | Production release | Pass | Deployment `dpxzfw1jstlt` succeeded; `level-grind.com` serves JS `index-CoRPDsVF.js`, cross-library copy, and the simplified filter bundle |
+
+## V5.10 AI Capex geocoding and AskAI Markdown QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| China map coverage | Pass | All 3/3 China campuses have reproducible Nominatim place-level coordinates |
+| Overall map coverage | Pass | Coverage improves from 51/75 to 54/75; the remaining 21 records stay explicitly unresolved |
+| Data honesty | Pass | No building coordinate is inferred; place-level matches are labelled as such |
+| AskAI Markdown | Pass | Assistant messages use the shared semantic Markdown renderer; user messages remain plain text |
+| Answer hierarchy | Pass | Headings, bullets, links, citations, and bold emphasis have scoped research-chat styles |
+| Automated validation | Pass | 7/7 targeted tests pass; lint has no errors and one unrelated existing warning; Tencent build succeeds |
+| Release | Pending approval | No deployment or push performed in this task |

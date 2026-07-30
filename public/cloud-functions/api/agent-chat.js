@@ -148,6 +148,8 @@ async function deepSeekAnswer(input, webResults, env) {
             "Cite every material factual claim. Separate observed facts from inference.",
             "Do not provide personalized investment advice or fabricate missing evidence.",
             "Keep the answer concise and useful for an equity analyst.",
+            "Format the answer as clean Markdown: lead with one direct conclusion, use 2-4 short ## section headings, use bullets for evidence, and use **bold** sparingly for the most important conclusions, entities, and numbers.",
+            "Do not output raw HTML, decorative separators, or a wall of unstructured text.",
           ].join(" "),
         },
         ...input.history,

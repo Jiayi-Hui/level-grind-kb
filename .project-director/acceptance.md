@@ -256,3 +256,17 @@
 - [ ] Yahoo refresh begins from an observed baseline and never invents missing
   returns.
 - [ ] Every shared mutation has actor, timestamp, and change-history evidence.
+
+## V5.10 Map coverage and AskAI readability
+
+- [x] Huawei Horinger, VNET Bayin Ulanqab, and Alibaba Zhangbei render from
+  reproducible Nominatim place-level matches.
+- [x] The map reports 54 located and 21 unresolved records without fabricating
+  coordinates.
+- [x] The unresolved-record inventory is documented with owner, country, and
+  available source address.
+- [x] AskAI converts Markdown headings, lists, links, citations, and `**bold**`
+  into semantic UI instead of displaying raw markers.
+- [x] Assistant answers visually distinguish conclusions, structure, and
+  supporting details.
+- [x] Targeted tests, lint, and the Tencent build pass.

@@ -1305,6 +1305,38 @@ button { color: inherit; }
 }
 .agentic-message.user > div { background: #315f4d; color: #fff; }
 .agentic-message p { margin: 0; white-space: pre-wrap; font-size: 12px; line-height: 1.75; }
+.agentic-message .markdown-answer {
+  color: var(--ink);
+  font: 12px/1.75 Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.agentic-message .markdown-answer h2,
+.agentic-message .markdown-answer h3,
+.agentic-message .markdown-answer h4 {
+  margin: 18px 0 8px;
+  color: #153f32;
+  font-family: Georgia, "Songti SC", "SimSun", serif;
+  line-height: 1.35;
+}
+.agentic-message .markdown-answer h2:first-child,
+.agentic-message .markdown-answer h3:first-child,
+.agentic-message .markdown-answer h4:first-child { margin-top: 0; }
+.agentic-message .markdown-answer h2 { font-size: 17px; }
+.agentic-message .markdown-answer h3 { font-size: 15px; }
+.agentic-message .markdown-answer h4 { font-size: 13px; }
+.agentic-message .markdown-answer p { margin: 0 0 10px; white-space: normal; }
+.agentic-message .markdown-answer p:last-child { margin-bottom: 0; }
+.agentic-message .markdown-answer ul,
+.agentic-message .markdown-answer ol { margin: 7px 0 12px; padding-left: 21px; }
+.agentic-message .markdown-answer li { margin: 5px 0; padding-left: 2px; }
+.agentic-message .markdown-answer strong {
+  color: #0f3b2e;
+  font-weight: 750;
+}
+.agentic-message .markdown-answer a {
+  color: #a84f30;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
 .agentic-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .agentic-sources a {
   max-width: 100%;

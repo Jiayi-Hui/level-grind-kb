@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
+import { MarkdownAnswer } from "./markdown-answer";
 
 export type ResearchScope = "events" | "aidc";
 type EvidenceMode = "hybrid" | "web" | "context";
@@ -508,7 +509,9 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
               <article key={message.id} className={`agentic-message ${message.role}`}>
                 <span>{message.role === "user" ? "You" : "AI"}</span>
                 <div>
-                  <p>{message.content}</p>
+                  {message.role === "assistant"
+                    ? <MarkdownAnswer value={message.content} />
+                    : <p>{message.content}</p>}
                   {!!message.sources?.length && (
                     <div className="agentic-sources">
                       {message.sources.map((source) => <a key={`${source.index}-${source.url}`} href={source.url} target="_blank" rel="noreferrer">[{source.index}] {source.title}</a>)}
