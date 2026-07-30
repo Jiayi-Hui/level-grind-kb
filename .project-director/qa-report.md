@@ -227,3 +227,16 @@ the production AI Capex view remains integrated in the authenticated
 | Automated validation | Pass | 17/17 tests, full build, Tencent build, and lint with one unrelated pre-existing warning |
 | Tencent production | Pass | Deployment `dpjgwih2iu3d`; `www.level-grind.com` serves the new asset hashes and Claim ledger cutoff `2026-07-28` |
 | Physical Hong Kong sign-in | Pending user confirmation | Carrier-specific no-VPN and actual invited-account sign-in remain physical-device checks |
+
+## V5.4 QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| Event density | Pass | Claim table leads; fixed interpretation and recommendation prose removed |
+| Price integrity | Pass | Charts use the 48 tracked AKShare/yfinance public series paired with BBG event horizons |
+| Claim actions | Pass with boundary | Add/edit/delete persist in browser storage; shared multi-user persistence is not claimed |
+| AIDC density | Pass | Compact KPI snapshot flows directly into matrix, filters, map, and detail |
+| Map integrity | Pass | 51/75 Nominatim address/place results plot; 24 unresolved projects do not render |
+| Image rights | Pass | No Epoch-referenced third-party satellite image is copied; original links remain available |
+| Clerk invitation | Production-ready | Tencent stores masked Clerk secret and owner email; unauthenticated production API correctly returns 401 |
+| Tencent production | Pass | Deployment `dpol6z9tc8tl`; new JS/CSS hashes, geocode asset, and Cloud Function are live |

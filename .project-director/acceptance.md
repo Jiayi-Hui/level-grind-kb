@@ -178,3 +178,20 @@
 - [ ] Tencent server-side authorization for static research JSON is not claimed
   until data is moved behind an authenticated Tencent runtime.
 - [ ] Physical Hong Kong phone sign-in and signed-in navigation are verified.
+
+## V5.4 Dense research screens
+
+- [x] Event DB landing surface is a compact Claim/T+X table with search and
+  company, speaker, and ticker filters.
+- [x] Claim rows can be added, edited, and deleted on the current device.
+- [x] Claim detail shows the published real price path and highlighted event
+  windows without investment advice.
+- [x] AI Capex KPI evidence paragraphs are replaced by one compact dataset note.
+- [x] The project matrix precedes a bundled world map and visual project detail.
+- [x] Unresolved AIDC coordinates remain absent rather than fabricated.
+- [x] Settings contains a Clerk-backed invitation form with Analyst, PM, and
+  GEM PM roles.
+- [x] Tencent environment contains masked `CLERK_SECRET_KEY` and owner email;
+  the live invitation endpoint rejects unauthenticated access.
+- [ ] A real invitation email round trip awaits the first boss email entered by
+  the signed-in owner; no unsolicited test invitation was sent.

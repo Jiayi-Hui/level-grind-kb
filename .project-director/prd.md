@@ -364,3 +364,18 @@ client-side authentication protects static JSON assets.
   Event DB and AI Capex.
 - AC-31: Static JSON confidentiality is explicitly not claimed until a
   Tencent-side authenticated API is deployed.
+
+## V5.4 — Dense Claim and Campus Screens
+
+- Event DB opens on a searchable row ledger: date, Claim, company, speaker,
+  mapped security, and T+0/T+1/T+3/T+5 return.
+- Claim detail contains the real public price series with the Claim date and
+  T+1/T+5 windows highlighted. It contains no generated recommendation.
+- Add, edit, and delete controls are functional. V5.4 browser edits are
+  explicitly device-local until the shared Tencent write store is released.
+- AI Capex opens on a compact six-metric snapshot followed immediately by the
+  75-campus matrix, filters, a geocoded world map, and project detail.
+- Only address/place matches returned by OpenStreetMap Nominatim are plotted;
+  unresolved projects are not assigned synthetic coordinates.
+- Settings replaces the infrastructure continuity badge and provides a real
+  Clerk invitation form for Analyst, PM, and GEM PM.

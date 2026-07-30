@@ -1,0 +1,752 @@
+{
+  "aidc-d4bd7733fff8": {
+    "latitude": 34.9979829,
+    "longitude": -90.0348674,
+    "precision": "address",
+    "displayName": "xAI Macrohard Colossus 2, 5420, Tulane Road, Scaife, Memphis, Shelby County, West Tennessee, Tennessee, 38109, United States",
+    "query": "5420 Tulane Rd, Memphis, TN 38109, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=34.9979829&mlon=-90.0348674#map=12/34.9979829/-90.0348674",
+    "geocodedAt": "2026-07-30T00:23:56.648Z"
+  },
+  "aidc-bea870b7dc12": {
+    "latitude": 33.4454917,
+    "longitude": -84.5241153,
+    "precision": "address",
+    "displayName": "1435, Highway 54 West, Fayetteville, Fayette County, Georgia, 30214, United States",
+    "query": "1435 Hwy 54 W, Fayetteville, GA 30214, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.4454917&mlon=-84.5241153#map=12/33.4454917/-84.5241153",
+    "geocodedAt": "2026-07-30T00:23:57.820Z"
+  },
+  "aidc-56b731c22d1e": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Meta Prometheus, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:28:52.614Z"
+  },
+  "aidc-f707ab4482d1": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Anthropic-Amazon New Carlisle, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:28:56.061Z"
+  },
+  "aidc-0272cf6b9f38": {
+    "latitude": 32.4942321,
+    "longitude": -99.8009071,
+    "precision": "address",
+    "displayName": "Spinks Road, Abilene, Taylor County, Texas, 79603, United States",
+    "query": "5502 Spinks Rd, Abilene, TX 79601, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.4942321&mlon=-99.8009071#map=12/32.4942321/-99.8009071",
+    "geocodedAt": "2026-07-30T00:24:05.986Z"
+  },
+  "aidc-8f6b83ea243a": {
+    "latitude": 42.6748722,
+    "longitude": -87.8948822,
+    "precision": "address",
+    "displayName": "4800, 90th Street, Mount Pleasant, Racine County, Wisconsin, 53403, United States",
+    "query": "4800 90th St, Mount Pleasant, WI 53403, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=42.6748722&mlon=-87.8948822#map=12/42.6748722/-87.8948822",
+    "geocodedAt": "2026-07-30T00:24:07.166Z"
+  },
+  "aidc-6b9f00186b36": {
+    "latitude": 39.8614521,
+    "longitude": -83.0039995,
+    "precision": "address",
+    "displayName": "5076, South High Street, Columbus, Franklin County, Ohio, 43137, United States",
+    "query": "5076 S High St, Columbus, OH 43207, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=39.8614521&mlon=-83.0039995#map=12/39.8614521/-83.0039995",
+    "geocodedAt": "2026-07-30T00:24:08.336Z"
+  },
+  "aidc-4266e9fdadd3": {
+    "latitude": 40.070051,
+    "longitude": -82.754042,
+    "precision": "address",
+    "displayName": "1101, Beech Road Southwest, Beech, New Albany, Jersey Township, Licking County, Ohio, 43054, United States",
+    "query": "1101 Beech Rd SW, New Albany, OH 43054, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=40.0700510&mlon=-82.7540420#map=12/40.0700510/-82.7540420",
+    "geocodedAt": "2026-07-30T00:24:09.498Z"
+  },
+  "aidc-2bafa8396285": {
+    "latitude": 41.1666499,
+    "longitude": -95.7977408,
+    "precision": "address",
+    "displayName": "10410, Bunge Avenue, Council Bluffs, Lewis Township, Pottawattamie County, Iowa, 51503, United States",
+    "query": "10410 Bunge Ave, Council Bluffs, IA 51503, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.1666499&mlon=-95.7977408#map=12/41.1666499/-95.7977408",
+    "geocodedAt": "2026-07-30T00:24:10.665Z"
+  },
+  "aidc-8656e9fee905": {
+    "latitude": 40.907472,
+    "longitude": -96.6457832,
+    "precision": "address",
+    "displayName": "Cloud Court, Lincoln, Lancaster County, Nebraska, 68514, United States",
+    "query": "5475 Cloud Ct, Lincoln, NE 68514, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=40.9074720&mlon=-96.6457832#map=12/40.9074720/-96.6457832",
+    "geocodedAt": "2026-07-30T00:24:11.844Z"
+  },
+  "aidc-6b830635f02e": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Google Bristow, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:28:59.498Z"
+  },
+  "aidc-4f0d3869db2b": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "DayOne Nusajaya, Malaysia",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:01.777Z"
+  },
+  "aidc-e546a66c9572": {
+    "latitude": 35.082853,
+    "longitude": -90.0763722,
+    "precision": "address",
+    "displayName": "Riverport Road, Memphis, Shelby County, West Tennessee, Tennessee, 38109, United States",
+    "query": "3231 Riverport Rd, Memphis, TN 38109, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=35.0828530&mlon=-90.0763722#map=12/35.0828530/-90.0763722",
+    "geocodedAt": "2026-07-30T00:24:18.786Z"
+  },
+  "aidc-5266a66283bf": {
+    "latitude": 41.3356809,
+    "longitude": -96.0523625,
+    "precision": "address",
+    "displayName": "State Street, Omaha, Union Precinct, Douglas County, Nebraska, 68007, United States",
+    "query": "11110 State St, Omaha, NE 68142, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.3356809&mlon=-96.0523625#map=12/41.3356809/-96.0523625",
+    "geocodedAt": "2026-07-30T00:24:19.974Z"
+  },
+  "aidc-18a07cadcef8": {
+    "latitude": 33.2192731,
+    "longitude": -97.1747833,
+    "precision": "address",
+    "displayName": "Jim Christal Road, Denton, Denton County, Texas, 76207, United States",
+    "query": "8171 Jim Christal Rd, Denton, TX 76207, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.2192731&mlon=-97.1747833#map=12/33.2192731/-97.1747833",
+    "geocodedAt": "2026-07-30T00:24:21.152Z"
+  },
+  "aidc-40a4dc3cb80f": {
+    "latitude": 37.4888273,
+    "longitude": -77.24749,
+    "precision": "address",
+    "displayName": "6000, Technology Boulevard, Sandston, Henrico County, Virginia, 23150, United States",
+    "query": "6000 Technology Blvd, Sandston, VA 23150, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=37.4888273&mlon=-77.2474900#map=12/37.4888273/-77.2474900",
+    "geocodedAt": "2026-07-30T00:24:22.403Z"
+  },
+  "aidc-f4704755e4f7": {
+    "latitude": 44.7350005,
+    "longitude": -93.0626069,
+    "precision": "place",
+    "displayName": "Meta Rosemount Data Center, Rich Valley, Rosemount, Dakota County, Minnesota, United States",
+    "query": "Meta Rosemount, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=44.7350005&mlon=-93.0626069#map=12/44.7350005/-93.0626069",
+    "geocodedAt": "2026-07-30T00:24:24.762Z"
+  },
+  "aidc-a7bb87730f26": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Amazon Madison Mega Site, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:05.222Z"
+  },
+  "aidc-20bb107831bd": {
+    "latitude": 33.4089905,
+    "longitude": -112.3647996,
+    "precision": "address",
+    "displayName": "PHX-11, 14250, West Broadway Road, Goodyear, Maricopa County, Arizona, 85338, United States",
+    "query": "14250 W Broadway Rd, Goodyear, AZ 85338, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.4089905&mlon=-112.3647996#map=12/33.4089905/-112.3647996",
+    "geocodedAt": "2026-07-30T00:24:29.596Z"
+  },
+  "aidc-1bd3b20da6e8": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Meta Jeffersonville, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:08.740Z"
+  },
+  "aidc-3216305462c8": {
+    "latitude": 45.6253889,
+    "longitude": -121.2023887,
+    "precision": "address",
+    "displayName": "River Road, The Dalles, Wasco County, Oregon, 97058, United States",
+    "query": "3500 River Rd, The Dalles, OR, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=45.6253889&mlon=-121.2023887#map=12/45.6253889/-121.2023887",
+    "geocodedAt": "2026-07-30T00:24:34.219Z"
+  },
+  "aidc-2f580c287b75": {
+    "latitude": 32.438927,
+    "longitude": -97.0507991,
+    "precision": "address",
+    "displayName": "Railport Parkway, Midlothian, Ellis County, Texas, 76084, United States",
+    "query": "3250 Railport Parkway, Midlothian, TX 76065, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.4389270&mlon=-97.0507991#map=12/32.4389270/-97.0507991",
+    "geocodedAt": "2026-07-30T00:24:35.397Z"
+  },
+  "aidc-e7ca6171124f": {
+    "latitude": 37.4873848,
+    "longitude": -77.2463754,
+    "precision": "place",
+    "displayName": "QTS Richmond 1 Data Center, 6000, Sandston, Henrico County, Virginia, 23150, United States",
+    "query": "QTS Richmond 2, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=37.4873848&mlon=-77.2463754#map=12/37.4873848/-77.2463754",
+    "geocodedAt": "2026-07-30T00:24:37.746Z"
+  },
+  "aidc-77b68a1a53ad": {
+    "latitude": 37.4873848,
+    "longitude": -77.2463754,
+    "precision": "place",
+    "displayName": "QTS Richmond 1 Data Center, 6000, Sandston, Henrico County, Virginia, 23150, United States",
+    "query": "QTS Richmond 3, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=37.4873848&mlon=-77.2463754#map=12/37.4873848/-77.2463754",
+    "geocodedAt": "2026-07-30T00:24:40.083Z"
+  },
+  "aidc-96f89ee8a225": {
+    "latitude": 32.270057,
+    "longitude": -86.328751,
+    "precision": "place",
+    "displayName": "Meta Montgomery Data Center, Montgomery County, Alabama, United States",
+    "query": "Meta Montgomery, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.2700570&mlon=-86.3287510#map=12/32.2700570/-86.3287510",
+    "geocodedAt": "2026-07-30T00:24:42.458Z"
+  },
+  "aidc-daecc6d77791": {
+    "latitude": 43.4645022,
+    "longitude": -116.269285,
+    "precision": "place",
+    "displayName": "Meta Kuna Data Center, Kuna, Ada County, Idaho, United States",
+    "query": "Meta Kuna, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=43.4645022&mlon=-116.2692850#map=12/43.4645022/-116.2692850",
+    "geocodedAt": "2026-07-30T00:24:44.936Z"
+  },
+  "aidc-12669ea3c5d6": {
+    "latitude": 31.1259599,
+    "longitude": -97.3598178,
+    "precision": "address",
+    "displayName": "2310, Eberhardt Road, Temple, Bell County, Texas, 76504, United States",
+    "query": "2310 Eberhardt Rd, Temple, TX 76504, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=31.1259599&mlon=-97.3598178#map=12/31.1259599/-97.3598178",
+    "geocodedAt": "2026-07-30T00:24:46.117Z"
+  },
+  "aidc-5d0b4bf8f62a": {
+    "latitude": 41.0802719,
+    "longitude": -104.8274697,
+    "precision": "place",
+    "displayName": "Meta Cheyenne Data Center, Orchard Valley, Laramie County, Wyoming, United States",
+    "query": "Meta Cheyenne, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.0802719&mlon=-104.8274697#map=12/41.0802719/-104.8274697",
+    "geocodedAt": "2026-07-30T00:24:48.727Z"
+  },
+  "aidc-fe843053737b": {
+    "latitude": 32.4000327,
+    "longitude": -90.1971708,
+    "precision": "address",
+    "displayName": "1626, West County Line Road, Lakeover, Jackson, Hinds County, Mississippi, 39213, United States",
+    "query": "1626 County Line Road Ridgeland, Mississippi, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.4000327&mlon=-90.1971708#map=12/32.4000327/-90.1971708",
+    "geocodedAt": "2026-07-30T00:24:50.074Z"
+  },
+  "aidc-9cc3ee76a6b6": {
+    "latitude": 33.6422384,
+    "longitude": -81.8439618,
+    "precision": "place",
+    "displayName": "Meta Aiken Data Center, Aiken County, South Carolina, United States",
+    "query": "Meta Aiken, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.6422384&mlon=-81.8439618#map=12/33.6422384/-81.8439618",
+    "geocodedAt": "2026-07-30T00:24:52.395Z"
+  },
+  "aidc-beae96413792": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Coreweave Helios, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:12.179Z"
+  },
+  "aidc-3075360618dc": {
+    "latitude": 38.9431898,
+    "longitude": -77.5243571,
+    "precision": "place",
+    "displayName": "Google, Dulles Run Drive, South Riding, Loudoun County, Virginia, 20107, United States",
+    "query": "Google Arcola, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=38.9431898&mlon=-77.5243571#map=12/38.9431898/-77.5243571",
+    "geocodedAt": "2026-07-30T00:24:58.242Z"
+  },
+  "aidc-5b79a85854ad": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Microsoft Project Osmium, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:15.827Z"
+  },
+  "aidc-515d6b841006": {
+    "latitude": 39.4962992,
+    "longitude": -119.4337027,
+    "precision": "place",
+    "displayName": "Google Data Center, 7600, USA Parkway, Storey County, Nevada, 89437, United States",
+    "query": "Google Storey County, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=39.4962992&mlon=-119.4337027#map=12/39.4962992/-119.4337027",
+    "geocodedAt": "2026-07-30T00:25:02.857Z"
+  },
+  "aidc-d3340535dee8": {
+    "latitude": 40.2655833,
+    "longitude": -112.0151087,
+    "precision": "place",
+    "displayName": "Meta, Pony Express Parkway, Meta Eagle Mountain Data Center, Eagle Mountain, Utah County, Utah, United States",
+    "query": "Meta Eagle Mountain, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=40.2655833&mlon=-112.0151087#map=12/40.2655833/-112.0151087",
+    "geocodedAt": "2026-07-30T00:25:05.196Z"
+  },
+  "aidc-8f8978072c40": {
+    "latitude": 43.3586546,
+    "longitude": -78.604128,
+    "precision": "address",
+    "displayName": "7725, Lake Road, Town of Somerset, Niagara County, New York, 14012, United States",
+    "query": "7725 Lake Rd, Barker, NY 14012, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=43.3586546&mlon=-78.6041280#map=12/43.3586546/-78.6041280",
+    "geocodedAt": "2026-07-30T00:25:06.355Z"
+  },
+  "aidc-94dbe8948195": {
+    "latitude": 39.7270407,
+    "longitude": -82.6831433,
+    "precision": "address",
+    "displayName": "105, Whiley Road Southwest, Lancaster, Hocking Township, Fairfield County, Ohio, 43130, United States",
+    "query": "105 Whiley Rd, Lancaster, OH 43130, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=39.7270407&mlon=-82.6831433#map=12/39.7270407/-82.6831433",
+    "geocodedAt": "2026-07-30T00:25:07.566Z"
+  },
+  "aidc-368fd614e474": {
+    "latitude": 33.3536324,
+    "longitude": -111.6761989,
+    "precision": "place",
+    "displayName": "Google Data Center, Mesa, Maricopa County, Arizona, United States",
+    "query": "Google Mesa, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.3536324&mlon=-111.6761989#map=12/33.3536324/-111.6761989",
+    "geocodedAt": "2026-07-30T00:25:08.736Z"
+  },
+  "aidc-865bfff1c370": {
+    "latitude": 51.6961342,
+    "longitude": -0.0489748,
+    "precision": "place",
+    "displayName": "Google Datacentre Waltham Cross, Churchgate, Broxbourne, Hertfordshire, England, United Kingdom",
+    "query": "Google Waltham Cross, United Kingdom",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=51.6961342&mlon=-0.0489748#map=12/51.6961342/-0.0489748",
+    "geocodedAt": "2026-07-30T00:25:11.098Z"
+  },
+  "aidc-083981c2ef7f": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Huawei Horinger, China",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:19.277Z"
+  },
+  "aidc-fc2dfaa647e3": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "VNET Bayin Ulanqab, China",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:22.736Z"
+  },
+  "aidc-83fe006ae422": {
+    "latitude": 32.5376266,
+    "longitude": -96.7966747,
+    "precision": "address",
+    "displayName": "330, North Austin Boulevard, Red Oak, Ellis County, Texas, 75154, United States",
+    "query": "330 Austin Blvd, Red Oak, TX 75154, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.5376266&mlon=-96.7966747#map=12/32.5376266/-96.7966747",
+    "geocodedAt": "2026-07-30T00:25:19.347Z"
+  },
+  "aidc-a8887506cf41": {
+    "latitude": 36.4117644,
+    "longitude": -86.3696786,
+    "precision": "place",
+    "displayName": "Meta Gallatin Data Center, Roundtree Drive, Sumner County, Middle Tennessee, Tennessee, 37066, United States",
+    "query": "Meta Gallatin, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=36.4117644&mlon=-86.3696786#map=12/36.4117644/-86.3696786",
+    "geocodedAt": "2026-07-30T00:25:21.797Z"
+  },
+  "aidc-6f95624e49f0": {
+    "latitude": 34.8301645,
+    "longitude": -106.7838267,
+    "precision": "address",
+    "displayName": "Meta, 4250, Messenger Loop Northwest, Meta Los Lunas Data Center, Los Lunas, Valencia County, New Mexico, 87031, United States",
+    "query": "4250 Messenger Lp, Los Lunas, NM 87031, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=34.8301645&mlon=-106.7838267#map=12/34.8301645/-106.7838267",
+    "geocodedAt": "2026-07-30T00:25:22.969Z"
+  },
+  "aidc-d3805276c65d": {
+    "latitude": 46.0102576,
+    "longitude": -98.5686907,
+    "precision": "address",
+    "displayName": "87th Avenue Southeast, Ellendale Township, Dickey County, North Dakota, 58436, United States",
+    "query": "9685 87th Ave SE, Ellendale, ND 58436, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=46.0102576&mlon=-98.5686907#map=12/46.0102576/-98.5686907",
+    "geocodedAt": "2026-07-30T00:25:24.162Z"
+  },
+  "aidc-8d86f0e6c910": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "CoreWeave Chester VA, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:26.165Z"
+  },
+  "aidc-93a6f5af24f5": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Oracle Batam, Indonesia",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:28.437Z"
+  },
+  "aidc-ffca7cde27bc": {
+    "latitude": 41.1349216,
+    "longitude": -96.1440795,
+    "precision": "place",
+    "displayName": "Google, Schram Road, Papillion, Richland VIII Precinct, Sarpy County, Nebraska, 68046, United States",
+    "query": "Google Papillion, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.1349216&mlon=-96.1440795#map=12/41.1349216/-96.1440795",
+    "geocodedAt": "2026-07-30T00:25:32.298Z"
+  },
+  "aidc-4be283a117b0": {
+    "latitude": 35.1849883,
+    "longitude": -83.9141225,
+    "precision": "address",
+    "displayName": "155, Palmer Lane, Marble, Cherokee County, North Carolina, 28905, United States",
+    "query": "155 Palmer Ln, Marble, NC 28905, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=35.1849883&mlon=-83.9141225#map=12/35.1849883/-83.9141225",
+    "geocodedAt": "2026-07-30T00:25:33.531Z"
+  },
+  "aidc-d1f116b0f4fc": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Microsoft SAT40, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:31.876Z"
+  },
+  "aidc-33067ce31ae9": {
+    "latitude": 38.7458055,
+    "longitude": -77.5377246,
+    "precision": "address",
+    "displayName": "9590, Hornbaker Road, Manassas, Prince William County, Virginia, 20109, United States",
+    "query": "9590 Hornbaker Rd, Manassas, VA 20109, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=38.7458055&mlon=-77.5377246#map=12/38.7458055/-77.5377246",
+    "geocodedAt": "2026-07-30T00:25:38.301Z"
+  },
+  "aidc-03b972ec9ca0": {
+    "latitude": 33.4194907,
+    "longitude": -112.3599884,
+    "precision": "address",
+    "displayName": "Stream Data Centers PHX-1, 2950, South Litchfield Road, Litchfield, Goodyear, Maricopa County, Arizona, 85338, United States",
+    "query": "2950 S. Litchfield Road, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=33.4194907&mlon=-112.3599884#map=12/33.4194907/-112.3599884",
+    "geocodedAt": "2026-07-30T00:25:39.480Z"
+  },
+  "aidc-2d5745fcf9bb": {
+    "latitude": 29.47677,
+    "longitude": -98.6946701,
+    "precision": "address",
+    "displayName": "Wiseman Boulevard, Westover Hills, San Antonio, Bexar County, Texas, 78251, United States",
+    "query": "3545 Wiseman Boulevard, San Antonio, TX 78251, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=29.4767700&mlon=-98.6946701#map=12/29.4767700/-98.6946701",
+    "geocodedAt": "2026-07-30T00:25:40.656Z"
+  },
+  "aidc-69b68942f557": {
+    "latitude": 29.4168571,
+    "longitude": -98.7901875,
+    "precision": "address",
+    "displayName": "Vantage TX11, 14720, Omicron Drive, San Antonio, Bexar County, Texas, 78245, United States",
+    "query": "14720 Omicron Dr, San Antonio, TX 78245, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=29.4168571&mlon=-98.7901875#map=12/29.4168571/-98.7901875",
+    "geocodedAt": "2026-07-30T00:25:41.815Z"
+  },
+  "aidc-78e8b1681c14": {
+    "latitude": 34.7134428,
+    "longitude": -84.9521507,
+    "precision": "address",
+    "displayName": "2205, Industrial South Road, Dalton, Whitfield County, Georgia, 30721, United States",
+    "query": "2205 Industrial South Rd, Dalton, GA, 30721, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=34.7134428&mlon=-84.9521507#map=12/34.7134428/-84.9521507",
+    "geocodedAt": "2026-07-30T00:25:43.268Z"
+  },
+  "aidc-7ac8b712ec76": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Alibaba Zhangbei, China",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:35.317Z"
+  },
+  "aidc-47ebdf4c8d0f": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Start Campus Sines Data Campus, Portugal",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:38.792Z"
+  },
+  "aidc-024cd8309ce7": {
+    "latitude": 36.2411721,
+    "longitude": -95.3300473,
+    "precision": "address",
+    "displayName": "4581, Webb Street, Mid-America Industrial Park, Lusta, Pryor Creek, Mayes County, Oklahoma, 74361, United States",
+    "query": "4581 Webb St, Pryor, OK 74361, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=36.2411721&mlon=-95.3300473#map=12/36.2411721/-95.3300473",
+    "geocodedAt": "2026-07-30T00:25:51.425Z"
+  },
+  "aidc-641072dcd54a": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "CoreWeave Muskogee OK, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:42.243Z"
+  },
+  "aidc-429ea379c5bc": {
+    "latitude": 32.4942321,
+    "longitude": -99.8009071,
+    "precision": "address",
+    "displayName": "Spinks Road, Abilene, Taylor County, Texas, 79603, United States",
+    "query": "5502 Spinks Rd, Abilene, TX 79601, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.4942321&mlon=-99.8009071#map=12/32.4942321/-99.8009071",
+    "geocodedAt": "2026-07-30T00:25:56.056Z"
+  },
+  "aidc-e107f49b0e97": {
+    "latitude": 37.45225,
+    "longitude": -93.2331127,
+    "precision": "place",
+    "displayName": "Goodnight, Mooney Township, Polk County, Missouri, United States",
+    "query": "Goodnight, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=37.4522500&mlon=-93.2331127#map=12/37.4522500/-93.2331127",
+    "geocodedAt": "2026-07-30T00:25:58.458Z"
+  },
+  "aidc-3973048b9585": {
+    "latitude": 41.9222823,
+    "longitude": -91.7156692,
+    "precision": "address",
+    "displayName": "5800, Edgewood Road Southwest, Cedar Rapids, Linn County, Iowa, 52404, United States",
+    "query": "5800 EDGEWOOD RD SW CEDAR RAPIDS, IA 52404, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.9222823&mlon=-91.7156692#map=12/41.9222823/-91.7156692",
+    "geocodedAt": "2026-07-30T00:25:59.649Z"
+  },
+  "aidc-ac96d5cb3080": {
+    "latitude": 41.0309293,
+    "longitude": -85.0536261,
+    "precision": "address",
+    "displayName": "6015, Adams Center Road, Fort Wayne, Allen County, Indiana, 46816, United States",
+    "query": "6015 Adams Center Road, Fort Wayne, IN 46806, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.0309293&mlon=-85.0536261#map=12/41.0309293/-85.0536261",
+    "geocodedAt": "2026-07-30T00:26:00.816Z"
+  },
+  "aidc-a928ffe6d42e": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "Google Kansas City East, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:44.508Z"
+  },
+  "aidc-4b7675e720a7": {
+    "latitude": 32.4676421,
+    "longitude": -91.6267883,
+    "precision": "address",
+    "displayName": "Holly Ridge, Richland Parish, Louisiana, United States",
+    "query": "Holly Ridge, LA 71269, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=32.4676421&mlon=-91.6267883#map=12/32.4676421/-91.6267883",
+    "geocodedAt": "2026-07-30T00:26:04.256Z"
+  },
+  "aidc-d7fb44576747": {
+    "latitude": 41.111765,
+    "longitude": -96.142431,
+    "precision": "place",
+    "displayName": "Sarpy Meta Data Center, Springfield, Sarpy County, Nebraska, United States",
+    "query": "Meta Sarpy, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.1117650&mlon=-96.1424310#map=12/41.1117650/-96.1424310",
+    "geocodedAt": "2026-07-30T00:26:06.649Z"
+  },
+  "aidc-0d2953ed5830": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate Lordstown, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:47.962Z"
+  },
+  "aidc-5227b4059ab0": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate Michigan, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:50.239Z"
+  },
+  "aidc-a35e342efe0b": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate Milam, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:52.498Z"
+  },
+  "aidc-b76a986a0930": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate New Mexico, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:54.776Z"
+  },
+  "aidc-6239e77e00b1": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate Shackelford, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:29:58.256Z"
+  },
+  "aidc-10656b376989": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate UAE, United Arab Emirates",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:30:01.757Z"
+  },
+  "aidc-8d4b67e047a6": {
+    "latitude": null,
+    "longitude": null,
+    "precision": "unresolved",
+    "displayName": null,
+    "query": "OpenAI Stargate Wisconsin, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": null,
+    "geocodedAt": "2026-07-30T00:30:04.018Z"
+  },
+  "aidc-2b9d162684a4": {
+    "latitude": 41.9056197,
+    "longitude": -91.7510775,
+    "precision": "address",
+    "displayName": "6200, 76th Avenue Southwest, Cedar Rapids, Linn County, Iowa, 52228, United States",
+    "query": "6200 76th Ave SW, Fairfax, IA 52228, United States",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=41.9056197&mlon=-91.7510775#map=12/41.9056197/-91.7510775",
+    "geocodedAt": "2026-07-30T00:26:27.576Z"
+  },
+  "aidc-57798f8cdd90": {
+    "latitude": -37.8202314,
+    "longitude": 144.9656609,
+    "precision": "place",
+    "displayName": "Southgate, Southgate Avenue, Southbank, Melbourne, Victoria, 3006, Australia",
+    "query": "Southgate Melbourne, Australia",
+    "source": "OpenStreetMap Nominatim",
+    "sourceUrl": "https://www.openstreetmap.org/?mlat=-37.8202314&mlon=144.9656609#map=12/-37.8202314/144.9656609",
+    "geocodedAt": "2026-07-30T00:26:28.740Z"
+  }
+}

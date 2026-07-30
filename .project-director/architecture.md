@@ -218,3 +218,18 @@ This gate controls the rendered application experience only. Static JSON assets
 on EdgeOne are not confidential resources. Server-enforced membership,
 protected data responses, write APIs, and migrated D1/R2 records require a
 Tencent full-stack runtime and are outside this static cutover.
+
+## V5.4 Tencent function and geospatial boundary
+
+- `cloud-functions/api/invitations.js` verifies the Clerk session JWT against
+  Clerk JWKS, confirms the configured workspace owner email, and calls Clerk's
+  Backend Invitation API. `CLERK_SECRET_KEY` stays in Tencent environment
+  variables.
+- `scripts/geocode-aidc-capex.mjs` keeps a repeatable OpenStreetMap Nominatim
+  cache outside the generated AIDC folder and emits a browser-ready copy during
+  the Tencent build.
+- The world basemap is bundled from `world-atlas`; project bubbles use only
+  source-derived addresses and cached geocodes.
+- Claim edits use browser local storage in this release. This is deliberately
+  separate from the immutable published Claim snapshot and is not described as
+  multi-user persistence.

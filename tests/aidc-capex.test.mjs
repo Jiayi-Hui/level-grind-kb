@@ -12,6 +12,8 @@ const styles = await readFile("app/globals.css", "utf8");
 const workspace = await readFile("app/research-workspace.tsx", "utf8");
 const i18n = await readFile("app/i18n.ts", "utf8");
 const script = await readFile("scripts/sync-aidc-capex.mjs", "utf8");
+const geocodeScript = await readFile("scripts/geocode-aidc-capex.mjs", "utf8");
+const geocodes = JSON.parse(await readFile("data/aidc-capex-geocodes.json", "utf8"));
 
 test("publishes a versioned and checksummed Epoch AI baseline", () => {
   assert.equal(dashboard.schemaVersion, "aidc-capex.v1");
@@ -42,7 +44,7 @@ test("keeps project metrics, evidence, dates, and forecast periods traceable", (
   assert.ok(dashboard.knownLimitations.some((item) => /No reviewed.*forecast/i.test(item)));
 });
 
-test("adds AI Capex as a bilingual peer workspace with complete research states", () => {
+test("adds a compact AI Capex workspace with real matrix and mapped projects", () => {
   assert.match(workspace, /type View = .*"events" \| "aidc" \| "models"/);
   assert.match(workspace, /aidc: "▥"/);
   assert.match(workspace, /active === "aidc".*<AICapex language=\{language\}/s);
@@ -52,17 +54,22 @@ test("adds AI Capex as a bilingual peer workspace with complete research states"
   assert.ok(i18n.indexOf('events: "Event DB"') < i18n.indexOf('aidc: "AI Capex"'));
   assert.ok(i18n.indexOf('aidc: "AI Capex"') < i18n.indexOf('models: "Model workbench"'));
   assert.match(i18n, /追踪 AI 数据中心建设、未来容量与实物 Capex 动能/);
-  assert.match(component, /Owner capacity comparison|业主容量对比/);
-  assert.match(component, /Buildout capacity timeline|建设容量时间线/);
-  assert.match(component, /Campus status baseline|园区状态基线/);
   assert.match(component, /Project matrix|项目矩阵/);
-  assert.match(component, /Sources & Freshness/);
+  assert.match(component, /WorldMap/);
+  assert.match(component, /geocodes\.json/);
+  assert.match(component, /setOwner/);
+  assert.match(component, /setCountry/);
+  assert.match(component, /setStatus/);
+  assert.match(component, /setConfidence/);
+  assert.match(component, /setFreshness/);
   assert.match(component, /loading|Loading/);
   assert.match(component, /aidc-state-error/);
   assert.match(component, /aidc-empty-state/);
-  assert.match(component, /暂缺数据|Data not available/);
-  assert.match(component, /<details>/);
+  assert.match(component, /地址待补/);
   assert.match(styles, /\.freshness-stale/);
+  assert.ok(Object.values(geocodes).filter((entry) => entry.latitude !== null).length >= 50);
+  assert.match(geocodeScript, /nominatim\.openstreetmap\.org/);
+  assert.match(geocodeScript, /retry-unresolved/);
 });
 
 test("sync is build-time only and supports a tracked fallback", () => {

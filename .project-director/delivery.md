@@ -230,3 +230,15 @@ and explicit Report/Web/Hybrid evidence modes.
 - A one-day EdgeOne deployment token was created for the release and expires
   on 2026-07-31; it was not persisted in the repository or shell environment,
   and the local clipboard was cleared after deployment.
+
+## V5.4 Dense Claim and AI Capex delivery
+
+- Event DB is now a spreadsheet-like Claim ledger with T+X returns, row
+  actions, and a real price-path detail view.
+- AI Capex is now a snapshot, project matrix, geocoded global buildout map, and
+  visual project page. Third-party satellite images were not copied because
+  the Epoch licence does not grant redistribution rights for those references.
+- Settings now exposes the member invitation workflow. The production
+  invitation function uses Clerk secrets stored in Tencent's masked environment
+  configuration. Deployment `dpol6z9tc8tl` serves the new function and UI; no
+  invitation was sent without a user-specified recipient.

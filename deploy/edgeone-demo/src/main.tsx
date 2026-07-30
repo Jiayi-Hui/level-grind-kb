@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@clerk/react";
 import { createRoot } from "react-dom/client";
 import { AICapex } from "../../../app/ai-capex";
 import { AppClerkProvider, AuthGate } from "../../../app/auth-widgets";
@@ -6,7 +7,7 @@ import { EventResearch } from "../../../app/event-research";
 import "../../../app/globals.css";
 import "./mirror.css";
 
-type DemoView = "events" | "aidc";
+type DemoView = "events" | "aidc" | "settings";
 
 const viewCopy = {
   events: {
@@ -16,6 +17,10 @@ const viewCopy = {
   aidc: {
     eyebrow: "AI INFRASTRUCTURE",
     title: "AI Capex",
+  },
+  settings: {
+    eyebrow: "WORKSPACE CONTROL",
+    title: "设置",
   },
 } satisfies Record<DemoView, {
   eyebrow: string;
@@ -81,12 +86,14 @@ function ContinuityApp() {
             <span>AskAI</span>
             <small>迁移中</small>
           </button>
+          <button
+            className={`nav-item ${view === "settings" ? "active" : ""}`}
+            onClick={() => selectView("settings")}
+          >
+            <span className="nav-symbol">⚙</span>
+            <span>设置</span>
+          </button>
         </nav>
-        <div className="continuity-note">
-          <span>TENCENT EDGEONE</span>
-          <strong>香港免 VPN 连续性版本</strong>
-          <small>核心研究数据已随站点托管，不再回源 chatgpt.site。</small>
-        </div>
       </aside>
 
       <section className="workspace">
@@ -118,8 +125,10 @@ function ContinuityApp() {
               liveClaims={[]}
               onAsk={() => undefined}
             />
-          ) : (
+          ) : view === "aidc" ? (
             <AICapex language="zh" />
+          ) : (
+            <InviteSettings />
           )}
         </div>
       </section>
@@ -127,14 +136,69 @@ function ContinuityApp() {
   );
 }
 
+function InviteSettings() {
+  const { getToken } = useAuth();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("Analyst");
+  const [status, setStatus] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const invite = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSending(true);
+    setStatus("");
+    try {
+      const token = await getToken();
+      const response = await fetch("/api/invitations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ email, role }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "邀请发送失败");
+      setStatus(`邀请已发送至 ${email}`);
+      setEmail("");
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "邀请发送失败");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <section className="settings-workspace">
+      <div className="settings-grid">
+        <article className="settings-card">
+          <p className="eyebrow">TEAM ACCESS</p>
+          <h2>邀请团队成员</h2>
+          <form onSubmit={invite}>
+            <label><span>公司邮箱</span><input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@dymonasia.com" /></label>
+            <label><span>角色</span><select value={role} onChange={(event) => setRole(event.target.value)}><option>Analyst</option><option>PM</option><option>GEM PM</option></select></label>
+            <button type="submit" disabled={sending}>{sending ? "发送中…" : "发送邀请"}</button>
+          </form>
+          {status && <p className="settings-status">{status}</p>}
+        </article>
+        <article className="settings-card">
+          <p className="eyebrow">RESEARCH PROFILE</p>
+          <h2>研究偏好</h2>
+          <dl><div><dt>研究范围</dt><dd>团队事件、公司、行业与 AI 基础设施</dd></div><div><dt>默认语言</dt><dd>中文</dd></div><div><dt>访问方式</dt><dd>受邀请的 Clerk 账户</dd></div></dl>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 const app = <ContinuityApp />;
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    {import.meta.env.DEV ? app : (
-      <AppClerkProvider publishableKey={clerkPublishableKey}>
-        <AuthGate>{app}</AuthGate>
-      </AppClerkProvider>
-    )}
+    <AppClerkProvider publishableKey={clerkPublishableKey}>
+      {(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV
+        ? app
+        : <AuthGate>{app}</AuthGate>}
+    </AppClerkProvider>
   </React.StrictMode>,
 );
