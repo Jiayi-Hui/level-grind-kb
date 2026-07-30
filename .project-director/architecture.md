@@ -185,3 +185,36 @@ The integration is additive: one client component, one portable-data sync
 script, navigation/i18n additions, styles, and focused tests. It adds no D1/R2
 schema and does not alter existing Event DB, Model Workbench, authentication,
 or report-storage contracts.
+
+## Real Claim Ledger portable boundary
+
+```text
+wechat_claim_date_ledger_2026-07-28.xlsx
+  -> tracked normalized Claim source (45)
+
+Bloomberg Desktop-derived event study
+  + AKShare/yfinance public rerun
+  + Dymon/BBG verification findings
+  -> scripts/sync-claim-ledger.mjs
+  -> claim-ledger.v1 portable JSON
+  -> Event DB claim list, event-window charts, evidence rows, comparison
+```
+
+The Claim content state, timestamp evidence, security mapping, price event
+window, and verification evidence are independent fields. In particular,
+successful BBG/public price reconciliation does not validate the underlying
+group-chat statement.
+
+The legacy 10-event narrative snapshot remains tracked for provenance but is no
+longer the Tencent Event DB presentation source.
+
+## Tencent authentication boundary
+
+The Tencent EdgeOne continuity build uses the existing Clerk public client and
+session gate. The publishable key is intentionally present in the browser
+bundle; no Clerk secret is shipped.
+
+This gate controls the rendered application experience only. Static JSON assets
+on EdgeOne are not confidential resources. Server-enforced membership,
+protected data responses, write APIs, and migrated D1/R2 records require a
+Tencent full-stack runtime and are outside this static cutover.

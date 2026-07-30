@@ -321,3 +321,46 @@ time.
   actionable without dead controls.
 - AC-26: Desktop and phone layouts keep filters, charts, table, project detail,
   and source references readable.
+
+## V5.3 — Real Claim Ledger and Tencent Clerk Gate
+
+### Objective
+
+Replace the narrative-heavy historical-event prototype with the team's real
+WeChat Claim ledger and its BBG/public event-window outputs. Add the existing
+Clerk identity gate to the Tencent continuity build without implying that
+client-side authentication protects static JSON assets.
+
+### Requirements
+
+- FR-51: Event DB uses the 45-Claim date ledger, including original group-chat
+  wording, speaker, HKT time when known, date evidence type, content-verification
+  status, and effective period.
+- FR-52: The 88 Claim–security mappings retain direct/proxy classification,
+  benchmark, BBG-derived T+0/T+1/T+3/T+5 returns, abnormal returns, and public
+  price cross-check status.
+- FR-53: A price event window never upgrades Claim content to verified.
+- FR-54: Dymon/BBG evidence is displayed as attributed evidence rows, not
+  generated investment advice.
+- FR-55: Users can search/filter Claims, inspect one Claim and its securities,
+  and compare up to four Claims by mapped-security median return.
+- FR-56: The Event DB removes generated stance, similarity, demand-state, and
+  investment-read-through prose.
+- FR-57: The Tencent static build restores the existing Clerk sign-in and user
+  session UI. Server-side authorization and protected data delivery remain a
+  separate Tencent full-stack migration.
+- FR-58: AI Capex keeps its source/date/method contract but uses compact
+  evidence rows and direct labels.
+
+### Acceptance
+
+- AC-27: The published Event DB reports 45 Claims, 88 security mappings, 48/48
+  public price coverage, and the actual ledger cutoff.
+- AC-28: Original Claim wording and known speakers/timestamps match the source
+  workbook; missing fields remain visibly pending.
+- AC-29: No generated investment recommendation or unsupported verification
+  label appears.
+- AC-30: Clerk sign-in gates the Tencent UI and a signed-in account can open the
+  Event DB and AI Capex.
+- AC-31: Static JSON confidentiality is explicitly not claimed until a
+  Tencent-side authenticated API is deployed.

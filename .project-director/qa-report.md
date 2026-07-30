@@ -209,3 +209,21 @@ the production AI Capex view remains integrated in the authenticated
 | Browser interaction | Pass | Event Research renders ten events and AI Capex renders the 75-campus baseline from Tencent-hosted assets |
 | Automated validation | Pass | Lint has zero errors and one unrelated existing warning; 17/17 tests, full build, and continuity build pass |
 | Physical Hong Kong phone | Pending user confirmation | DNS and HTTPS are effective; final carrier-specific validation must be performed on the user's phone with VPN disabled |
+
+## V5.3 Real Claim Ledger and Tencent Clerk Checks
+
+| Check | Result | Notes |
+|---|---|---|
+| Real Claim source | Pass | 45 normalized group-chat Claims, including 25 with original timestamps |
+| Price mapping | Pass | 88 BBG-derived Claim–security mappings and 48/48 public price series |
+| Evidence boundary | Pass | Claim content status, timestamp quality, security mapping, BBG window, public cross-check, and Dymon evidence remain independent |
+| Event interaction | Pass | Search, speaker/evidence/mapping filters, claim selection, security selection, and four-Claim comparison render |
+| AI prose removal | Pass | No generated similarity, shock, demand-state, or investment-read-through copy remains |
+| AI Capex density | Pass | Short labels replace explanatory prose; source, observation, cutoff, sync, and collapsible method remain attached to each decision view |
+| Desktop browser | Pass | Claim ledger and AI Capex render in the Tencent continuity shell without clipping |
+| Mobile browser | Pass | 390 × 844 navigation, KPI stack, filters, Claim list, and AI Capex evidence render without page-level overflow |
+| Clerk client gate | Pass | Production build restores the Clerk session, shows the invited-account gate, and loads the Google/Microsoft/GitHub/email sign-in modal |
+| Static-data boundary | Explicit | Clerk protects the rendered UI; static JSON is not represented as server-authorized |
+| Automated validation | Pass | 17/17 tests, full build, Tencent build, and lint with one unrelated pre-existing warning |
+| Tencent production | Pass | Deployment `dpjgwih2iu3d`; `www.level-grind.com` serves the new asset hashes and Claim ledger cutoff `2026-07-28` |
+| Physical Hong Kong sign-in | Pending user confirmation | Carrier-specific no-VPN and actual invited-account sign-in remain physical-device checks |

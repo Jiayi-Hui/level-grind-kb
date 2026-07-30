@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { AICapex } from "../../../app/ai-capex";
+import { AppClerkProvider, AuthGate } from "../../../app/auth-widgets";
 import { EventResearch } from "../../../app/event-research";
 import "../../../app/globals.css";
 import "./mirror.css";
@@ -9,20 +10,22 @@ type DemoView = "events" | "aidc";
 
 const viewCopy = {
   events: {
-    eyebrow: "EVENT MEMORY",
+    eyebrow: "CLAIM LEDGER",
     title: "事件库",
-    description: "跨事件比较历史价格反应、行业传导、证据来源与投资启示。",
   },
   aidc: {
     eyebrow: "AI INFRASTRUCTURE",
     title: "AI Capex",
-    description: "追踪 AI 数据中心建设、未来容量与实物 Capex 动能。",
   },
 } satisfies Record<DemoView, {
   eyebrow: string;
   title: string;
-  description: string;
 }>;
+
+// Clerk publishable keys are designed for browser bundles. Authentication
+// secrets and authorization decisions remain outside this static deployment.
+const clerkPublishableKey =
+  "pk_test_YWR2YW5jZWQtc3RvcmstNy5jbGVyay5hY2NvdW50cy5kZXYk";
 
 function ContinuityApp() {
   const [view, setView] = useState<DemoView>("events");
@@ -107,7 +110,6 @@ function ContinuityApp() {
             <div>
               <p className="eyebrow">{heading.eyebrow}</p>
               <h1>{heading.title}</h1>
-              <p>{heading.description}</p>
             </div>
           </header>
 
@@ -125,8 +127,14 @@ function ContinuityApp() {
   );
 }
 
+const app = <ContinuityApp />;
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ContinuityApp />
+    {import.meta.env.DEV ? app : (
+      <AppClerkProvider publishableKey={clerkPublishableKey}>
+        <AuthGate>{app}</AuthGate>
+      </AppClerkProvider>
+    )}
   </React.StrictMode>,
 );

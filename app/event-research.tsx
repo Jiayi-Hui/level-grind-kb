@@ -17,71 +17,114 @@ import {
 
 type NullableNumber = number | null;
 
-type HistoricalEvent = {
-  event_id: string;
-  event_date: string;
-  event_name_cn: string;
-  primary_shock: string;
-  trigger: string;
-  initial_market_narrative: string;
-  demand_assessment: string;
-  positioning_assessment: string;
-  similarity_to_w29: number;
-  is_negative_control: number;
-  caveat: string | null;
-  median_return_1d: NullableNumber;
-  median_return_5d: NullableNumber;
-  median_return_20d: NullableNumber;
-  median_max_drawdown_20d: NullableNumber;
-  negative_breadth_1d: NullableNumber;
+type Horizon = {
+  date: string | null;
+  close: NullableNumber;
+  return: NullableNumber;
+  abnormal: NullableNumber;
+  benchmarkClose: NullableNumber;
 };
 
-type SectorReaction = {
-  event_id: string;
-  track_id: string;
-  track_name_cn: string;
-  median_return_1d: NullableNumber;
-};
-
-type SecurityReaction = {
-  event_id: string;
+type ClaimMapping = {
+  mappingType: string;
   ticker: string;
-  role: string;
-  name_cn: string;
-  name_en: string;
+  security: string;
   market: string;
-  return_1d: NullableNumber;
-  return_5d: NullableNumber;
-  return_20d: NullableNumber;
-  abnormal_1d: NullableNumber;
-  pre_20d_return: NullableNumber;
-  event_volume_vs_prior20_median: NullableNumber;
+  benchmark: string;
+  mappingRationale: string;
+  eventSession: string;
+  baseDate: string;
+  baseClose: NullableNumber;
+  status: string;
+  returns: {
+    t0: Horizon;
+    t1: Horizon;
+    t3: Horizon;
+    t5: Horizon;
+  };
+  publicCheck: {
+    status: string;
+    priceSource: string;
+    benchmarkSource: string;
+    abnormalDiffBp: Record<"t0" | "t1" | "t3" | "t5", NullableNumber>;
+  } | null;
+  publicSymbol: string | null;
 };
 
-type PricePathPoint = {
-  event_id: string;
-  session: number;
-  median_return: NullableNumber;
-  median_abnormal: NullableNumber;
-  security_count: number;
+type VerificationEvidence = {
+  findingId: string;
+  verificationStatus: string;
+  nextEvidenceNeeded: string[];
+  bbgEvidence: Array<{
+    ticker: string;
+    date: string;
+    field: string;
+    value: string;
+  }>;
+  dymonEvidence: Array<{
+    sourceType: string;
+    title: string;
+    date: string;
+    publisher?: string;
+    note: string;
+  }>;
 };
 
-type SourceRecord = {
-  source_id: string;
-  event_id: string;
-  publisher: string;
-  published_date: string;
+type LedgerClaim = {
+  claimDateStart: string;
+  claimDateEnd: string | null;
+  claimTimeHkt: string | null;
+  dateEvidenceType: string;
+  dateConfidence: string;
+  claimId: string;
+  eventId: string;
+  sourceWeek: string | null;
+  speaker: string | null;
+  entity: string | null;
   title: string;
-  url: string;
+  originalClaim: string;
+  claimConfidence: string | null;
+  verificationStatus: string | null;
+  effectivePeriod: string | null;
+  needsOriginalTimestamp: boolean;
+  contentStatus: string | null;
+  priceStatus: string;
+  verificationEvidence: VerificationEvidence[];
+  mappings: ClaimMapping[];
 };
 
-type EventResearchPayload = {
-  publishedAt: string;
-  events: HistoricalEvent[];
-  sectorSummaries: SectorReaction[];
-  eventReturns: SecurityReaction[];
-  eventPricePaths: PricePathPoint[];
-  sources: SourceRecord[];
+type SecuritySeries = {
+  ticker: string;
+  publicSymbol: string | null;
+  source: string | null;
+  prices: Array<{
+    date: string;
+    close: number;
+    source: string;
+    publicSymbol: string;
+  }>;
+};
+
+type ClaimLedgerPayload = {
+  schemaVersion: string;
+  generatedAt: string;
+  dataCutoff: string;
+  recordCounts: {
+    claims: number;
+    exactTimestampClaims: number;
+    mappedClaims: number;
+    claimSecurityMappings: number;
+    securitiesWithPublicPrices: number;
+    verificationFindings: number;
+  };
+  methodology: {
+    contentBoundary: string;
+    bbgBoundary: string;
+    publicBoundary: string;
+    horizons: string[];
+  };
+  claims: LedgerClaim[];
+  securities: SecuritySeries[];
 };
 
 type LiveClaim = {
@@ -95,28 +138,12 @@ type LiveClaim = {
   verification_status: string;
 };
 
-const shockLabels: Record<string, string> = {
-  valuation_roi: "估值 / ROI",
-  earnings_expectation: "财报 / 预期",
-  macro_liquidity: "宏观 / 流动性",
-  policy: "政策",
-  efficiency_narrative: "效率 / 需求叙事",
-  demand_inventory: "订单 / 库存",
-  orders_guidance: "订单 / 指引",
-};
+const horizonKeys = ["t0", "t1", "t3", "t5"] as const;
+const horizonLabels = { t0: "T+0", t1: "T+1", t3: "T+3", t5: "T+5" };
 
-const demandLabels: Record<string, string> = {
-  demand_intact: "需求仍强",
-  ai_intact_non_ai_weak: "AI 强 / 非 AI 弱",
-  uncertain_demand: "需求待验证",
-  actual_deterioration: "基本面恶化",
-  policy_impaired: "政策受损",
-};
-
-function pct(value: NullableNumber, signed = true) {
+function pct(value: NullableNumber, digits = 1) {
   if (value === null || Number.isNaN(value)) return "—";
-  const sign = signed && value > 0 ? "+" : "";
-  return `${sign}${(value * 100).toFixed(1)}%`;
+  return `${value > 0 ? "+" : ""}${(value * 100).toFixed(digits)}%`;
 }
 
 function tone(value: NullableNumber) {
@@ -124,61 +151,28 @@ function tone(value: NullableNumber) {
   return value > 0 ? "positive" : "negative";
 }
 
-function exactDate(value?: string) {
-  return value?.slice(0, 10).replaceAll("-", ".") || "—";
+function dateLabel(claim: LedgerClaim) {
+  const end = claim.claimDateEnd && claim.claimDateEnd !== claim.claimDateStart
+    ? ` – ${claim.claimDateEnd}`
+    : "";
+  const time = claim.claimTimeHkt ? ` ${claim.claimTimeHkt}` : "";
+  return `${claim.claimDateStart}${end}${time}`;
 }
 
-function eventQuarter(value: string) {
-  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
-  return `${date.getUTCFullYear()}Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
+function contentStatusTone(claim: LedgerClaim) {
+  if (claim.verificationEvidence.length) return "evidence";
+  if (claim.verificationStatus?.includes("未验证")) return "unverified";
+  return "pending";
 }
 
-function median(values: NullableNumber[]) {
-  const valid = values
-    .filter((value): value is number => value !== null && !Number.isNaN(value))
+function mappingMedian(claim: LedgerClaim, key: keyof ClaimMapping["returns"]) {
+  const values = claim.mappings
+    .map((mapping) => mapping.returns[key].return)
+    .filter((value): value is number => value !== null)
     .sort((a, b) => a - b);
-  if (!valid.length) return null;
-  const middle = Math.floor(valid.length / 2);
-  return valid.length % 2 ? valid[middle] : (valid[middle - 1] + valid[middle]) / 2;
-}
-
-function primaryIndustry(data: EventResearchPayload, eventId: string) {
-  return data.sectorSummaries
-    .filter((row) => row.event_id === eventId && row.median_return_1d !== null)
-    .sort((a, b) => Math.abs(b.median_return_1d || 0) - Math.abs(a.median_return_1d || 0))[0]?.track_name_cn || "未分类";
-}
-
-function investmentReadThrough(event: HistoricalEvent) {
-  if (event.demand_assessment === "actual_deterioration") {
-    return {
-      stance: "防守 / 等待验证",
-      title: "不要把基本面恶化误判为单纯拥挤交易出清",
-      body: "历史上当订单、库存或指引同步转弱时，首日反弹并不能确认见底。仓位应等待领先指标、盈利预期和成交结构至少有一项转折。",
-      watch: "验证：订单与库存拐点、盈利预测下修是否停止、T+5 至 T+20 是否仍跑输基准。",
-    };
-  }
-  if (event.demand_assessment === "policy_impaired") {
-    return {
-      stance: "降低政策暴露",
-      title: "政策冲击的持续时间通常长于单日价格反应",
-      body: "优先区分一次性风险溢价与真实收入/供应链受限。配置上更适合转向替代供应商、受益地区或政策暴露更低的环节。",
-      watch: "验证：规则执行范围、许可证节奏、客户转单和本地替代份额。",
-    };
-  }
-  if (event.demand_assessment === "demand_intact" || event.demand_assessment === "ai_intact_non_ai_weak") {
-    return {
-      stance: "分化买入 / 避免追涨",
-      title: "若需求未坏，价格下跌更可能是估值和仓位再平衡",
-      body: "历史路径支持在确认订单与资本开支仍强后，优先回补盈利兑现度高、估值回撤充分的龙头，而不是无差别抄底整个主题。",
-      watch: "验证：AI 订单、资本开支、交付瓶颈与盈利上修是否延续；若 T+5 仍显著跑输基准则下调判断。",
-    };
-  }
-  return {
-    stance: "小仓位观察",
-    title: "当前证据不足以把价格波动归因于需求或仓位",
-    body: "先把市场叙事拆成可验证变量，再决定是否扩大风险。该结论用于研究排序，不是自动交易指令。",
-    watch: "验证：公司指引、供应链交叉信息、分析师预期变化与后续价格广度。",
-  };
+  if (!values.length) return null;
+  const middle = Math.floor(values.length / 2);
+  return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
 }
 
 export function EventResearch({
@@ -188,30 +182,29 @@ export function EventResearch({
   liveClaims: LiveClaim[];
   onAsk: (title: string, detail: string) => void;
 }) {
-  const [data, setData] = useState<EventResearchPayload | null>(null);
+  const [data, setData] = useState<ClaimLedgerPayload | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [shock, setShock] = useState("all");
-  const [demand, setDemand] = useState("all");
-  const [quarter, setQuarter] = useState("all");
-  const [industry, setIndustry] = useState("all");
-  const [company, setCompany] = useState("all");
+  const [speaker, setSpeaker] = useState("all");
+  const [evidence, setEvidence] = useState("all");
+  const [mappingType, setMappingType] = useState("all");
   const [selectedId, setSelectedId] = useState("");
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
-    fetch("/data/event-research.json", { cache: "no-store" })
+    fetch("/data/claim-ledger-dashboard.json", { cache: "no-store" })
       .then((response) => {
-        if (!response.ok) throw new Error("历史事件数据暂时不可用");
-        return response.json() as Promise<EventResearchPayload>;
+        if (!response.ok) throw new Error("Claim ledger 暂时不可用");
+        return response.json() as Promise<ClaimLedgerPayload>;
       })
       .then((payload) => {
         if (!active) return;
         setData(payload);
-        setSelectedId((current) => current || payload.events[0]?.event_id || "");
+        setSelectedId(payload.claims[0]?.claimId || "");
       })
       .catch((caught) => {
-        if (active) setError(caught instanceof Error ? caught.message : "历史事件数据暂时不可用");
+        if (active) setError(caught instanceof Error ? caught.message : "Claim ledger 暂时不可用");
       });
     return () => {
       active = false;
@@ -219,349 +212,353 @@ export function EventResearch({
   }, []);
 
   const filters = useMemo(() => {
-    if (!data) return { shocks: [], demands: [], quarters: [], industries: [], companies: [] };
-    const companies = data.eventReturns
-      .filter((row) => row.role === "asia_core")
-      .map((row) => ({ value: row.ticker, label: `${row.name_cn || row.name_en} · ${row.ticker}` }))
-      .filter((item, index, rows) => rows.findIndex((row) => row.value === item.value) === index)
-      .sort((a, b) => a.label.localeCompare(b.label, "zh-CN"));
+    if (!data) return { speakers: [], mappingTypes: [] };
     return {
-      shocks: [...new Set(data.events.map((event) => event.primary_shock))].sort(),
-      demands: [...new Set(data.events.map((event) => event.demand_assessment))].sort(),
-      quarters: [...new Set(data.events.map((event) => eventQuarter(event.event_date)))].sort().reverse(),
-      industries: [...new Set(data.events.map((event) => primaryIndustry(data, event.event_id)))]
+      speakers: [...new Set(data.claims.map((claim) => claim.speaker).filter(Boolean) as string[])]
         .sort((a, b) => a.localeCompare(b, "zh-CN")),
-      companies,
+      mappingTypes: [...new Set(data.claims.flatMap((claim) => claim.mappings.map((mapping) => mapping.mappingType)))]
+        .sort(),
     };
   }, [data]);
 
   const filtered = useMemo(() => {
     if (!data) return [];
     const needle = search.trim().toLocaleLowerCase("zh-CN");
-    return data.events.filter((event) => {
-      const related = data.eventReturns
-        .filter((row) => row.event_id === event.event_id)
-        .flatMap((row) => [row.ticker, row.name_cn, row.name_en]);
-      const relatedIndustries = data.sectorSummaries
-        .filter((row) => row.event_id === event.event_id)
-        .map((row) => row.track_name_cn);
-      const matchesSearch = !needle || [
-        event.event_name_cn,
-        event.trigger,
-        event.initial_market_narrative,
-        event.positioning_assessment,
-        ...related,
-        ...relatedIndustries,
-      ].some((value) => value?.toLocaleLowerCase("zh-CN").includes(needle));
-      return matchesSearch
-        && (shock === "all" || event.primary_shock === shock)
-        && (demand === "all" || event.demand_assessment === demand)
-        && (quarter === "all" || eventQuarter(event.event_date) === quarter)
-        && (industry === "all" || primaryIndustry(data, event.event_id) === industry)
-        && (company === "all" || data.eventReturns.some(
-          (row) => row.event_id === event.event_id && row.ticker === company,
-        ));
+    return data.claims.filter((claim) => {
+      const text = [
+        claim.title,
+        claim.originalClaim,
+        claim.entity,
+        claim.speaker,
+        claim.eventId,
+        ...claim.mappings.flatMap((mapping) => [mapping.ticker, mapping.security]),
+      ].filter(Boolean).join(" ").toLocaleLowerCase("zh-CN");
+      const evidenceMatch = evidence === "all"
+        || (evidence === "source" && claim.verificationEvidence.length > 0)
+        || (evidence === "timestamp" && claim.dateEvidenceType === "原始群聊时间戳")
+        || (evidence === "pending" && claim.verificationEvidence.length === 0);
+      return (!needle || text.includes(needle))
+        && (speaker === "all" || claim.speaker === speaker)
+        && evidenceMatch
+        && (mappingType === "all" || claim.mappings.some((mapping) => mapping.mappingType === mappingType));
     });
-  }, [company, data, demand, industry, quarter, search, shock]);
+  }, [data, evidence, mappingType, search, speaker]);
 
-  const selected = filtered.find((event) => event.event_id === selectedId) || filtered[0];
-  const filteredReadThrough = useMemo(() => {
-    const selectedCompanyReturns = company === "all" || !data
-      ? []
-      : data.eventReturns.filter((row) => (
-        row.ticker === company && filtered.some((event) => event.event_id === row.event_id)
-      ));
-    const t1 = median(company === "all"
-      ? filtered.map((event) => event.median_return_1d)
-      : selectedCompanyReturns.map((row) => row.return_1d));
-    const t5 = median(company === "all"
-      ? filtered.map((event) => event.median_return_5d)
-      : selectedCompanyReturns.map((row) => row.return_5d));
-    const t20 = median(company === "all"
-      ? filtered.map((event) => event.median_return_20d)
-      : selectedCompanyReturns.map((row) => row.return_20d));
-    const intact = filtered.filter((event) => (
-      event.demand_assessment === "demand_intact" || event.demand_assessment === "ai_intact_non_ai_weak"
-    )).length;
-    const impaired = filtered.filter((event) => (
-      event.demand_assessment === "actual_deterioration" || event.demand_assessment === "policy_impaired"
-    )).length;
-    const stance = !filtered.length
-      ? "没有足够样本"
-      : impaired > intact
-        ? "先降低风险暴露，等待基本面或政策证据反转"
-        : (t20 || 0) > 0
-          ? "优先研究回撤充分、盈利兑现度高的龙头"
-          : "保持选择性，避免把主题回撤直接视为买点";
-    return { t1, t5, t20, intact, stance };
-  }, [company, data, filtered]);
+  const selected = filtered.find((claim) => claim.claimId === selectedId) || filtered[0] || null;
+  const comparedClaims = useMemo(
+    () => (data?.claims || []).filter((claim) => compareIds.includes(claim.claimId)),
+    [compareIds, data],
+  );
 
-  if (error) return <div className="empty-state"><h3>{error}</h3><p>请检查事件研究快照是否已随版本发布。</p></div>;
-  if (!data) return <div className="event-research-loading"><i className="button-spinner" /> 正在载入事件与价格路径…</div>;
+  const toggleCompare = (claimId: string) => {
+    setCompareIds((current) => current.includes(claimId)
+      ? current.filter((id) => id !== claimId)
+      : current.length >= 4
+        ? [...current.slice(1), claimId]
+        : [...current, claimId]);
+  };
+
+  if (error) return <div className="empty-state"><h3>{error}</h3><p>请重新生成并发布真实 Claim ledger 快照。</p></div>;
+  if (!data) return <div className="event-research-loading"><i className="button-spinner" /> 正在载入 Claim 与价格事件窗…</div>;
 
   return (
-    <div className="event-research-shell">
-      <section className="live-claim-band" aria-live="polite">
-        <div className="live-claim-heading">
-          <div>
-            <span className="live-dot" />
-            <strong>WeChat → Codex 实时 Claim Inbox</strong>
+    <div className="claim-ledger-shell">
+      {liveClaims.length > 0 && (
+        <section className="live-claim-band" aria-live="polite">
+          <div className="live-claim-heading">
+            <div><span className="live-dot" /><strong>新进入的 Claim</strong></div>
+            <small>{liveClaims.length} 条</small>
           </div>
-          <small>{liveClaims.length} 条 · 每 3 秒刷新</small>
-        </div>
-        <div className="live-claim-list">
-          {liveClaims.slice(0, 3).map((claim) => (
-            <article key={claim.id}>
-              <span>
-                {exactDate(claim.claimed_at)} · 来源 {claim.source_system === "wechat-group" ? "WeChat Group" : claim.source_system}
-                {claim.speaker ? ` · ${claim.speaker}` : ""}
-              </span>
-              <strong>{claim.company || claim.ticker || "待识别主体"}</strong>
-              <p>{claim.claim_text}</p>
-            </article>
-          ))}
-          {!liveClaims.length && <p className="live-empty">等待从 WeChat Bot 进入的第一条 Claim。</p>}
-        </div>
+          <div className="live-claim-list">
+            {liveClaims.slice(0, 3).map((claim) => (
+              <article key={claim.id}>
+                <span>{claim.claimed_at?.slice(0, 16).replace("T", " ") || "时间待补"} · {claim.speaker || "发言人待补"}</span>
+                <strong>{claim.company || claim.ticker || "主体待识别"}</strong>
+                <p>{claim.claim_text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="claim-ledger-kpis" aria-label="Claim ledger coverage">
+        <article><span>群聊 Claims</span><strong>{data.recordCounts.claims}</strong></article>
+        <article><span>原始时间戳</span><strong>{data.recordCounts.exactTimestampClaims}</strong></article>
+        <article><span>证券映射</span><strong>{data.recordCounts.claimSecurityMappings}</strong></article>
+        <article><span>公开价格覆盖</span><strong>{data.recordCounts.securitiesWithPublicPrices}/48</strong></article>
+        <article><span>数据截至</span><strong>{data.dataCutoff.slice(0, 10)}</strong></article>
       </section>
 
-      <section className="event-research-intro">
-        <div>
-          <p className="eyebrow">EVENT RESEARCH</p>
-          <h2>历史事件、价格路径与投资含义</h2>
-          <p>不是只记录“发生了什么”，而是比较相似事件后市场如何定价，并把判断拆成可验证条件。</p>
-        </div>
-        <div className="event-research-count">
-          <strong>{data.events.length}</strong>
-          <span>个历史事件</span>
-        </div>
-      </section>
-
-      <section className="event-research-filters" aria-label="跨事件搜索与分类">
+      <section className="claim-ledger-toolbar" aria-label="Claim filters">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="跨事件搜索：主题、触发因素、公司或股票代码"
-          aria-label="跨事件搜索"
+          placeholder="搜索 Claim、公司、发言人或股票代码"
+          aria-label="搜索 Claim"
         />
-        <select value={shock} onChange={(event) => setShock(event.target.value)} aria-label="冲击类型">
-          <option value="all">全部冲击类型</option>
-          {filters.shocks.map((value) => <option key={value} value={value}>{shockLabels[value] || value}</option>)}
+        <select value={speaker} onChange={(event) => setSpeaker(event.target.value)} aria-label="发言人">
+          <option value="all">全部发言人</option>
+          {filters.speakers.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
-        <select value={demand} onChange={(event) => setDemand(event.target.value)} aria-label="需求判断">
-          <option value="all">全部需求判断</option>
-          {filters.demands.map((value) => <option key={value} value={value}>{demandLabels[value] || value}</option>)}
+        <select value={evidence} onChange={(event) => setEvidence(event.target.value)} aria-label="证据状态">
+          <option value="all">全部证据状态</option>
+          <option value="source">有 BBG / Dymon 核验材料</option>
+          <option value="timestamp">有原始群聊时间戳</option>
+          <option value="pending">内容待核验</option>
         </select>
-        <select value={company} onChange={(event) => setCompany(event.target.value)} aria-label="公司">
-          <option value="all">全部公司</option>
-          {filters.companies.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-        </select>
-        <select value={industry} onChange={(event) => setIndustry(event.target.value)} aria-label="行业">
-          <option value="all">全部行业</option>
-          {filters.industries.map((value) => <option key={value} value={value}>{value}</option>)}
-        </select>
-        <select value={quarter} onChange={(event) => setQuarter(event.target.value)} aria-label="季度">
-          <option value="all">全部季度</option>
-          {filters.quarters.map((value) => <option key={value} value={value}>{value}</option>)}
+        <select value={mappingType} onChange={(event) => setMappingType(event.target.value)} aria-label="证券映射">
+          <option value="all">全部证券映射</option>
+          {filters.mappingTypes.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
       </section>
 
-      <section className="cross-event-readthrough" aria-label="跨事件投资映射">
-        <div>
-          <span>当前筛选 · {filtered.length} 个事件</span>
-          <strong>{filteredReadThrough.stance}</strong>
-          <small>{filteredReadThrough.intact} 个样本显示需求仍强或 AI 需求与非 AI 分化；结论随筛选条件动态变化。</small>
-        </div>
-        <dl>
-          <div><dt>T+1 中位数</dt><dd className={tone(filteredReadThrough.t1)}>{pct(filteredReadThrough.t1)}</dd></div>
-          <div><dt>T+5 中位数</dt><dd className={tone(filteredReadThrough.t5)}>{pct(filteredReadThrough.t5)}</dd></div>
-          <div><dt>T+20 中位数</dt><dd className={tone(filteredReadThrough.t20)}>{pct(filteredReadThrough.t20)}</dd></div>
-        </dl>
-      </section>
-
-      <div className="event-research-index">
-        {filtered.map((event) => {
-          const companyReaction = company === "all"
-            ? null
-            : data.eventReturns.find((row) => row.event_id === event.event_id && row.ticker === company);
-          return (
-            <button
-              key={event.event_id}
-              className={selected?.event_id === event.event_id ? "selected" : ""}
-              onClick={() => setSelectedId(event.event_id)}
-            >
-              <span>{exactDate(event.event_date)}</span>
-              <strong>{event.event_name_cn}</strong>
-              <em>{shockLabels[event.primary_shock] || event.primary_shock} · {primaryIndustry(data, event.event_id)}</em>
-              <b className={tone(companyReaction?.return_1d ?? event.median_return_1d)}>{pct(companyReaction?.return_1d ?? event.median_return_1d)}</b>
-              <b className={tone(companyReaction?.return_5d ?? event.median_return_5d)}>{pct(companyReaction?.return_5d ?? event.median_return_5d)}</b>
-              <b className={tone(companyReaction?.return_20d ?? event.median_return_20d)}>{pct(companyReaction?.return_20d ?? event.median_return_20d)}</b>
-            </button>
-          );
-        })}
-        {!filtered.length && <div className="live-empty">没有匹配的事件，请减少筛选条件。</div>}
-      </div>
-
-      {selected && (
-        <EventResearchDetail
-          event={selected}
-          data={data}
-          companyTicker={company === "all" ? "" : company}
-          onAsk={() => onAsk(
-            selected.event_name_cn,
-            `${selected.trigger}；历史 T+1 ${pct(selected.median_return_1d)}、T+5 ${pct(selected.median_return_5d)}、T+20 ${pct(selected.median_return_20d)}。`,
-          )}
-        />
+      {comparedClaims.length > 1 && (
+        <CrossClaimComparison claims={comparedClaims} onClear={() => setCompareIds([])} />
       )}
+
+      <div className="claim-ledger-layout">
+        <section className="claim-ledger-list" aria-label="Claims">
+          <header><strong>{filtered.length} 条</strong><span>最多比较 4 条</span></header>
+          {filtered.map((claim) => (
+            <article
+              key={claim.claimId}
+              className={selected?.claimId === claim.claimId ? "claim-ledger-row selected" : "claim-ledger-row"}
+            >
+              <button className="claim-ledger-open" onClick={() => setSelectedId(claim.claimId)}>
+                <span>{dateLabel(claim)} · {claim.speaker || "发言人待补"}</span>
+                <strong>{claim.title}</strong>
+                <small>{claim.entity} · {claim.mappings.length} 个证券映射</small>
+              </button>
+              <label className="claim-compare-toggle">
+                <input
+                  type="checkbox"
+                  checked={compareIds.includes(claim.claimId)}
+                  onChange={() => toggleCompare(claim.claimId)}
+                />
+                比较
+              </label>
+            </article>
+          ))}
+          {!filtered.length && <div className="live-empty">没有匹配的 Claim。</div>}
+        </section>
+
+        <section className="claim-ledger-detail">
+          {selected ? (
+            <ClaimDetail
+              key={selected.claimId}
+              claim={selected}
+              securities={data.securities}
+              methodology={data.methodology}
+              onAsk={() => onAsk(selected.title, selected.originalClaim)}
+            />
+          ) : (
+            <div className="empty-state"><h3>选择一条 Claim</h3></div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
 
-function EventResearchDetail({
-  event,
-  data,
-  companyTicker,
+function CrossClaimComparison({
+  claims,
+  onClear,
+}: {
+  claims: LedgerClaim[];
+  onClear: () => void;
+}) {
+  return (
+    <section className="claim-comparison">
+      <header><div><span>跨 Claim 比较</span><strong>{claims.length} 条</strong></div><button onClick={onClear}>清除</button></header>
+      <div className="claim-comparison-grid">
+        <span>Claim</span><span>T+0</span><span>T+1</span><span>T+3</span><span>T+5</span>
+        {claims.map((claim) => (
+          <div className="claim-comparison-row" key={claim.claimId}>
+            <strong>{claim.title}</strong>
+            {horizonKeys.map((key) => {
+              const value = mappingMedian(claim, key);
+              return <b key={key} className={tone(value)}>{pct(value)}</b>;
+            })}
+          </div>
+        ))}
+      </div>
+      <small>中位数基于该 Claim 的已映射证券；直接映射与代理篮子请在详情中分别查看。</small>
+    </section>
+  );
+}
+
+function ClaimDetail({
+  claim,
+  securities,
+  methodology,
   onAsk,
 }: {
-  event: HistoricalEvent;
-  data: EventResearchPayload;
-  companyTicker: string;
+  claim: LedgerClaim;
+  securities: SecuritySeries[];
+  methodology: ClaimLedgerPayload["methodology"];
   onAsk: () => void;
 }) {
-  const pricePath = data.eventPricePaths
-    .filter((row) => row.event_id === event.event_id)
-    .map((row) => ({
-      session: `T+${row.session}`,
-      raw: row.median_return === null ? null : row.median_return * 100,
-      abnormal: row.median_abnormal === null ? null : row.median_abnormal * 100,
-      count: row.security_count,
-    }));
-  const sectors = data.sectorSummaries
-    .filter((row) => row.event_id === event.event_id)
-    .sort((a, b) => (a.median_return_1d || 0) - (b.median_return_1d || 0))
-    .map((row) => ({ name: row.track_name_cn, value: row.median_return_1d === null ? null : row.median_return_1d * 100 }));
-  const securities = data.eventReturns
-    .filter((row) => row.event_id === event.event_id && row.role === "asia_core")
-    .sort((a, b) => (a.return_1d || 0) - (b.return_1d || 0));
-  const selectedSecurity = companyTicker
-    ? data.eventReturns.find((row) => row.event_id === event.event_id && row.ticker === companyTicker)
-    : null;
-  const sources = data.sources.filter((source) => source.event_id === event.event_id);
-  const readThrough = investmentReadThrough(event);
+  const [ticker, setTicker] = useState(claim.mappings[0]?.ticker || "");
+
+  const mapping = claim.mappings.find((row) => row.ticker === ticker) || claim.mappings[0] || null;
+  const security = securities.find((row) => row.ticker === mapping?.ticker);
+  const pricePath = useMemo(() => {
+    if (!security?.prices.length || !mapping?.baseDate || !mapping.baseClose) return [];
+    return security.prices
+      .filter((point) => point.date >= mapping.baseDate)
+      .map((point) => ({
+        date: point.date.slice(5),
+        fullDate: point.date,
+        indexed: (point.close / mapping.baseClose!) * 100,
+        close: point.close,
+      }));
+  }, [mapping, security]);
+  const returnBars = mapping ? horizonKeys.map((key) => ({
+    horizon: horizonLabels[key],
+    return: mapping.returns[key].return === null ? null : mapping.returns[key].return! * 100,
+    abnormal: mapping.returns[key].abnormal === null ? null : mapping.returns[key].abnormal! * 100,
+    date: mapping.returns[key].date,
+  })) : [];
 
   return (
-    <section className="event-research-detail">
-      <header>
+    <>
+      <header className="claim-detail-heading">
         <div>
-          <span className="eyebrow">{exactDate(event.event_date)} · {shockLabels[event.primary_shock] || event.primary_shock}</span>
-          <h2>{event.event_name_cn}</h2>
+          <div className="claim-detail-tags">
+            <span className={`claim-content-status ${contentStatusTone(claim)}`}>{claim.contentStatus || "待核验"}</span>
+            <span>{claim.dateEvidenceType} · {claim.dateConfidence}可信度</span>
+            {claim.mappings.length > 0 && <span>BBG 价格事件窗</span>}
+          </div>
+          <h2>{claim.title}</h2>
+          <p>{claim.entity} · {dateLabel(claim)} · {claim.speaker || "发言人待补"}</p>
         </div>
-        <button className="ask-context-button" onClick={onAsk}>✦ 用 AskAI 深入研究</button>
+        <button className="ask-context-button" onClick={onAsk}>询问此 Claim</button>
       </header>
 
-      <div className="event-reaction-strip">
-        {[
-          [selectedSecurity ? `${selectedSecurity.name_cn} T+1` : "T+1 中位数", selectedSecurity?.return_1d ?? event.median_return_1d],
-          [selectedSecurity ? `${selectedSecurity.name_cn} T+5` : "T+5 中位数", selectedSecurity?.return_5d ?? event.median_return_5d],
-          [selectedSecurity ? `${selectedSecurity.name_cn} T+20` : "T+20 中位数", selectedSecurity?.return_20d ?? event.median_return_20d],
-          ["20日最大回撤", event.median_max_drawdown_20d],
-        ].map(([label, value]) => (
-          <article key={String(label)} className={tone(value as NullableNumber)}>
-            <span>{label}</span>
-            <strong>{pct(value as NullableNumber)}</strong>
-          </article>
-        ))}
-        <article>
-          <span>首日下跌股票占比</span>
-          <strong>{pct(event.negative_breadth_1d, false)}</strong>
-        </article>
-      </div>
+      <blockquote className="claim-original">
+        <span>WeChat Group 原始口径</span>
+        {claim.originalClaim}
+      </blockquote>
 
-      <div className="event-thesis-grid">
-        <article><span>触发因素</span><p>{event.trigger}</p></article>
-        <article><span>市场最初如何理解</span><p>{event.initial_market_narrative}</p></article>
-        <article><span>需求判断</span><p>{demandLabels[event.demand_assessment] || event.demand_assessment}</p></article>
-        <article><span>仓位判断</span><p>{event.positioning_assessment}</p></article>
-      </div>
+      <dl className="claim-fact-grid">
+        <div><dt>Claim ID</dt><dd>{claim.claimId}</dd></div>
+        <div><dt>事件 / 预测期</dt><dd>{claim.effectivePeriod || "—"}</dd></div>
+        <div><dt>内容核验</dt><dd>{claim.verificationStatus || "待核验"}</dd></div>
+        <div><dt>价格核验</dt><dd>{claim.priceStatus}</dd></div>
+      </dl>
 
-      <section className="investment-readthrough">
-        <div>
-          <span>投资含义 · {readThrough.stance}</span>
-          <h3>{readThrough.title}</h3>
-        </div>
-        <p>{readThrough.body}</p>
-        <small>{readThrough.watch}</small>
-        <em>研究辅助，不构成自动买卖指令。</em>
-      </section>
+      {mapping ? (
+        <>
+          <section className="claim-price-header">
+            <div><span>价格反应</span><strong>{mapping.security}</strong><small>{mapping.ticker} · 基准 {mapping.benchmark}</small></div>
+            <select value={mapping.ticker} onChange={(event) => setTicker(event.target.value)} aria-label="选择证券">
+              {claim.mappings.map((row) => (
+                <option key={row.ticker} value={row.ticker}>{row.security} · {row.mappingType}</option>
+              ))}
+            </select>
+          </section>
 
-      <div className="event-chart-grid">
-        <section>
-          <div className="event-chart-heading">
-            <h3>事件后股价路径</h3>
-            <span>{selectedSecurity ? `${selectedSecurity.name_cn}关键节点见上方 · 曲线为亚洲核心股票中位数` : "亚洲核心股票中位数"}</span>
+          <div className="claim-chart-grid">
+            <article className="claim-chart-card">
+              <header><strong>事件窗收益</strong><span>收益 / 相对基准</span></header>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={returnBars} margin={{ top: 18, right: 8, left: -12, bottom: 0 }}>
+                  <CartesianGrid stroke="#e1e4dd" vertical={false} />
+                  <XAxis dataKey="horizon" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} tickFormatter={(value) => `${value}%`} />
+                  <Tooltip
+                    formatter={(value, name) => [`${Number(value).toFixed(2)}%`, name === "return" ? "收益" : "相对基准"]}
+                    labelFormatter={(label, rows) => `${label}${rows?.[0]?.payload?.date ? ` · ${rows[0].payload.date}` : ""}`}
+                  />
+                  <Legend formatter={(value) => value === "return" ? "收益" : "相对基准"} />
+                  <ReferenceLine y={0} stroke="#7c8982" />
+                  <Bar dataKey="return" fill="#2d6854" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="abnormal" fill="#6f94b8" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </article>
+
+            <article className="claim-chart-card">
+              <header><strong>公开价格路径</strong><span>基准日 = 100</span></header>
+              {pricePath.length ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={pricePath} margin={{ top: 18, right: 12, left: -12, bottom: 0 }}>
+                    <CartesianGrid stroke="#e1e4dd" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9 }} minTickGap={20} />
+                    <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
+                    <Tooltip
+                      formatter={(value, name, row) => [
+                        name === "indexed" ? Number(value).toFixed(1) : value,
+                        name === "indexed" ? `指数化 · 收盘 ${row.payload.close}` : name,
+                      ]}
+                      labelFormatter={(_, rows) => rows?.[0]?.payload?.fullDate || ""}
+                    />
+                    <ReferenceLine y={100} stroke="#b7bdb9" strokeDasharray="4 4" />
+                    <Line type="monotone" dataKey="indexed" stroke="#2d6854" strokeWidth={2.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : <div className="live-empty">该证券没有可发布的公开价格路径。</div>}
+            </article>
           </div>
-          <div className="event-chart-frame">
-            <ResponsiveContainer width="100%" height={310}>
-              <LineChart data={pricePath} margin={{ top: 18, right: 20, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke="#dde4df" strokeDasharray="2 3" vertical={false} />
-                <ReferenceLine y={0} stroke="#87958d" strokeDasharray="4 4" />
-                <XAxis dataKey="session" tick={{ fill: "#65736c", fontSize: 11 }} interval={pricePath.length > 10 ? 1 : 0} />
-                <YAxis unit="%" width={48} tick={{ fill: "#65736c", fontSize: 11 }} />
-                <Tooltip formatter={(value, name) => [`${Number(value).toFixed(1)}%`, name === "raw" ? "绝对收益" : "相对本地基准"]} />
-                <Legend formatter={(value) => value === "raw" ? "绝对收益" : "相对本地基准"} />
-                <Line type="monotone" dataKey="raw" stroke="#173d32" strokeWidth={2.6} dot={{ r: 2 }} connectNulls />
-                <Line type="monotone" dataKey="abnormal" stroke="#ce5a32" strokeWidth={2} dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-        <section>
-          <div className="event-chart-heading"><h3>赛道首日反应</h3><span>等权中位数</span></div>
-          <div className="event-chart-frame">
-            <ResponsiveContainer width="100%" height={310}>
-              <BarChart data={sectors} layout="vertical" margin={{ top: 8, right: 20, bottom: 8, left: 8 }}>
-                <CartesianGrid stroke="#dde4df" strokeDasharray="2 3" horizontal={false} />
-                <XAxis type="number" unit="%" tick={{ fill: "#65736c", fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={112} tick={{ fill: "#34433c", fontSize: 11 }} />
-                <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                <Bar dataKey="value" name="T+1" fill="#315f52" radius={[0, 3, 3, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
 
-      <div className="event-bottom-grid">
-        <section>
-          <div className="event-chart-heading"><h3>个股反应</h3><span>{securities.length} 只亚洲核心股票</span></div>
-          <div className="event-security-table">
-            <table>
-              <thead><tr><th>股票</th><th>T+1</th><th>T+5</th><th>T+20</th><th>首日超额</th></tr></thead>
+          <section className="claim-mapping-table-wrap">
+            <table className="claim-mapping-table">
+              <thead>
+                <tr><th>证券</th><th>映射</th><th>T+0</th><th>T+1</th><th>T+3</th><th>T+5</th><th>公开复核</th></tr>
+              </thead>
               <tbody>
-                {securities.map((row) => (
-                  <tr key={row.ticker} className={row.ticker === companyTicker ? "selected-security" : ""}>
-                    <td><strong>{row.name_cn}</strong><small>{row.ticker}</small></td>
-                    <td className={tone(row.return_1d)}>{pct(row.return_1d)}</td>
-                    <td className={tone(row.return_5d)}>{pct(row.return_5d)}</td>
-                    <td className={tone(row.return_20d)}>{pct(row.return_20d)}</td>
-                    <td className={tone(row.abnormal_1d)}>{pct(row.abnormal_1d)}</td>
+                {claim.mappings.map((row) => (
+                  <tr key={row.ticker} className={row.ticker === mapping.ticker ? "selected" : ""} onClick={() => setTicker(row.ticker)}>
+                    <td><strong>{row.security}</strong><small>{row.ticker}</small></td>
+                    <td>{row.mappingType}</td>
+                    {horizonKeys.map((key) => <td key={key} className={tone(row.returns[key].return)}>{pct(row.returns[key].return)}</td>)}
+                    <td>{row.publicCheck?.status === "ok" ? `${row.publicCheck.priceSource} ✓` : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </section>
-        <section>
-          <div className="event-chart-heading"><h3>证据来源</h3><span>{sources.length} 条</span></div>
-          <div className="event-source-list">
-            {sources.map((source) => (
-              <a href={source.url} target="_blank" rel="noreferrer" key={source.source_id}>
-                <span>{source.publisher} · {exactDate(source.published_date)}</span>
-                <strong>{source.title}</strong>
-              </a>
-            ))}
-          </div>
-        </section>
-      </div>
-    </section>
+          </section>
+        </>
+      ) : (
+        <div className="empty-state"><h3>没有证券映射</h3><p>该 Claim 尚未建立可审计的价格事件窗。</p></div>
+      )}
+
+      <section className="claim-evidence-section">
+        <header><strong>核验材料</strong><span>{claim.verificationEvidence.length ? `${claim.verificationEvidence.length} 组` : "内容仍待核验"}</span></header>
+        {claim.verificationEvidence.length ? claim.verificationEvidence.map((finding) => (
+          <article key={finding.findingId}>
+            <div className="claim-evidence-id">{finding.findingId} · {finding.verificationStatus}</div>
+            <div className="claim-evidence-grid">
+              {finding.bbgEvidence.map((item) => (
+                <div key={`${item.ticker}-${item.date}-${item.field}`}>
+                  <span>Bloomberg Desktop</span>
+                  <strong>{item.ticker}</strong>
+                  <p>{item.date} · {item.field} · {item.value}</p>
+                </div>
+              ))}
+              {finding.dymonEvidence.map((item) => (
+                <div key={`${item.title}-${item.date}`}>
+                  <span>{item.publisher || "Dymon MCP"} · {item.sourceType}</span>
+                  <strong>{item.title}</strong>
+                  <p>{item.date} · {item.note}</p>
+                </div>
+              ))}
+            </div>
+            {finding.nextEvidenceNeeded?.length > 0 && (
+              <p className="claim-next-evidence">仍需：{finding.nextEvidenceNeeded.join("；")}</p>
+            )}
+          </article>
+        )) : (
+          <p className="live-empty">目前只有群聊来源和价格事件窗；它们不能证明 Claim 内容本身成立。</p>
+        )}
+      </section>
+
+      <footer className="claim-method-note">
+        <strong>数据边界</strong>
+        <span>{methodology.contentBoundary}</span>
+        <span>{methodology.bbgBoundary}</span>
+        <span>{methodology.publicBoundary}</span>
+      </footer>
+    </>
   );
 }

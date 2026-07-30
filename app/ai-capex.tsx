@@ -218,11 +218,14 @@ function EvidenceLine({
 }) {
   return (
     <footer className="aidc-evidence-line">
-      <span>Source / 来源 <SourceLinks ids={ids} /></span>
-      <span>Observation date · {date(observationDate)}</span>
-      <span>Data cutoff · {payload.dataCutoff}</span>
-      <span>Synced · {payload.syncedAtHkt}</span>
-      <span>Method / 口径 · {method}</span>
+      <span>来源 <SourceLinks ids={ids} /></span>
+      <span>观察 {date(observationDate)}</span>
+      <span>截止 {payload.dataCutoff}</span>
+      <span>同步 {payload.syncedAtHkt}</span>
+      <details>
+        <summary>口径</summary>
+        <p>{method}</p>
+      </details>
     </footer>
   );
 }
@@ -271,13 +274,13 @@ function labels(language: Language) {
     h100e: "当前 H100-equivalent",
     cost: "当前估算资本成本",
     ownerTitle: "业主容量对比",
-    ownerNote: "按当前 Epoch AI 园区快照聚合；颜色表示运营基线，不表示置信度。",
+    ownerNote: "75 个园区的当前估算。",
     buildoutTitle: "建设容量时间线",
-    buildoutNote: "历史/当前使用实线；未来仅展示 Epoch baseline 规划，暂无审核后的 p10/p50/p90。",
+    buildoutNote: "实线：历史/当前；虚线：Epoch 规划。",
     history: "历史 / 当前",
     planned: "Epoch baseline 规划",
     pipelineTitle: "园区状态基线",
-    pipelineNote: "仅区分已有当前容量与仍在建设观察中的园区；不推断延期或暂停概率。",
+    pipelineNote: "已有容量、建设观察与未知。",
     projectMatrix: "项目矩阵",
     projectCount: "个匹配园区",
     owner: "业主",
@@ -311,8 +314,8 @@ function labels(language: Language) {
     url: "URL / Asset ID",
     rights: "权利状态",
     verification: "验证状态",
-    pilot: "Research pilot / 尚待研究",
-    pilotBody: "暂无审核后的 building-level 状态、延期概率、未来四季度 MW 或公司 Capex Momentum。页面不会用假数据补齐。",
+    pilot: "暂缺数据",
+    pilotBody: "楼宇状态、延期概率、未来四季度 MW、公司 Capex Momentum。",
     retry: "重新加载",
     loading: "正在载入 AI Capex 研究快照…",
     partial: "部分数据",
@@ -325,13 +328,13 @@ function labels(language: Language) {
     h100e: "Current H100-equivalent",
     cost: "Estimated capital cost",
     ownerTitle: "Owner capacity comparison",
-    ownerNote: "Aggregated from the current Epoch AI campus snapshot; color indicates operating baseline, not confidence.",
+    ownerNote: "Current estimates across 75 campuses.",
     buildoutTitle: "Buildout capacity timeline",
-    buildoutNote: "Historical/current is solid; future points are Epoch baseline plans. No reviewed p10/p50/p90 exists yet.",
+    buildoutNote: "Solid: historical/current. Dashed: Epoch plan.",
     history: "Historical / current",
     planned: "Epoch baseline plan",
     pipelineTitle: "Campus status baseline",
-    pipelineNote: "Separates campuses with current capacity from observed construction only; no delay or pause probability is inferred.",
+    pipelineNote: "Online capacity, construction observed, and unknown.",
     projectMatrix: "Project matrix",
     projectCount: "matching campuses",
     owner: "Owner",
@@ -365,8 +368,8 @@ function labels(language: Language) {
     url: "URL / Asset ID",
     rights: "Rights",
     verification: "Verification",
-    pilot: "Research pilot / pending research",
-    pilotBody: "No reviewed building-level status, delay probability, next-four-quarter MW, or company Capex Momentum exists. The UI does not fill these gaps with synthetic data.",
+    pilot: "Data not available",
+    pilotBody: "Building status, delay probability, next-four-quarter MW, and company Capex Momentum.",
     retry: "Reload",
     loading: "Loading the AI Capex research snapshot…",
     partial: "Partial data",

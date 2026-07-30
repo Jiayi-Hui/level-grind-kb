@@ -208,3 +208,25 @@ and explicit Report/Web/Hybrid evidence modes.
   separate full-stack phase.
 - Exact operating and rollback instructions are in
   `docs/TENCENT_EDGEONE_HANDOFF_2026-07-30.md`.
+
+## V5.3 Real Claim Ledger and Tencent Clerk Gate
+
+- Replaces the ten-event narrative demo on the Tencent surface with the real
+  45-Claim group-chat ledger.
+- Publishes 88 BBG-derived Claim–security mappings, 48 public price series,
+  T+0/T+1/T+3/T+5 return and abnormal-return windows, and the available
+  Dymon/BBG findings without conflating price verification with Claim truth.
+- Removes generated investment prose and keeps original group wording,
+  timestamp quality, speaker, mapping rationale, evidence, and price paths.
+- Keeps the complete 75-campus AI Capex baseline while shortening explanatory
+  copy and moving calculation notes behind compact disclosure controls.
+- Adds the existing Clerk client/session gate to the Tencent production
+  bundle. No Clerk secret is shipped; static JSON remains a public asset until
+  a Tencent server runtime enforces authorization.
+- Production deployment `dpjgwih2iu3d` succeeded. The canonical domain serves
+  the new build, the Clerk modal loads on the real domain, and
+  `/data/claim-ledger-dashboard.json` reports 45 Claims, 88 mappings, 48 price
+  series, and data cutoff `2026-07-28`.
+- A one-day EdgeOne deployment token was created for the release and expires
+  on 2026-07-31; it was not persisted in the repository or shell environment,
+  and the local clipboard was cleared after deployment.

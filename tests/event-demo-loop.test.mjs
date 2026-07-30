@@ -2,26 +2,31 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("ships historical event reactions and an investment read-through", async () => {
-  const [component, snapshot] = await Promise.all([
+test("ships the real Claim ledger with separate content and price evidence", async () => {
+  const [component, snapshot, source, sync] = await Promise.all([
     readFile(new URL("../app/event-research.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../data/events/event-research.json", import.meta.url), "utf8"),
+    readFile(new URL("../data/events/claim-ledger-dashboard.json", import.meta.url), "utf8"),
+    readFile(new URL("../data/events/wechat-claim-ledger-source.json", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/sync-claim-ledger.mjs", import.meta.url), "utf8"),
   ]);
   const data = JSON.parse(snapshot);
-  assert.equal(data.events.length, 10);
-  assert.equal(data.eventReturns.length, 410);
-  assert.ok(data.eventPricePaths.length >= 180);
-  assert.match(component, /跨事件搜索/);
-  assert.match(component, /全部公司/);
-  assert.match(component, /全部行业/);
-  assert.match(component, /全部季度/);
-  assert.match(component, /当前筛选/);
-  assert.match(component, /primaryIndustry/);
-  assert.match(component, /来源.*WeChat Group/);
-  assert.match(component, /companyTicker/);
-  assert.match(component, /事件后股价路径/);
-  assert.match(component, /投资含义/);
-  assert.match(component, /研究辅助，不构成自动买卖指令/);
+  const claims = JSON.parse(source);
+  assert.equal(data.schemaVersion, "claim-ledger.v1");
+  assert.equal(data.recordCounts.claims, 45);
+  assert.equal(data.recordCounts.claimSecurityMappings, 88);
+  assert.equal(data.recordCounts.securitiesWithPublicPrices, 48);
+  assert.equal(claims.claims.length, 45);
+  assert.ok(data.claims.some((claim) => claim.speaker === "Allen" && claim.claimTimeHkt));
+  assert.ok(data.claims.some((claim) => claim.verificationEvidence.length > 0));
+  assert.ok(data.claims.every((claim) => claim.contentStatus && claim.priceStatus));
+  assert.match(component, /搜索 Claim、公司、发言人或股票代码/);
+  assert.match(component, /跨 Claim 比较/);
+  assert.match(component, /WeChat Group 原始口径/);
+  assert.match(component, /BBG 价格事件窗/);
+  assert.match(data.methodology.contentBoundary, /价格已核验不等于 Claim 内容已核验/);
+  assert.doesNotMatch(component, /investmentReadThrough|投资含义|相似度|需求判断/);
+  assert.match(sync, /event_study_bbg_baseline/);
+  assert.match(sync, /comparison_rows/);
 });
 
 test("ships a secret-protected idempotent WeChat claim inbox", async () => {

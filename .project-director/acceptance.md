@@ -156,3 +156,25 @@
 - [ ] A physical Hong Kong phone opens the apex domain with VPN disabled.
 - [ ] Full authenticated D1/R2-backed functionality is not considered
   migrated until the write runtime and backups have been imported and tested.
+
+## V5.3 Real Claim Ledger and Clerk
+
+- [x] Event DB runtime data comes from the 45 real group-chat Claims rather
+  than the 10-event narrative prototype.
+- [x] The portable snapshot contains 88 BBG-derived Claim–security mappings and
+  48/48 public price series.
+- [x] Claim text, speaker, HKT time, date-evidence quality, effective period,
+  and content-verification state remain separate.
+- [x] Security event windows show T+0/T+1/T+3/T+5 return and abnormal return.
+- [x] Dymon/BBG findings render as attributed evidence; a price window never
+  marks Claim content verified.
+- [x] Generated investment-read-through, similarity, shock, and demand-state
+  prose is removed from the Event DB.
+- [x] Search, source-status filtering, speaker filtering, security mapping
+  filtering, and up-to-four-Claim comparison are implemented.
+- [x] AI Capex evidence metadata is compact while source, observation date,
+  cutoff, sync time, and method remain available.
+- [x] The existing Clerk client gates the Tencent continuity UI.
+- [ ] Tencent server-side authorization for static research JSON is not claimed
+  until data is moved behind an authenticated Tencent runtime.
+- [ ] Physical Hong Kong phone sign-in and signed-in navigation are verified.

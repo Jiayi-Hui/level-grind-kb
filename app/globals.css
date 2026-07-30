@@ -1623,6 +1623,13 @@ button { color: inherit; }
   grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 11px; margin-top: 8px;
   padding-top: 8px; border-top: 1px solid #e6e8e2; color: #77817b; font-size: 8px; line-height: 1.45;
 }
+.aidc-evidence-line details { position: relative; }
+.aidc-evidence-line summary { color: #53685e; cursor: pointer; font-weight: 800; }
+.aidc-evidence-line details p {
+  position: absolute; z-index: 8; right: 0; top: 17px; width: min(360px, 72vw); margin: 0;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa;
+  box-shadow: 0 12px 26px rgba(20,43,35,.12); color: #4e5f56; font-size: 8px; line-height: 1.55;
+}
 .aidc-source-links { display: inline-flex; flex-wrap: wrap; gap: 3px; }
 .aidc-source-links a { color: #35644f; font-weight: 800; text-decoration: none; }
 .aidc-source-links a:hover { text-decoration: underline; }
@@ -1908,4 +1915,238 @@ button { color: inherit; }
   .chat-panel-head .chat-engine small { display: none; }
   .provider-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .provider-metrics div:last-child { grid-column: 1 / -1; }
+}
+
+/* Claim ledger — real WeChat claims + BBG/public price verification */
+.claim-ledger-shell { display: grid; gap: 16px; }
+.claim-ledger-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel);
+}
+.claim-ledger-kpis article {
+  min-width: 0;
+  padding: 16px 18px;
+  display: grid;
+  gap: 5px;
+  border-right: 1px solid var(--line);
+}
+.claim-ledger-kpis article:last-child { border-right: 0; }
+.claim-ledger-kpis span { color: var(--muted); font-size: 9px; }
+.claim-ledger-kpis strong { color: var(--green); font: 500 22px/1.1 var(--font-serif); }
+.claim-ledger-kpis article:last-child strong { font-size: 16px; }
+.claim-ledger-toolbar {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.7fr) repeat(3, minmax(150px, .7fr));
+  gap: 8px;
+}
+.claim-ledger-toolbar input,
+.claim-ledger-toolbar select,
+.claim-price-header select {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #d8dcd5;
+  border-radius: 9px;
+  background: #fffefa;
+  color: #20352d;
+  font: inherit;
+  font-size: 10px;
+}
+.claim-ledger-layout {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.claim-ledger-list,
+.claim-ledger-detail {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel);
+}
+.claim-ledger-list { max-height: 920px; overflow-y: auto; }
+.claim-ledger-list > header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: #f3f4ee;
+}
+.claim-ledger-list > header strong { color: var(--green); font-size: 11px; }
+.claim-ledger-list > header span { color: var(--muted); font-size: 9px; }
+.claim-ledger-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid #e7e9e3;
+}
+.claim-ledger-row.selected { background: #edf4ef; box-shadow: inset 4px 0 0 var(--accent); }
+.claim-ledger-open {
+  min-width: 0;
+  padding: 13px 12px 13px 16px;
+  display: grid;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.claim-ledger-open > span,
+.claim-ledger-open > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 8px; }
+.claim-ledger-open strong { font: 500 12px/1.35 var(--font-serif); }
+.claim-compare-toggle {
+  padding: 8px 11px 8px 2px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  color: #68766f;
+  font-size: 8px;
+  cursor: pointer;
+}
+.claim-compare-toggle input { accent-color: var(--green); }
+.claim-detail-heading {
+  padding: 20px 22px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f6f1;
+}
+.claim-detail-heading h2 { margin: 8px 0 6px; font: 500 24px/1.2 var(--font-serif); }
+.claim-detail-heading p { margin: 0; color: var(--muted); font-size: 9px; }
+.claim-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.claim-detail-tags span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #e7ebe6;
+  color: #52645b;
+  font-size: 7px;
+  font-weight: 800;
+}
+.claim-detail-tags .claim-content-status.evidence { background: #dfeee6; color: #276247; }
+.claim-detail-tags .claim-content-status.unverified { background: #f5dfd8; color: #974c35; }
+.claim-detail-tags .claim-content-status.pending { background: #f2ead3; color: #765d1d; }
+.claim-original {
+  margin: 20px 22px 12px;
+  padding: 16px 18px;
+  border: 0;
+  border-left: 3px solid #b87958;
+  border-radius: 0 10px 10px 0;
+  background: #f4eee8;
+  color: #293a33;
+  font: 500 14px/1.7 var(--font-serif);
+}
+.claim-original span {
+  margin-bottom: 6px;
+  display: block;
+  color: #9a6043;
+  font: 800 7px/1 var(--font-sans);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+.claim-fact-grid {
+  margin: 0 22px 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.claim-fact-grid div { min-width: 0; padding: 11px 12px; border-right: 1px solid var(--line); }
+.claim-fact-grid div:last-child { border-right: 0; }
+.claim-fact-grid dt { color: var(--muted); font-size: 7px; }
+.claim-fact-grid dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 9px; font-weight: 700; }
+.claim-price-header {
+  padding: 15px 22px 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.claim-price-header > div { display: grid; gap: 3px; }
+.claim-price-header span { color: #a65a3b; font-size: 8px; font-weight: 800; }
+.claim-price-header strong { font: 500 16px var(--font-serif); }
+.claim-price-header small { color: var(--muted); font-size: 8px; }
+.claim-chart-grid { padding: 0 22px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.claim-chart-card { min-width: 0; padding: 13px 13px 4px; border: 1px solid var(--line); border-radius: 11px; background: #fffefa; }
+.claim-chart-card > header { display: flex; justify-content: space-between; }
+.claim-chart-card > header strong { font: 500 12px var(--font-serif); }
+.claim-chart-card > header span { color: var(--muted); font-size: 8px; }
+.claim-mapping-table-wrap { margin: 0 22px 20px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.claim-mapping-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 8px; }
+.claim-mapping-table th { padding: 9px 10px; color: #63726b; background: #f1f2ed; text-align: left; }
+.claim-mapping-table td { padding: 10px; border-top: 1px solid #e7e9e3; cursor: pointer; }
+.claim-mapping-table tr.selected td { background: #edf4ef; }
+.claim-mapping-table td strong,
+.claim-mapping-table td small { display: block; }
+.claim-mapping-table td small { margin-top: 3px; color: var(--muted); }
+.claim-evidence-section { margin: 0 22px 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; }
+.claim-evidence-section > header {
+  padding: 11px 13px;
+  display: flex;
+  justify-content: space-between;
+  background: #f1f2ed;
+}
+.claim-evidence-section > header strong { font: 500 13px var(--font-serif); }
+.claim-evidence-section > header span { color: var(--muted); font-size: 8px; }
+.claim-evidence-section > article { padding: 14px; border-top: 1px solid var(--line); }
+.claim-evidence-id { margin-bottom: 10px; color: #6d7a73; font-size: 8px; font-weight: 800; }
+.claim-evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.claim-evidence-grid > div { padding: 11px; border-radius: 8px; background: #f7f6f1; }
+.claim-evidence-grid span { color: #a65a3b; font-size: 7px; font-weight: 800; }
+.claim-evidence-grid strong { margin-top: 4px; display: block; font-size: 9px; }
+.claim-evidence-grid p,
+.claim-next-evidence { margin: 5px 0 0; color: #56655e; font-size: 8px; line-height: 1.55; }
+.claim-method-note { padding: 14px 22px 20px; display: grid; gap: 5px; color: #66736d; font-size: 8px; line-height: 1.5; }
+.claim-method-note strong { color: #253a31; font-size: 9px; }
+.claim-comparison { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #fffefa; }
+.claim-comparison > header { padding: 11px 14px; display: flex; justify-content: space-between; background: #17372d; color: white; }
+.claim-comparison > header div { display: flex; gap: 8px; align-items: center; }
+.claim-comparison > header span { color: #b8c9c1; font-size: 8px; }
+.claim-comparison > header strong { font-size: 10px; }
+.claim-comparison > header button { border: 0; background: transparent; color: #dfeae5; font-size: 8px; cursor: pointer; }
+.claim-comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(4, 72px);
+  align-items: center;
+  overflow-x: auto;
+  color: #63716b;
+  font-size: 8px;
+}
+.claim-comparison-grid > span { padding: 8px 10px; background: #f0f1ec; }
+.claim-comparison-row { display: contents; }
+.claim-comparison-row > * { min-width: 0; padding: 10px; border-top: 1px solid #e5e7e1; }
+.claim-comparison-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #243a31; }
+.claim-comparison > small { padding: 10px 14px; display: block; border-top: 1px solid var(--line); color: var(--muted); font-size: 8px; }
+
+@media (max-width: 1100px) {
+  .claim-ledger-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .claim-ledger-kpis article { border-bottom: 1px solid var(--line); }
+  .claim-ledger-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .claim-ledger-toolbar input { grid-column: 1 / -1; }
+  .claim-ledger-layout { grid-template-columns: 300px minmax(0, 1fr); }
+  .claim-chart-grid { grid-template-columns: 1fr; }
+  .claim-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 780px) {
+  .claim-ledger-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .claim-ledger-toolbar { grid-template-columns: 1fr; }
+  .claim-ledger-toolbar input { grid-column: auto; }
+  .claim-ledger-layout { grid-template-columns: 1fr; }
+  .claim-ledger-list { max-height: 390px; }
+  .claim-detail-heading,
+  .claim-price-header { display: grid; }
+  .claim-fact-grid { grid-template-columns: 1fr; }
+  .claim-fact-grid div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .claim-evidence-grid { grid-template-columns: 1fr; }
+  .claim-comparison-grid { grid-template-columns: minmax(220px, 1fr) repeat(4, 62px); }
 }

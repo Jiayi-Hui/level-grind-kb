@@ -60,7 +60,8 @@ test("adds AI Capex as a bilingual peer workspace with complete research states"
   assert.match(component, /loading|Loading/);
   assert.match(component, /aidc-state-error/);
   assert.match(component, /aidc-empty-state/);
-  assert.match(component, /Research pilot/);
+  assert.match(component, /暂缺数据|Data not available/);
+  assert.match(component, /<details>/);
   assert.match(styles, /\.freshness-stale/);
 });
 

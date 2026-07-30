@@ -155,3 +155,15 @@
 - [ ] Migrate Clerk-equivalent authentication, write APIs, D1/R2 exports,
   reports, AskAI, Model Workbench, and Claim Inbox to a Tencent-compatible
   full-stack runtime after the access-critical demo.
+
+## V5.3 — Real Claim Ledger and Tencent Clerk Gate
+
+- [x] Inspect the Claim date workbook with the spreadsheet workflow.
+- [x] Reconcile the 45 Claims with 88 BBG event-study rows and 48 public series.
+- [x] Define and generate the `claim-ledger.v1` portable contract.
+- [x] Replace the narrative Event Research view with the Claim ledger.
+- [x] Remove generated investment prose and preserve evidence boundaries.
+- [x] Compact AI Capex copy and evidence metadata without dropping lineage.
+- [x] Add the existing Clerk client/session gate to the Tencent build.
+- [x] Run full lint/tests/build and desktop/mobile browser QA.
+- [x] Publish the validated Tencent bundle and verify Clerk + both workspaces.
