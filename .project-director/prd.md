@@ -393,3 +393,20 @@ client-side authentication protects static JSON assets.
 - Tencent cloud functions own provider secrets and validate Clerk sessions.
 - Projects, chats, and saved notes are device-local in this release and must
   not be described as team-shared persistence.
+
+## V5.6 — Research table controls and data-integrity correction
+
+- Event DB and AI Capex expose a compact contextual AskAI action beside the
+  page title. It opens the existing unified AskAI workspace with the current
+  database scope; neither database embeds a chatbot at the bottom.
+- Event rows can be sorted by date, T+0/T+1/T+3/T+5, deepest observed drawdown,
+  or largest observed upside, in either direction. Missing horizons always
+  remain at the end.
+- Event filters distinguish direct company mappings from proxy
+  industry/theme mappings.
+- AI Capex projects can be sorted by IT MW, H100e, estimated capital cost,
+  observation date, project name, or owner.
+- Missing BBG horizon observations are null. Sentinel values such as `-1`
+  must never render as a real `-100%` return.
+- Settings lists active Clerk users and pending invitations for the workspace
+  owner, in addition to the existing invitation form.

@@ -66,6 +66,8 @@ type Draft = {
   title: string;
   originalClaim: string;
 };
+type ClaimSortField = "date" | "t0" | "t1" | "t3" | "t5" | "drawdown" | "upside";
+type SortDirection = "desc" | "asc";
 
 const horizons = ["t0", "t1", "t3", "t5"] as const;
 const horizonLabels = { t0: "T+0", t1: "T+1", t3: "T+3", t5: "T+5" };
@@ -106,6 +108,24 @@ function medianReturn(claim: LedgerClaim, horizon: typeof horizons[number]) {
   return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
 }
 
+function claimDimensions(claim: LedgerClaim) {
+  const hasDirectMapping = claim.mappings.some((mapping) => mapping.mappingType.startsWith("Direct"));
+  const hasProxyMapping = claim.mappings.some((mapping) => mapping.mappingType === "Proxy basket");
+  return {
+    company: hasDirectMapping && !hasProxyMapping ? claim.entity : null,
+    industry: hasProxyMapping ? claim.entity : null,
+  };
+}
+
+function claimSortValue(claim: LedgerClaim, field: ClaimSortField) {
+  if (field === "date") return Date.parse(`${claim.claimDateStart}T${/^\d{2}:\d{2}$/.test(claim.claimTimeHkt || "") ? claim.claimTimeHkt : "00:00"}:00+08:00`);
+  if (field in horizonLabels) return medianReturn(claim, field as typeof horizons[number]);
+  const values = claim.mappings.flatMap((mapping) => horizons.map((item) => mapping.returns[item]?.return))
+    .filter((value): value is number => value !== null && value !== undefined && Number.isFinite(value));
+  if (!values.length) return null;
+  return field === "drawdown" ? Math.min(...values) : Math.max(...values);
+}
+
 function toDraft(claim: LedgerClaim): Draft {
   return {
     claimDateStart: claim.claimDateStart,
@@ -127,8 +147,11 @@ export function EventResearch({
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [speaker, setSpeaker] = useState("all");
-  const [entity, setEntity] = useState("all");
+  const [company, setCompany] = useState("all");
+  const [industry, setIndustry] = useState("all");
   const [ticker, setTicker] = useState("all");
+  const [sortField, setSortField] = useState<ClaimSortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedId, setSelectedId] = useState("");
   const [deletedIds, setDeletedIds] = useState<string[]>(() => loadLocalEdits().deletedIds);
   const [overrides, setOverrides] = useState<Record<string, Draft>>(() => loadLocalEdits().overrides);
@@ -180,19 +203,31 @@ export function EventResearch({
 
   const filters = useMemo(() => ({
     speakers: [...new Set(claims.map((claim) => claim.speaker).filter(Boolean) as string[])].sort(),
-    entities: [...new Set(claims.map((claim) => claim.entity).filter(Boolean) as string[])].sort(),
+    companies: [...new Set(claims.map((claim) => claimDimensions(claim).company).filter(Boolean) as string[])].sort(),
+    industries: [...new Set(claims.map((claim) => claimDimensions(claim).industry).filter(Boolean) as string[])].sort(),
     tickers: [...new Set(claims.flatMap((claim) => claim.mappings.map((mapping) => mapping.ticker)))].sort(),
   }), [claims]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return claims.filter((claim) => (
-      (!needle || [claim.originalClaim, claim.title, claim.entity, claim.speaker, ...claim.mappings.map((item) => item.ticker)].filter(Boolean).join(" ").toLowerCase().includes(needle))
-      && (speaker === "all" || claim.speaker === speaker)
-      && (entity === "all" || claim.entity === entity)
-      && (ticker === "all" || claim.mappings.some((mapping) => mapping.ticker === ticker))
-    ));
-  }, [claims, entity, query, speaker, ticker]);
+    return claims.filter((claim) => {
+      const dimensions = claimDimensions(claim);
+      return (
+        (!needle || [claim.originalClaim, claim.title, claim.entity, claim.speaker, ...claim.mappings.map((item) => item.ticker)].filter(Boolean).join(" ").toLowerCase().includes(needle))
+        && (speaker === "all" || claim.speaker === speaker)
+        && (company === "all" || dimensions.company === company)
+        && (industry === "all" || dimensions.industry === industry)
+        && (ticker === "all" || claim.mappings.some((mapping) => mapping.ticker === ticker))
+      );
+    }).sort((left, right) => {
+      const leftValue = claimSortValue(left, sortField);
+      const rightValue = claimSortValue(right, sortField);
+      if (leftValue === null || !Number.isFinite(leftValue)) return rightValue === null || !Number.isFinite(rightValue) ? 0 : 1;
+      if (rightValue === null || !Number.isFinite(rightValue)) return -1;
+      const ordered = sortDirection === "asc" ? leftValue - rightValue : rightValue - leftValue;
+      return ordered || right.claimDateStart.localeCompare(left.claimDateStart);
+    });
+  }, [claims, company, industry, query, sortDirection, sortField, speaker, ticker]);
 
   const selected = filtered.find((claim) => claim.claimId === selectedId) || filtered[0] || null;
 
@@ -248,19 +283,28 @@ export function EventResearch({
       </div>
       <div className="claim-filter-row">
         <select value={speaker} onChange={(event) => setSpeaker(event.target.value)}><option value="all">全部发言人</option>{filters.speakers.map((item) => <option key={item}>{item}</option>)}</select>
-        <select value={entity} onChange={(event) => setEntity(event.target.value)}><option value="all">全部公司</option>{filters.entities.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={company} onChange={(event) => setCompany(event.target.value)}><option value="all">全部公司</option>{filters.companies.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={industry} onChange={(event) => setIndustry(event.target.value)}><option value="all">全部行业 / 主题</option>{filters.industries.map((item) => <option key={item}>{item}</option>)}</select>
         <select value={ticker} onChange={(event) => setTicker(event.target.value)}><option value="all">全部股票</option>{filters.tickers.map((item) => <option key={item}>{item}</option>)}</select>
+        <select value={sortField} onChange={(event) => setSortField(event.target.value as ClaimSortField)}>
+          <option value="date">按日期</option><option value="t0">按 T+0</option><option value="t1">按 T+1</option>
+          <option value="t3">按 T+3</option><option value="t5">按 T+5</option><option value="drawdown">按最深回撤</option><option value="upside">按最大涨幅</option>
+        </select>
+        <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
+          <option value="desc">从高到低 / 最新</option><option value="asc">从低到高 / 最早</option>
+        </select>
         <span>{filtered.length} 条 · 数据截至 {data.dataCutoff}</span>
       </div>
 
       <div className="claim-table-wrap">
         <table className="claim-table">
-          <thead><tr><th>日期</th><th>Claim</th><th>公司</th><th>发言人</th><th>证券</th>{horizons.map((item) => <th key={item}>{horizonLabels[item]}</th>)}<th /></tr></thead>
+          <thead><tr><th>日期</th><th>Claim</th><th>公司</th><th>行业 / 主题</th><th>发言人</th><th>证券</th>{horizons.map((item) => <th key={item}>{horizonLabels[item]}</th>)}<th /></tr></thead>
           <tbody>{filtered.map((claim) => (
             <tr key={claim.claimId} className={selected?.claimId === claim.claimId ? "selected" : ""} onClick={() => setSelectedId(claim.claimId)}>
               <td><strong>{claim.claimDateStart}</strong><small>{claim.claimTimeHkt || ""}</small></td>
               <td><button className="claim-title-cell" onClick={() => setSelectedId(claim.claimId)}><strong>{claim.originalClaim}</strong></button></td>
-              <td>{claim.entity || "—"}</td>
+              <td>{claimDimensions(claim).company || "—"}</td>
+              <td>{claimDimensions(claim).industry || "—"}</td>
               <td>{claim.speaker || "待定位"}</td>
               <td>{claim.mappings[0]?.ticker || "—"}{claim.mappings.length > 1 && <small> +{claim.mappings.length - 1}</small>}</td>
               {horizons.map((item) => {

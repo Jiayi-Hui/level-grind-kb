@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { createRoot } from "react-dom/client";
 import { AgenticResearchPanel, PersonalKnowledgeView } from "../../../app/agentic-research";
@@ -8,7 +8,8 @@ import { EventResearch } from "../../../app/event-research";
 import "../../../app/globals.css";
 import "./mirror.css";
 
-type DemoView = "knowledge" | "events" | "aidc" | "settings";
+type DemoView = "knowledge" | "events" | "aidc" | "ask" | "settings";
+type AskScope = "events" | "aidc";
 
 const viewCopy = {
   knowledge: {
@@ -22,6 +23,10 @@ const viewCopy = {
   aidc: {
     eyebrow: "AI INFRASTRUCTURE",
     title: "AI Capex",
+  },
+  ask: {
+    eyebrow: "AGENTIC RESEARCH",
+    title: "AskAI",
   },
   settings: {
     eyebrow: "WORKSPACE CONTROL",
@@ -39,6 +44,7 @@ const clerkPublishableKey =
 
 function ContinuityApp() {
   const [view, setView] = useState<DemoView>("events");
+  const [askScope, setAskScope] = useState<AskScope>("events");
   const [mobileNav, setMobileNav] = useState(false);
   const heading = viewCopy[view];
 
@@ -46,6 +52,10 @@ function ContinuityApp() {
     setView(nextView);
     setMobileNav(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const openAsk = (scope: AskScope) => {
+    setAskScope(scope);
+    selectView("ask");
   };
 
   return (
@@ -88,10 +98,12 @@ function ContinuityApp() {
             <span>模型工作台</span>
             <small>待上线</small>
           </button>
-          <button className="nav-item" disabled title="统一 AskAI 待上线；事件库与 AI Capex 已可直接问答">
+          <button
+            className={`nav-item ${view === "ask" ? "active" : ""}`}
+            onClick={() => selectView("ask")}
+          >
             <span className="nav-symbol">✦</span>
             <span>AskAI</span>
-            <small>待上线</small>
           </button>
           <button
             className={`nav-item ${view === "settings" ? "active" : ""}`}
@@ -123,25 +135,31 @@ function ContinuityApp() {
           <header className="page-heading">
             <div>
               <p className="eyebrow">{heading.eyebrow}</p>
-              <h1>{heading.title}</h1>
+              <h1>{view === "ask" ? `${heading.title} · ${askScope === "events" ? "事件库" : "AI Capex"}` : heading.title}</h1>
             </div>
+            {(view === "events" || view === "aidc") && (
+              <button className="page-ask-button" onClick={() => openAsk(view)}>
+                ✦ 询问此数据库
+              </button>
+            )}
+            {view === "ask" && (
+              <button className="page-ask-button secondary" onClick={() => selectView(askScope)}>
+                ← 返回{askScope === "events" ? "事件库" : "AI Capex"}
+              </button>
+            )}
           </header>
 
           {view === "knowledge" ? (
             <PersonalKnowledgeView />
           ) : view === "events" ? (
-            <>
-              <EventResearch
-                liveClaims={[]}
-                onAsk={() => undefined}
-              />
-              <AgenticResearchPanel scope="events" />
-            </>
+            <EventResearch
+              liveClaims={[]}
+              onAsk={() => openAsk("events")}
+            />
           ) : view === "aidc" ? (
-            <>
-              <AICapex language="zh" />
-              <AgenticResearchPanel scope="aidc" />
-            </>
+            <AICapex language="zh" />
+          ) : view === "ask" ? (
+            <AgenticResearchPanel scope={askScope} />
           ) : (
             <InviteSettings />
           )}
@@ -157,6 +175,44 @@ function InviteSettings() {
   const [role, setRole] = useState("Analyst");
   const [status, setStatus] = useState("");
   const [sending, setSending] = useState(false);
+  const [members, setMembers] = useState<Array<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    status: "active" | "pending" | "revoked";
+  }>>([]);
+  const [memberStatus, setMemberStatus] = useState("");
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  const loadMembers = useCallback(async () => {
+    setLoadingMembers(true);
+    setMemberStatus("");
+    try {
+      const token = await getToken();
+      const response = await fetch("/api/invitations", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.headers.get("content-type")?.includes("application/json")) {
+        throw new Error("成员服务仅在已部署环境可用");
+      }
+      const payload = await response.json() as {
+        members?: Array<{ id: string; email: string; name: string; role: string; status: "active" | "pending" | "revoked" }>;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error || "无法读取成员");
+      setMembers(payload.members || []);
+    } catch (caught) {
+      setMemberStatus(caught instanceof Error ? caught.message : "无法读取成员");
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    const task = window.setTimeout(() => void loadMembers(), 0);
+    return () => window.clearTimeout(task);
+  }, [loadMembers]);
 
   const invite = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -176,6 +232,7 @@ function InviteSettings() {
       if (!response.ok) throw new Error(payload.error || "邀请发送失败");
       setStatus(`邀请已发送至 ${email}`);
       setEmail("");
+      await loadMembers();
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "邀请发送失败");
     } finally {
@@ -202,6 +259,24 @@ function InviteSettings() {
           <dl><div><dt>研究范围</dt><dd>团队事件、公司、行业与 AI 基础设施</dd></div><div><dt>默认语言</dt><dd>中文</dd></div><div><dt>访问方式</dt><dd>受邀请的 Clerk 账户</dd></div></dl>
         </article>
       </div>
+      <article className="settings-card member-management-card">
+        <header>
+          <div><p className="eyebrow">MEMBER MANAGEMENT</p><h2>成员管理</h2></div>
+          <button className="quiet-button" onClick={() => void loadMembers()} disabled={loadingMembers}>{loadingMembers ? "刷新中…" : "刷新"}</button>
+        </header>
+        {memberStatus && <p className="settings-status">{memberStatus}</p>}
+        <div className="settings-member-list">
+          {!loadingMembers && members.length === 0 && !memberStatus && <p>还没有成员或待处理邀请。</p>}
+          {members.map((member) => (
+            <div key={member.id} className="settings-member-row">
+              <span className="avatar">{(member.name || member.email).slice(0, 2).toUpperCase()}</span>
+              <div><strong>{member.name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
+              <span>{member.role}</span>
+              <span className={`member-state ${member.status}`}>{member.status === "active" ? "已加入" : member.status === "pending" ? "待接受" : "已撤销"}</span>
+            </div>
+          ))}
+        </div>
+      </article>
     </section>
   );
 }

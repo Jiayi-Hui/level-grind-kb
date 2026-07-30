@@ -86,6 +86,8 @@ type Geocode = {
   source: string;
   sourceUrl: string | null;
 };
+type CapexSortField = "currentItMw" | "currentH100e" | "estimatedCapitalCostUsdBn" | "observationDate" | "name" | "owner";
+type SortDirection = "desc" | "asc";
 
 const statusColors: Record<ProjectStatus, string> = {
   operational: "#2f6b54",
@@ -186,6 +188,8 @@ export function AICapex({ language }: { language: Language }) {
   const [status, setStatus] = useState("all");
   const [confidence, setConfidence] = useState("all");
   const [freshness, setFreshness] = useState("all");
+  const [sortField, setSortField] = useState<CapexSortField>("currentItMw");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedId, setSelectedId] = useState("");
 
   useEffect(() => {
@@ -223,8 +227,25 @@ export function AICapex({ language }: { language: Language }) {
       && (status === "all" || project.status === status)
       && (confidence === "all" || project.confidence === confidence)
       && (freshness === "all" || project.freshness === freshness)
-    ));
-  }, [confidence, country, data, freshness, owner, query, status]);
+    )).sort((left, right) => {
+      const leftValue = sortField === "observationDate"
+        ? (left.observationDate ? Date.parse(left.observationDate) : null)
+        : sortField === "name" || sortField === "owner"
+          ? left[sortField]
+          : left[sortField];
+      const rightValue = sortField === "observationDate"
+        ? (right.observationDate ? Date.parse(right.observationDate) : null)
+        : sortField === "name" || sortField === "owner"
+          ? right[sortField]
+          : right[sortField];
+      if (leftValue === null || leftValue === "") return rightValue === null || rightValue === "" ? 0 : 1;
+      if (rightValue === null || rightValue === "") return -1;
+      const ordered = typeof leftValue === "string" && typeof rightValue === "string"
+        ? leftValue.localeCompare(rightValue)
+        : Number(leftValue) - Number(rightValue);
+      return sortDirection === "asc" ? ordered : -ordered;
+    });
+  }, [confidence, country, data, freshness, owner, query, sortDirection, sortField, status]);
 
   const selected = filtered.find((project) => project.id === selectedId) || filtered[0] || null;
   const sourceMap = new Map((data?.sources || []).map((source) => [source.id, source]));
@@ -276,6 +297,18 @@ export function AICapex({ language }: { language: Language }) {
               </select>
             </label>
           ))}
+          <label><span>排序</span>
+            <select value={sortField} onChange={(event) => setSortField(event.target.value as CapexSortField)}>
+              <option value="currentItMw">IT MW</option><option value="currentH100e">H100e</option>
+              <option value="estimatedCapitalCostUsdBn">估算成本</option><option value="observationDate">观察日期</option>
+              <option value="name">项目名称</option><option value="owner">业主</option>
+            </select>
+          </label>
+          <label><span>顺序</span>
+            <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
+              <option value="desc">从高到低 / 最新</option><option value="asc">从低到高 / 最早</option>
+            </select>
+          </label>
         </div>
         <div className="aidc-table-wrap">
           <table className="aidc-project-table">

@@ -250,3 +250,18 @@ Event DB / AI Capex portable JSON
 The function validates request sizes and treats retrieved material as evidence,
 not instructions. Tavily uses Basic search by default to preserve credits.
 DeepSeek receives only the last six messages and a bounded context package.
+
+## V5.6 interaction and return-integrity boundary
+
+- Event DB and AI Capex launch one `AgenticResearchPanel` through the
+  top-level `ask` view. Scope is carried in React state and the user can return
+  to the originating database.
+- `sync-claim-ledger.mjs` considers a horizon observed only when both its
+  trading date and a positive closing price exist. Upstream `return = -1`
+  placeholders with a null date/price are normalized to null before the
+  portable JSON is written.
+- Event company and industry/theme dimensions are derived from mapping type:
+  direct mappings populate company; proxy baskets populate industry/theme.
+- The Settings member list is server-derived from Clerk users and invitations.
+  The same owner-only JWT verification protects both listing and invitation
+  creation.

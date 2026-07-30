@@ -167,3 +167,16 @@
 - [x] Add the existing Clerk client/session gate to the Tencent build.
 - [x] Run full lint/tests/build and desktop/mobile browser QA.
 - [x] Publish the validated Tencent bundle and verify Clerk + both workspaces.
+
+## V5.6 — Research controls and integrity correction
+
+- [x] Trace the apparent `-100%` return to the missing-horizon BBG sentinel.
+- [x] Normalize unobserved future horizons to null and regenerate both Claim
+  dashboard copies.
+- [x] Correct the four New Hope Dairy speaker records to Xu Lei.
+- [x] Separate event company and industry/theme filters.
+- [x] Add event and AI Capex sorting with missing values last.
+- [x] Move module research entry to the page header and unified AskAI view.
+- [x] Add the Clerk-backed Settings member list.
+- [x] Run lint, targeted tests, and the Tencent production build.
+- [x] Complete desktop/mobile browser QA and publish the Tencent deployment.

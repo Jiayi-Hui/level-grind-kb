@@ -17,8 +17,13 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.equal(data.recordCounts.securitiesWithPublicPrices, 48);
   assert.equal(claims.claims.length, 45);
   assert.ok(data.claims.some((claim) => claim.speaker === "Allen" && claim.claimTimeHkt));
+  assert.ok(["CLM-SEED-EVT-0001", "CLM-SEED-EVT-0002", "CLM-SEED-EVT-0003", "CLM-SEED-EVT-0004"]
+    .every((id) => data.claims.find((claim) => claim.claimId === id)?.speaker === "Xu Lei"));
   assert.ok(data.claims.some((claim) => claim.verificationEvidence.length > 0));
   assert.ok(data.claims.every((claim) => claim.contentStatus && claim.priceStatus));
+  assert.ok(data.claims.every((claim) => claim.mappings.every((mapping) => Object.values(mapping.returns).every((horizon) => (
+    horizon.date && horizon.close !== null ? horizon.return !== null : horizon.return === null
+  )))));
   assert.match(component, /搜索 Claim、公司、发言人、股票代码/);
   assert.match(component, /T\+0/);
   assert.match(component, /T\+1/);
@@ -30,10 +35,14 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.match(component, /编辑/);
   assert.match(component, /删除/);
   assert.match(component, /添加 Claim/);
+  assert.match(component, /按最深回撤/);
+  assert.match(component, /全部公司/);
+  assert.match(component, /全部行业 \/ 主题/);
   assert.match(data.methodology.contentBoundary, /价格已核验不等于 Claim 内容已核验/);
   assert.doesNotMatch(component, /investmentReadThrough|投资含义|相似度|需求判断/);
   assert.match(sync, /event_study_bbg_baseline/);
   assert.match(sync, /comparison_rows/);
+  assert.match(sync, /hasObservedPrice/);
 });
 
 test("ships a secret-protected idempotent WeChat claim inbox", async () => {

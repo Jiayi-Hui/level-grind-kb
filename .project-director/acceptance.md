@@ -210,3 +210,16 @@
 - [x] Deferred modules are marked `待上线`.
 - [ ] One signed-in production answer completes in the user's Clerk session;
   provider secrets are already configured in Tencent.
+
+## V5.6 AskAI, sorting, member list, and return integrity
+
+- [x] Event DB and AI Capex show a top-right contextual AskAI action and no
+  bottom chatbot.
+- [x] Event DB supports date, horizon, drawdown, and upside sorting in both
+  directions, with missing values last.
+- [x] AI Capex supports metric, observation-date, name, and owner sorting.
+- [x] Event company and industry/theme filters are separate.
+- [x] The four New Hope Dairy rows identify Xu Lei as speaker.
+- [x] Missing future BBG horizons are published as null rather than `-100%`.
+- [x] Settings includes an owner-only Clerk member and pending-invitation list.
+- [ ] Signed-in production member-list loading is verified after deployment.

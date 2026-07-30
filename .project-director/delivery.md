@@ -258,3 +258,20 @@ and explicit Report/Web/Hybrid evidence modes.
 - Tencent deployment `dph9nmikv34j` is live. Tavily, DeepSeek, and the
   non-secret model/runtime settings are stored as masked Tencent environment
   variables; no provider secret is present in source control.
+
+## V5.6 Research controls and data-integrity correction
+
+- Replaces the two bottom chat panels with one top-right contextual AskAI
+  action that opens the unified scoped research workspace.
+- Adds two-way Event sorting for date, T+0/T+1/T+3/T+5, observed drawdown, and
+  observed upside; adds two-way AI Capex sorting for core metrics and identity
+  fields.
+- Splits direct-company and proxy industry/theme filters.
+- Corrects the four New Hope Dairy speakers to Xu Lei.
+- Normalizes BBG missing-horizon sentinels to null. The July 23 Alphabet
+  sample now retains T+0/T+1 and shows no value for unavailable T+3/T+5.
+- Adds owner-only Clerk member management for active users and pending
+  invitations.
+- Tencent deployment `dpqyrxptxqbo` is live on the canonical domain. The
+  corrected Claim JSON, new JS asset, and authenticated invitation function
+  were verified after release.

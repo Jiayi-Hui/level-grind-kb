@@ -258,3 +258,19 @@ the production AI Capex view remains integrated in the authenticated
 | Tencent function | Pass | Deployment `dph9nmikv34j` succeeded; production GET `/api/agent-chat` returns the expected health document |
 | Provider configuration | Pass | DeepSeek and Tavily keys plus model/runtime settings are stored as masked Tencent environment variables |
 | Signed-in answer | Pending physical session | Production remains at the Clerk sign-in gate in the controlled browser; one signed-in prompt is the final end-to-end user check |
+
+## V5.6 AskAI, sorting, members, and return-integrity QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| Missing-return normalization | Pass | Every horizon without both date and close publishes null; the BBG `-1` placeholder can no longer render as `-100%` |
+| July 23 Alphabet sample | Pass | T+0/T+1 retain real values; unavailable T+3/T+5 render as `—` |
+| Speaker correction | Pass | All four New Hope Dairy Claim rows now identify Xu Lei |
+| Event filters and sorting | Pass | Company and industry/theme are distinct; date, four horizons, drawdown, and upside support both directions with missing values last |
+| AIDC sorting | Pass | IT MW, H100e, estimated cost, observation date, name, and owner are selectable; project-name ascending starts with Alibaba Zhangbei |
+| AskAI navigation | Pass | Event DB and AI Capex expose one header action and no embedded bottom panel; the action opens the scoped unified AskAI workspace |
+| Settings member management | Pass with signed-in dependency | Owner-only GET combines Clerk users and pending invitations; unauthenticated production access returns 401 |
+| Desktop browser | Pass | Event filters, null returns, scoped AskAI navigation, AIDC sort, and Settings layout render locally |
+| Mobile browser | Pass | 390 × 844 has no page-level horizontal overflow and keeps the contextual AskAI action visible |
+| Automated validation | Pass | Lint, 20/20 tests, Claim/AIDC sync, and Tencent production build pass |
+| Tencent production | Pass | Deployment `dpqyrxptxqbo`; canonical domain serves JS `index-Ckhec2pl.js` and corrected portable Claim JSON |

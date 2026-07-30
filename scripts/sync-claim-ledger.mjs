@@ -91,13 +91,18 @@ for (const finding of findings.findings) {
   }
 }
 
-const horizon = (row, label) => ({
-  date: row[`${label} date`] ?? null,
-  close: row[`${label} PX`] ?? null,
-  return: row[`${label} return`] ?? null,
-  abnormal: row[`${label} abnormal`] ?? null,
-  benchmarkClose: row[`Benchmark ${label} PX`] ?? null,
-});
+const horizon = (row, label) => {
+  const date = row[`${label} date`] ?? null;
+  const close = row[`${label} PX`] ?? null;
+  const hasObservedPrice = Boolean(date) && Number.isFinite(close) && close > 0;
+  return {
+    date: hasObservedPrice ? date : null,
+    close: hasObservedPrice ? close : null,
+    return: hasObservedPrice && Number.isFinite(row[`${label} return`]) ? row[`${label} return`] : null,
+    abnormal: hasObservedPrice && Number.isFinite(row[`${label} abnormal`]) ? row[`${label} abnormal`] : null,
+    benchmarkClose: hasObservedPrice && Number.isFinite(row[`Benchmark ${label} PX`]) ? row[`Benchmark ${label} PX`] : null,
+  };
+};
 
 const claims = sourceClaims.claims.map((claim) => {
   const mappings = (bbgByEvent.get(claim.eventId) || []).map((row) => {

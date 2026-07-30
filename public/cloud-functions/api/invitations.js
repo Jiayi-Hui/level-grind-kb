@@ -73,9 +73,40 @@ async function requireOwner(request, env) {
 export async function onRequestGet({ request, env }) {
   try {
     await requireOwner(request, env);
-    const response = await clerkRequest("/invitations?limit=100", env.CLERK_SECRET_KEY);
-    const body = await response.json();
-    return response.ok ? json(body) : json({ error: body.errors?.[0]?.long_message || "无法读取邀请" }, response.status);
+    const [usersResponse, invitationsResponse] = await Promise.all([
+      clerkRequest("/users?limit=100&order_by=-created_at", env.CLERK_SECRET_KEY),
+      clerkRequest("/invitations?limit=100", env.CLERK_SECRET_KEY),
+    ]);
+    const [usersBody, invitationsBody] = await Promise.all([usersResponse.json(), invitationsResponse.json()]);
+    if (!usersResponse.ok || !invitationsResponse.ok) {
+      const errorBody = usersResponse.ok ? invitationsBody : usersBody;
+      return json({ error: errorBody.errors?.[0]?.long_message || "无法读取成员" }, usersResponse.ok ? invitationsResponse.status : usersResponse.status);
+    }
+    const users = Array.isArray(usersBody) ? usersBody : usersBody.data || [];
+    const invitations = Array.isArray(invitationsBody) ? invitationsBody : invitationsBody.data || [];
+    const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
+    const activeMembers = users.map((user) => {
+      const emails = new Map((user.email_addresses || []).map((item) => [item.id, item.email_address]));
+      const email = emails.get(user.primary_email_address_id) || [...emails.values()][0] || "";
+      return {
+        id: user.id,
+        email,
+        name: [user.first_name, user.last_name].filter(Boolean).join(" "),
+        role: email.toLowerCase() === ownerEmail ? "Owner" : user.public_metadata?.role || "Member",
+        status: "active",
+      };
+    }).filter((member) => member.email);
+    const activeEmails = new Set(activeMembers.map((member) => member.email.toLowerCase()));
+    const pendingMembers = invitations
+      .filter((invitation) => !activeEmails.has(String(invitation.email_address || "").toLowerCase()))
+      .map((invitation) => ({
+        id: invitation.id,
+        email: invitation.email_address,
+        name: "",
+        role: invitation.public_metadata?.role || "Invited",
+        status: invitation.status === "revoked" ? "revoked" : "pending",
+      }));
+    return json({ members: [...activeMembers, ...pendingMembers] });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "邀请服务不可用" }, 401);
   }
