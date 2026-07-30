@@ -43,7 +43,15 @@ async function getExtractor(onProgress?: (message: string) => void) {
       env.allowRemoteModels = false;
       env.allowLocalModels = true;
       env.localModelPath = "/models/";
-      env.backends.onnx.wasm.wasmPaths = "/transformers-wasm/";
+      // Keep the ONNX bootstrap module inside the Vite bundle. EdgeOne serves
+      // standalone `.mjs` files as application/octet-stream, which browsers
+      // reject as JavaScript modules. Only override the binary location.
+      env.backends.onnx.wasm.wasmPaths = {
+        wasm: "/transformers-wasm/ort-wasm-simd-threaded.jsep.wasm",
+      };
+      // A single thread avoids SharedArrayBuffer / cross-origin-isolation
+      // requirements and works consistently on desktop and mobile browsers.
+      env.backends.onnx.wasm.numThreads = 1;
       const extractor = await pipeline(
         "feature-extraction",
         "bge-small-zh-v1.5",
