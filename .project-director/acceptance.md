@@ -270,3 +270,17 @@
 - [x] Assistant answers visually distinguish conclusions, structure, and
   supporting details.
 - [x] Targeted tests, lint, and the Tencent build pass.
+
+## V5.11 Evidence-ranked AI Capex locations
+
+- [x] Explicit coordinates in Epoch timelines/sources outrank every derived
+  location.
+- [x] Epoch Satellite Explorer locations outrank parcel overrides and address
+  geocoding.
+- [x] Reviewed permit/parcel evidence has a dedicated tracked override path.
+- [x] Complete-address and city/county fallback tiers remain implemented.
+- [x] City/county centroids are labelled place-level and never described as
+  project parcels.
+- [x] All 75 published campuses have a source-linked location.
+- [x] Tooltips and project details state the location precision and source.
+- [ ] Release remains subject to explicit push/deploy approval.

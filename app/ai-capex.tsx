@@ -81,10 +81,12 @@ type CapexPayload = {
 type Geocode = {
   latitude: number | null;
   longitude: number | null;
-  precision: "address" | "place" | "unresolved";
+  precision: "source-coordinate" | "epoch-satellite" | "parcel" | "address" | "place" | "unresolved";
+  evidenceTier?: 1 | 2 | 3 | 4 | 5 | null;
   displayName: string | null;
   source: string;
   sourceUrl: string | null;
+  locationWarning?: string;
 };
 type CapexSortField = "currentItMw" | "currentH100e" | "estimatedCapitalCostUsdBn" | "observationDate" | "name" | "owner";
 type SortDirection = "desc" | "asc";
@@ -112,6 +114,18 @@ function sourceIndex(id: string) {
   return Number(id.replace(/\D/g, "")) || id;
 }
 
+function locationPrecisionLabel(precision: Geocode["precision"], compactLabel = false) {
+  const labels: Record<Geocode["precision"], [string, string]> = {
+    "source-coordinate": ["来源明确坐标", "来源坐标"],
+    "epoch-satellite": ["Epoch 卫星图定位", "卫星图"],
+    parcel: ["许可/地块级定位", "地块级"],
+    address: ["完整地址定位", "地址级"],
+    place: ["地点级定位（非项目地块）", "地点级"],
+    unresolved: ["位置待核实", "待定位"],
+  };
+  return labels[precision][compactLabel ? 1 : 0];
+}
+
 function WorldMap({
   projects,
   geocodes,
@@ -130,7 +144,7 @@ function WorldMap({
   const path = useMemo(() => geoPath(projection), [projection]);
   const points = projects.flatMap((project) => {
     const location = geocodes[project.id];
-    if (!location?.latitude || !location.longitude) return [];
+    if (!Number.isFinite(location?.latitude) || !Number.isFinite(location?.longitude)) return [];
     const coordinates = projection([location.longitude, location.latitude]);
     return coordinates ? [{ project, location, x: coordinates[0], y: coordinates[1] }] : [];
   });
@@ -162,7 +176,7 @@ function WorldMap({
               strokeWidth={selectedId === project.id ? 4 : 2}
             />
             <title>
-              {`${project.name}\n${project.owner} · ${project.country}\n${compact(project.currentItMw)} MW · ${statusLabel(project.status, "zh")}\n定位：${location.precision === "address" ? "地址级" : "地点级"}`}
+              {`${project.name}\n${project.owner} · ${project.country}\n${compact(project.currentItMw)} MW · ${statusLabel(project.status, "zh")}\n定位：${locationPrecisionLabel(location.precision, true)}\n来源：${location.source}`}
             </title>
           </g>
         ))}
@@ -365,10 +379,11 @@ export function AICapex({ language }: { language: Language }) {
               <div className="aidc-site-orbit">
                 <span>{statusLabel(selected.status, language)}</span>
                 <strong>{compact(selected.currentItMw)} MW</strong>
-                <small>{geocodes[selected.id]?.precision === "address" ? "地址级定位" : "地点级定位"}</small>
+                <small>{locationPrecisionLabel(geocodes[selected.id]?.precision || "unresolved")}</small>
               </div>
               <h3>{selected.name}</h3>
               <p>{geocodes[selected.id]?.displayName || selected.address || selected.country}</p>
+              {geocodes[selected.id]?.locationWarning && <p className="aidc-location-warning">{geocodes[selected.id].locationWarning}</p>}
               <div className="aidc-source-chips">
                 {selected.sourceIds.slice(0, 8).map((id) => {
                   const source = sourceMap.get(id);

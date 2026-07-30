@@ -67,12 +67,31 @@ test("adds a compact AI Capex workspace with real matrix and mapped projects", (
   assert.match(component, /aidc-empty-state/);
   assert.match(component, /地址待补/);
   assert.match(styles, /\.freshness-stale/);
-  assert.ok(Object.values(geocodes).filter((entry) => entry.latitude !== null).length >= 50);
+  assert.equal(Object.values(geocodes).filter((entry) => entry.latitude !== null).length, 75);
+  assert.ok(Object.values(geocodes).every((entry) => (
+    entry.latitude === null
+    || ["source-coordinate", "epoch-satellite", "parcel", "address", "place"].includes(entry.precision)
+  )));
   const chinaProjects = dashboard.projects.filter((project) => project.country === "China");
   assert.equal(chinaProjects.length, 3);
   assert.ok(chinaProjects.every((project) => Number.isFinite(geocodes[project.id]?.latitude)));
   assert.ok(chinaProjects.every((project) => Number.isFinite(geocodes[project.id]?.longitude)));
+  const sat40 = dashboard.projects.find((project) => project.name === "Microsoft SAT40");
+  assert.equal(geocodes[sat40.id].precision, "source-coordinate");
+  assert.equal(geocodes[sat40.id].evidenceTier, 1);
+  assert.ok(Math.abs(geocodes[sat40.id].latitude - 29.4149522) < 1e-8);
+  assert.match(geocodes[sat40.id].sourceUrl, /earth\.google\.com/);
+  const prometheus = dashboard.projects.find((project) => project.name === "Meta Prometheus");
+  assert.equal(geocodes[prometheus.id].precision, "epoch-satellite");
+  assert.equal(geocodes[prometheus.id].evidenceTier, 2);
+  assert.match(geocodes[prometheus.id].sourceUrl, /epoch\.ai.*satellite-explorer/);
   assert.match(component, /个待定位/);
+  assert.match(component, /Epoch 卫星图定位/);
+  assert.match(component, /地点级定位（非项目地块）/);
+  assert.match(geocodeScript, /source-coordinate/);
+  assert.match(geocodeScript, /epoch-satellite/);
+  assert.match(geocodeScript, /US Census Geocoder/);
+  assert.match(geocodeScript, /aidc-capex-location-overrides/);
   assert.match(geocodeScript, /nominatim\.openstreetmap\.org/);
   assert.match(geocodeScript, /retry-unresolved/);
   assert.match(geocodeScript, /Horinger County, Inner Mongolia, China/);

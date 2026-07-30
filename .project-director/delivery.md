@@ -314,3 +314,18 @@ and explicit Report/Web/Hybrid evidence modes.
 - Updates the DeepSeek instruction to return concise, structured Markdown.
 - Targeted tests, lint, and the Tencent build pass. This candidate is not yet
   pushed or deployed.
+
+## V5.11 AI Capex evidence-ranked location candidate
+
+- Replaces the Nominatim-first map pipeline with a five-tier evidence hierarchy.
+- Extracts explicit coordinates from local Epoch timelines and campus sources.
+- Reads the selected-campus location embedded in Epoch Satellite Explorer,
+  resolving all previously missing project locations without city-level
+  guessing.
+- Publishes 75/75 source-linked locations: 9 explicit source coordinates and
+  66 Epoch Satellite Explorer campus locations.
+- Adds the reviewed permit/parcel override path and keeps address/place
+  geocoding as transparent fallbacks.
+- Updates map tooltips and details to distinguish source coordinate, satellite,
+  parcel, address, place-level, and unresolved states.
+- This candidate is local only until explicit push/deploy approval.

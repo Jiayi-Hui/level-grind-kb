@@ -1,51 +1,46 @@
-# AI Capex map geocode coverage
+# AI Capex map location coverage
 
 Generated from the published 75-campus AI Capex dataset on 2026-07-30.
 
 ## Coverage
 
 - Total records: 75
-- Located records: 54
-- Unresolved records: 21
-- China records: 3 located / 3 total
+- Located records: 75
+- Unresolved records: 0
+- Explicit coordinates in an Epoch timeline/source: 9
+- Epoch Satellite Explorer campus locations: 66
+- Permit/parcel overrides: 0
+- Address-geocoded records: 0
+- Place-level fallback records: 0
 
-The original geocoder did not resolve the three China campuses because their
-English brand/campus names were not recognized by OpenStreetMap Nominatim.
-Reproducible public place-name fallbacks now locate:
+## Evidence priority
 
-- Huawei Horinger → Horinger County, Inner Mongolia
-- VNET Bayin Ulanqab → Bayin, Ulanqab, Inner Mongolia
-- Alibaba Zhangbei → Zhangbei County, Zhangjiakou, Hebei
+The repeatable location pipeline applies this order and stops at the first
+reliable match:
 
-These are place-level coordinates, not building-level coordinates.
+1. Explicit latitude/longitude in an Epoch timeline or linked source.
+2. The campus location embedded in the matching Epoch Satellite Explorer.
+3. A reviewed permit, land-use map, or parcel override in
+   `data/aidc-capex-location-overrides.json`.
+4. A complete-address match through the US Census Geocoder and/or OpenStreetMap
+   Nominatim.
+5. A city/county centroid, explicitly labelled place-level and not a campus
+   parcel.
 
-## Records still unresolved
+An unresolved record stays off the map. A city/county centroid must never be
+presented as a building or campus coordinate.
 
-| Project | Owner | Country | Source address |
-| --- | --- | --- | --- |
-| Meta Prometheus | Meta | United States | 1 Community Cir, New Albany, OH 43054 |
-| Anthropic-Amazon New Carlisle | Amazon | United States | 55001 Larrison Blvd, New Carlisle, IN 46552 |
-| Google Bristow | Google | United States | 13001 Rollins Ford Road, Bristow, VA 20136 |
-| DayOne Nusajaya | Unknown | Malaysia | Missing |
-| Amazon Madison Mega Site | Amazon | United States | Amazon Data Services Inc, Madison Mega Site Nissan Parkway and Highway 22 Canton, Mississippi Madison County |
-| Meta Jeffersonville | Meta | United States | 500 8th St, Jeffersonville, IN 47130, USA |
-| Coreweave Helios | CoreWeave | United States | 984 County Road 112, Afton, TX 79220 |
-| Microsoft Project Osmium | Microsoft | United States | 5855 SW Kerry St, Cumming, IA 50061 |
-| CoreWeave Chester VA | CoreWeave | United States | 1401 Meadowville Technology Parkway, Chester, VA |
-| Oracle Batam | Oracle | Indonesia | Missing |
-| Microsoft SAT40 | Microsoft | United States | 15000 Lambda Drive, San Antonio, TX 78245 |
-| Start Campus Sines Data Campus | Nscale | Portugal | Start Campus - Sustainable Data Center Services, Sines, Portugal |
-| CoreWeave Muskogee OK | CoreWeave | United States | 1525 W 43rd St S, Muskogee, OK 74401, USA |
-| Google Kansas City East | Google | United States | Missing |
-| OpenAI Stargate Lordstown | Softbank | United States | 2300 Hallock Young Rd, Warren, OH 44481 |
-| OpenAI Stargate Michigan | Oracle | United States | Missing |
-| OpenAI Stargate Milam | Softbank | United States | Missing |
-| OpenAI Stargate New Mexico | Oracle | United States | Missing |
-| OpenAI Stargate Shackelford | Oracle | United States | 175 Private Road 1604, Abilene, TX 79601, Shackelford County |
-| OpenAI Stargate UAE | G42 | United Arab Emirates | Nexus L&T Project Office, Al Bihouth, Al Dhafrah, Abu Dhabi, United Arab Emirates |
-| OpenAI Stargate Wisconsin | Oracle | United States | Missing |
+## Previously unresolved examples
 
-Seven records have no source address. The remaining fourteen have an address in
-the research export but Nominatim did not return a match for the supplied text.
-They should remain off the map until a reproducible place/building match is
-verified; the dashboard must not invent coordinates.
+| Project | New location evidence | Precision |
+| --- | --- | --- |
+| Meta Prometheus | Epoch Satellite Explorer | Campus/satellite |
+| Microsoft Project Osmium | Epoch Satellite Explorer | Campus/satellite |
+| Microsoft SAT40 | Google Earth coordinate linked in the Epoch timeline | Explicit source coordinate |
+| OpenAI Stargate Michigan | Epoch Satellite Explorer | Campus/satellite |
+| OpenAI Stargate New Mexico | Epoch Satellite Explorer | Campus/satellite |
+| OpenAI Stargate UAE | Epoch Satellite Explorer | Campus/satellite |
+
+Every published geocode record includes its precision, evidence tier, source,
+source URL, and generation timestamp. The browser renders these labels in the
+project tooltip and detail view.

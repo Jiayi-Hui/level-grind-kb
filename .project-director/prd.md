@@ -437,3 +437,15 @@ client-side authentication protects static JSON assets.
   Capex, utilization, or specific chip shipments.
 - A tracked demo-question guide provides event-only, AI-Capex-only, and
   cross-database prompts grounded in the current datasets.
+
+## V5.11 — Evidence-ranked AI Capex location
+
+- AI Capex location must follow the evidence priority: explicit Epoch/source
+  coordinate, Epoch Satellite Explorer, reviewed permit/parcel, complete
+  address, then city/county centroid.
+- Each coordinate must expose a precision class, evidence tier, source name,
+  and directly supporting URL.
+- Place-level coordinates must explicitly say that they are not the project
+  parcel.
+- Missing reliable evidence must leave the project off-map; the product must
+  not invent coordinates to improve visual coverage.

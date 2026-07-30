@@ -281,3 +281,26 @@ portable Claim ledger (sanitized speaker alias + verified snapshot)
 The alias is applied in the sync script before either tracked dashboard copy is
 written, so it protects interface text, downloadable JSON, and LLM context.
 Real names remain only in the non-published local source ledger.
+
+## V5.11 AI Capex location-evidence hierarchy
+
+```text
+Epoch timeline/source explicit latitude-longitude
+  -> Epoch Satellite Explorer selected-campus lngLat
+  -> reviewed permit / land-use / parcel override
+  -> complete-address geocoding (US Census and/or Nominatim)
+  -> city/county centroid, visibly marked place-level
+  -> unresolved and omitted from the map
+```
+
+`scripts/geocode-aidc-capex.mjs` reads the local Epoch campus and timeline CSVs,
+extracts explicit map coordinates, resolves official Epoch directory slugs from
+the Epoch data sitemap, and parses the selected campus location embedded in the
+Satellite Explorer. It records `precision`, `evidenceTier`, and the supporting
+URL with every coordinate. `data/aidc-capex-location-overrides.json` is the
+reviewed extension point for future permit or parcel evidence; it does not
+contain fabricated defaults.
+
+The basemap remains a browser-rendered `world-atlas` asset. OpenStreetMap is
+only a fourth/fifth-tier geocoder and map link, not the source of Epoch's
+research geometry.

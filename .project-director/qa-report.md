@@ -309,3 +309,18 @@ the production AI Capex view remains integrated in the authenticated
 | Answer hierarchy | Pass | Headings, bullets, links, citations, and bold emphasis have scoped research-chat styles |
 | Automated validation | Pass | 7/7 targeted tests pass; lint has no errors and one unrelated existing warning; Tencent build succeeds |
 | Release | Pending approval | No deployment or push performed in this task |
+
+## V5.11 AI Capex location-evidence QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| Evidence ordering | Pass | Script applies explicit Epoch/source coordinate, Satellite Explorer, reviewed parcel override, address geocoder, then labelled place centroid |
+| Published coverage | Pass | 75/75 projects have finite coordinates and a directly supporting URL |
+| Precision distribution | Pass | 9 explicit source coordinates; 66 Epoch Satellite Explorer campus locations; no place-level guess is currently needed |
+| SAT40 traceability | Pass | Uses `29.4149522, -98.80304495` from the Google Earth link in the local Epoch timeline |
+| Previously unresolved records | Pass | Prometheus, Osmium, Michigan, New Mexico, UAE, and the other prior gaps now resolve through Epoch spatial evidence |
+| UI disclosure | Pass | Tooltip and project detail distinguish source coordinate, Epoch satellite, parcel, address, place-level, and unresolved states |
+| Automated validation | Pass | 21/21 tests pass; targeted AIDC 4/4 passes; standard build and Tencent build pass |
+| Lint | Pass with existing warning | No errors; one pre-existing unused import warning remains in `scripts/export-production-backup.mjs` |
+| Browser gate | Partial | Local Tencent shell loads cleanly to the Clerk sign-in gate; authenticated post-login visual inspection is deferred because this candidate is not deployed |
+| Release | Pending approval | No push or Tencent deployment performed |
