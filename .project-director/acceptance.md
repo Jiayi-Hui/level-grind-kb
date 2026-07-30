@@ -195,3 +195,18 @@
   the live invitation endpoint rejects unauthenticated access.
 - [ ] A real invitation email round trip awaits the first boss email entered by
   the signed-in owner; no unsolicited test invitation was sent.
+
+## V5.5 Agentic research layer
+
+- [x] Event DB and AI Capex each expose a fixed-height scrollable chatbot.
+- [x] Hybrid, Web, and Current module evidence modes are explicit.
+- [x] Projects and chats can be created, renamed, and deleted.
+- [x] Answers can be saved to Personal Knowledge, downloaded as `.md`, and
+  handed to Obsidian.
+- [x] Personal Knowledge visibly contains saved answers and supports deletion.
+- [x] Clerk protects the Tencent function; provider keys remain server-side.
+- [x] Missing provider configuration produces an explicit state, not a fake
+  answer.
+- [x] Deferred modules are marked `待上线`.
+- [ ] One signed-in production answer completes in the user's Clerk session;
+  provider secrets are already configured in Tencent.

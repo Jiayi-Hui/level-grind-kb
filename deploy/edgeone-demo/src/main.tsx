@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import { useAuth } from "@clerk/react";
 import { createRoot } from "react-dom/client";
+import { AgenticResearchPanel, PersonalKnowledgeView } from "../../../app/agentic-research";
 import { AICapex } from "../../../app/ai-capex";
 import { AppClerkProvider, AuthGate } from "../../../app/auth-widgets";
 import { EventResearch } from "../../../app/event-research";
 import "../../../app/globals.css";
 import "./mirror.css";
 
-type DemoView = "events" | "aidc" | "settings";
+type DemoView = "knowledge" | "events" | "aidc" | "settings";
 
 const viewCopy = {
+  knowledge: {
+    eyebrow: "PERSONAL KNOWLEDGE",
+    title: "个人知识库",
+  },
   events: {
     eyebrow: "CLAIM LEDGER",
     title: "事件库",
@@ -52,15 +57,17 @@ function ContinuityApp() {
         </div>
         <p className="workspace-label">RESEARCH OS</p>
         <nav aria-label="Workspace navigation">
-          <button className="nav-item" disabled title="将在腾讯云完整迁移阶段恢复">
+          <button
+            className={`nav-item ${view === "knowledge" ? "active" : ""}`}
+            onClick={() => selectView("knowledge")}
+          >
             <span className="nav-symbol">⌂</span>
             <span>个人知识库</span>
-            <small>迁移中</small>
           </button>
-          <button className="nav-item" disabled title="将在腾讯云完整迁移阶段恢复">
+          <button className="nav-item" disabled title="待上线">
             <span className="nav-symbol">▤</span>
             <span>报告库</span>
-            <small>迁移中</small>
+            <small>待上线</small>
           </button>
           <button
             className={`nav-item ${view === "events" ? "active" : ""}`}
@@ -76,15 +83,15 @@ function ContinuityApp() {
             <span className="nav-symbol">▥</span>
             <span>AI Capex</span>
           </button>
-          <button className="nav-item" disabled title="将在腾讯云完整迁移阶段恢复">
+          <button className="nav-item" disabled title="待上线">
             <span className="nav-symbol">▦</span>
             <span>模型工作台</span>
-            <small>迁移中</small>
+            <small>待上线</small>
           </button>
-          <button className="nav-item" disabled title="将在腾讯云完整迁移阶段恢复">
+          <button className="nav-item" disabled title="统一 AskAI 待上线；事件库与 AI Capex 已可直接问答">
             <span className="nav-symbol">✦</span>
             <span>AskAI</span>
-            <small>迁移中</small>
+            <small>待上线</small>
           </button>
           <button
             className={`nav-item ${view === "settings" ? "active" : ""}`}
@@ -120,13 +127,21 @@ function ContinuityApp() {
             </div>
           </header>
 
-          {view === "events" ? (
-            <EventResearch
-              liveClaims={[]}
-              onAsk={() => undefined}
-            />
+          {view === "knowledge" ? (
+            <PersonalKnowledgeView />
+          ) : view === "events" ? (
+            <>
+              <EventResearch
+                liveClaims={[]}
+                onAsk={() => undefined}
+              />
+              <AgenticResearchPanel scope="events" />
+            </>
           ) : view === "aidc" ? (
-            <AICapex language="zh" />
+            <>
+              <AICapex language="zh" />
+              <AgenticResearchPanel scope="aidc" />
+            </>
           ) : (
             <InviteSettings />
           )}

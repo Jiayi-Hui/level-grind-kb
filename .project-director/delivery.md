@@ -242,3 +242,19 @@ and explicit Report/Web/Hybrid evidence modes.
   invitation function uses Clerk secrets stored in Tencent's masked environment
   configuration. Deployment `dpol6z9tc8tl` serves the new function and UI; no
   invitation was sent without a user-specified recipient.
+
+## V5.5 Agentic research layer
+
+- Adds an authenticated Tencent Cloud Function that can combine the current
+  Event DB or AI Capex context with Tavily public search and DeepSeek synthesis.
+- Adds fixed-height, scrollable research panels to both modules with explicit
+  Hybrid, Current module, and Web evidence modes.
+- Adds device-local Projects and Chats with create, rename, and confirmed
+  delete actions. No shared persistence is implied.
+- Adds answer actions for Personal Knowledge, Markdown download, and Obsidian
+  deep-link export; the Personal Knowledge navigation now renders saved
+  research and supports deletion.
+- Report Library, Model Workbench, and unified AskAI remain visibly `待上线`.
+- Tencent deployment `dph9nmikv34j` is live. Tavily, DeepSeek, and the
+  non-secret model/runtime settings are stored as masked Tencent environment
+  variables; no provider secret is present in source control.

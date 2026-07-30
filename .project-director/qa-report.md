@@ -240,3 +240,21 @@ the production AI Capex view remains integrated in the authenticated
 | Image rights | Pass | No Epoch-referenced third-party satellite image is copied; original links remain available |
 | Clerk invitation | Production-ready | Tencent stores masked Clerk secret and owner email; unauthenticated production API correctly returns 401 |
 | Tencent production | Pass | Deployment `dpol6z9tc8tl`; new JS/CSS hashes, geocode asset, and Cloud Function are live |
+
+## V5.5 Agentic research QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| Scoped research | Pass | Event DB and AI Capex each rank and send only their own current-module records |
+| Provider boundary | Pass with configuration dependency | Tencent stores Tavily plus DeepSeek base/model/output settings server-side; the DeepSeek secret still requires a one-time console login |
+| Authentication | Pass | POST verifies the Clerk JWT before search or model calls; GET health is intentionally non-sensitive |
+| Research modes | Pass | Hybrid, Current module, and Web modes have distinct evidence behavior |
+| Chat ergonomics | Pass | Fixed 720px workbench, independently scrollable message history, elapsed thinking time, and bounded project/chat lists |
+| Project and chat lifecycle | Pass | Create, rename, and confirmed delete persist on the current device |
+| Answer portability | Pass | Save to Personal Knowledge, Markdown download, and Obsidian deep-link export are implemented |
+| Honest boundaries | Pass | Report Library, Model Workbench, and unified AskAI are disabled and marked `待上线`; missing provider configuration returns an explicit error |
+| Automated validation | Pass | Lint, Tencent production build, and 20/20 targeted tests pass |
+| Desktop browser | Pass | Event data, AI Capex data, both embedded chat panels, and Personal Knowledge were exercised locally |
+| Tencent function | Pass | Deployment `dph9nmikv34j` succeeded; production GET `/api/agent-chat` returns the expected health document |
+| Provider configuration | Pass | DeepSeek and Tavily keys plus model/runtime settings are stored as masked Tencent environment variables |
+| Signed-in answer | Pending physical session | Production remains at the Clerk sign-in gate in the controlled browser; one signed-in prompt is the final end-to-end user check |

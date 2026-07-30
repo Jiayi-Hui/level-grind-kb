@@ -379,3 +379,17 @@ client-side authentication protects static JSON assets.
   unresolved projects are not assigned synthetic coordinates.
 - Settings replaces the infrastructure continuity badge and provides a real
   Clerk invitation form for Analyst, PM, and GEM PM.
+
+## V5.5 — Agentic Research Layer
+
+- Event DB and AI Capex each expose a bounded, vertically scrollable chatbot.
+- The current module supplies a compact query-ranked context set; Hybrid mode
+  may add Tavily public-web evidence before DeepSeek synthesis.
+- Users can create, rename, and delete research projects and chats.
+- Assistant answers can be saved to Personal Knowledge, downloaded as
+  Markdown, or handed to an Obsidian vault.
+- Personal Knowledge displays saved answers and supports deletion/export.
+- Unsupported continuity modules remain visibly marked `待上线`.
+- Tencent cloud functions own provider secrets and validate Clerk sessions.
+- Projects, chats, and saved notes are device-local in this release and must
+  not be described as team-shared persistence.

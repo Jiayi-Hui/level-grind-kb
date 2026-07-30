@@ -23,7 +23,7 @@ ChatGPT Sites.
   `deploy/edgeone-demo/level-grind-edgeone-demo.zip`
 - Tencent preview:
   `https://level-grind-hk-demo.edgeone.dev`
-- Current deployment: `dpjgwih2iu3d`
+- Current deployment: `dph9nmikv34j`
 - Deployment preview:
   `https://level-grind-hk-demo-dpow9ya5eggq.edgeone.dev`
 - Canonical custom domain: `https://www.level-grind.com`
@@ -41,6 +41,11 @@ ChatGPT Sites.
   sign-in modal supports the configured Google, Microsoft, GitHub, and
   email/password methods.
 - Level Grind visual system and responsive navigation.
+- Agentic research panels embedded in Event DB and AI Capex, with device-local
+  Projects/Chats, Personal Knowledge saves, Markdown download, and Obsidian
+  export.
+- Authenticated Tencent `/api/agent-chat` function. Tavily and the non-secret
+  DeepSeek runtime settings are configured in Tencent.
 
 The build copies the versioned JSON and static assets into the Tencent-hosted
 bundle. Browser requests do not depend on a sibling repository or
@@ -48,10 +53,16 @@ bundle. Browser requests do not depend on a sibling repository or
 
 ## Deliberate continuity limits
 
-This remains a read-only continuity surface for the immediate PM demo, now
-gated by Clerk. Personal/team knowledge, reports, AskAI, Model Workbench, D1
+The continuity surface is gated by Clerk. Event and AI Capex agentic research,
+device-local Projects/Chats, and device-local Personal Knowledge are enabled.
+Reports, unified AskAI, Model Workbench, shared multi-user persistence, D1
 writes, R2 uploads, and the live Claim Inbox remain disabled and visibly
-marked as `迁移中`.
+marked as `待上线`.
+
+DeepSeek and Tavily credentials are stored only in Tencent Environment
+Variables and are masked in the console. The previous Sites secret was not
+read or copied. A final signed-in browser prompt remains the production
+end-to-end check; unauthenticated calls correctly stop at Clerk.
 
 Clerk currently protects the rendered UI, not the static JSON URLs. Do not
 place confidential research in this bundle until the data routes run behind a

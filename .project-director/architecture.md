@@ -233,3 +233,20 @@ Tencent full-stack runtime and are outside this static cutover.
 - Claim edits use browser local storage in this release. This is deliberately
   separate from the immutable published Claim snapshot and is not described as
   multi-user persistence.
+
+## V5.5 Agentic research boundary
+
+```text
+Event DB / AI Capex portable JSON
+  -> browser ranks a bounded context subset for the current question
+  -> authenticated /api/agent-chat cloud function
+  -> optional Tavily Search
+  -> DeepSeek Chat Completions
+  -> cited answer + usage metadata
+  -> device-local project/chat store
+  -> Personal Knowledge / Markdown / Obsidian URI
+```
+
+The function validates request sizes and treats retrieved material as evidence,
+not instructions. Tavily uses Basic search by default to preserve credits.
+DeepSeek receives only the last six messages and a bounded context package.
