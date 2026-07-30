@@ -274,3 +274,15 @@ the production AI Capex view remains integrated in the authenticated
 | Mobile browser | Pass | 390 × 844 has no page-level horizontal overflow and keeps the contextual AskAI action visible |
 | Automated validation | Pass | Lint, 20/20 tests, Claim/AIDC sync, and Tencent production build pass |
 | Tencent production | Pass | Deployment `dpqyrxptxqbo`; canonical domain serves JS `index-Ckhec2pl.js` and corrected portable Claim JSON |
+
+## V5.7 Privacy alias and Yahoo refresh QA delta
+
+| Check | Result | Notes |
+|---|---|---|
+| Public privacy boundary | Pass | Published Claim JSON contains 16 `BossX` references and no `Xu Lei`; the four New Hope Dairy rows display `BossX` |
+| Live market function | Pass | Production `/api/market-prices` returned 62 observed daily closes each for GOOGL and 0700.HK from Yahoo Finance |
+| Return integrity | Pass | The client recalculates T+0/T+1/T+3/T+5 from observed trading sessions; missing horizons remain null and verified snapshots are the explicit fallback |
+| Refresh and request bounds | Pass | Mapped symbols refresh every five minutes in batches of eight; the function validates symbols and permits at most ten per request |
+| Local browser | Pass | Event DB shows `BossX`, contains no visible `Xu Lei`, preserves separated company/industry filters, and renders no `-100.0%` sentinel |
+| Automated validation | Pass | Lint, Tencent production build, and 21/21 tests pass |
+| Tencent production | Pass | Deployment `dpy1coemr2uo` completed in 29 seconds; `level-grind.com` serves JS `index-CdsZown2.js`, the aliased Claim JSON, and the Yahoo function |

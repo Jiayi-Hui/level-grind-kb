@@ -265,3 +265,19 @@ DeepSeek receives only the last six messages and a bounded context package.
 - The Settings member list is server-derived from Clerk users and invitations.
   The same owner-only JWT verification protects both listing and invitation
   creation.
+
+## V5.7 public price refresh and alias boundary
+
+```text
+portable Claim ledger (sanitized speaker alias + verified snapshot)
+  -> browser extracts bounded Yahoo symbols
+  -> /api/market-prices (max 10 symbols/request)
+  -> Yahoo Finance chart endpoint (3-month daily close)
+  -> normalized observed prices + explicit per-symbol errors
+  -> browser rebuilds event-session horizons
+  -> 5-minute refresh; verified snapshot fallback
+```
+
+The alias is applied in the sync script before either tracked dashboard copy is
+written, so it protects interface text, downloadable JSON, and LLM context.
+Real names remain only in the non-published local source ledger.

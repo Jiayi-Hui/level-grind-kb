@@ -19,10 +19,13 @@ type ClaimMapping = {
   ticker: string;
   security: string;
   benchmark: string;
+  eventSession: string;
   baseDate: string;
   baseClose: number | null;
+  status: string;
   returns: Record<"t0" | "t1" | "t3" | "t5", Horizon>;
   publicCheck: { status: string; priceSource: string } | null;
+  publicSymbol: string | null;
 };
 type LedgerClaim = {
   claimDateStart: string;
@@ -40,7 +43,7 @@ type LedgerClaim = {
 type SecuritySeries = {
   ticker: string;
   source: string | null;
-  prices: Array<{ date: string; close: number; source: string }>;
+  prices: Array<{ date: string; close: number; source: string; publicSymbol?: string }>;
 };
 type ClaimLedgerPayload = {
   schemaVersion: string;
@@ -68,6 +71,12 @@ type Draft = {
 };
 type ClaimSortField = "date" | "t0" | "t1" | "t3" | "t5" | "drawdown" | "upside";
 type SortDirection = "desc" | "asc";
+type LiveMarketSeries = {
+  symbol: string;
+  marketPrice: number | null;
+  marketTime: string | null;
+  prices: Array<{ date: string; close: number; source: string }>;
+};
 
 const horizons = ["t0", "t1", "t3", "t5"] as const;
 const horizonLabels = { t0: "T+0", t1: "T+1", t3: "T+3", t5: "T+5" };
@@ -126,6 +135,50 @@ function claimSortValue(claim: LedgerClaim, field: ClaimSortField) {
   return field === "drawdown" ? Math.min(...values) : Math.max(...values);
 }
 
+function yahooSymbolFor(series: SecuritySeries) {
+  const publicSymbol = series.prices.find((price) => price.publicSymbol)?.publicSymbol;
+  if (!publicSymbol) return null;
+  if (/^\d{6}$/.test(publicSymbol)) return publicSymbol.startsWith("6") ? `${publicSymbol}.SS` : `${publicSymbol}.SZ`;
+  return publicSymbol.toUpperCase();
+}
+
+function withYahooReturns(mapping: ClaimMapping, prices: SecuritySeries["prices"]) {
+  if (!prices.length) return mapping;
+  const ordered = [...prices].sort((left, right) => left.date.localeCompare(right.date));
+  const baseIndex = ordered.reduce((found, point, index) => point.date <= mapping.baseDate ? index : found, -1);
+  const eventIndex = ordered.findIndex((point) => point.date >= mapping.eventSession);
+  if (baseIndex < 0 || eventIndex < 0 || !ordered[baseIndex]?.close) return mapping;
+  const offsets = { t0: 0, t1: 1, t3: 3, t5: 5 } as const;
+  const baseClose = ordered[baseIndex].close;
+  const returns = Object.fromEntries(horizons.map((horizon) => {
+    const point = ordered[eventIndex + offsets[horizon]];
+    return [horizon, point ? {
+      date: point.date,
+      close: point.close,
+      return: point.close / baseClose - 1,
+      abnormal: null,
+      benchmarkClose: null,
+    } : {
+      date: null,
+      close: null,
+      return: null,
+      abnormal: null,
+      benchmarkClose: null,
+    }];
+  })) as ClaimMapping["returns"];
+  const latestHorizon = [...horizons].reverse().find((horizon) => returns[horizon].date);
+  return {
+    ...mapping,
+    baseClose,
+    status: latestHorizon ? `Yahoo Finance live through ${horizonLabels[latestHorizon]}` : mapping.status,
+    returns,
+    publicCheck: {
+      status: latestHorizon === "t5" ? "live complete" : `live partial: ${latestHorizon || "base only"}`,
+      priceSource: "Yahoo Finance live",
+    },
+  };
+}
+
 function toDraft(claim: LedgerClaim): Draft {
   return {
     claimDateStart: claim.claimDateStart,
@@ -152,6 +205,9 @@ export function EventResearch({
   const [ticker, setTicker] = useState("all");
   const [sortField, setSortField] = useState<ClaimSortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [livePrices, setLivePrices] = useState<Record<string, LiveMarketSeries>>({});
+  const [marketUpdatedAt, setMarketUpdatedAt] = useState("");
+  const [marketStatus, setMarketStatus] = useState("正在连接 Yahoo Finance…");
   const [selectedId, setSelectedId] = useState("");
   const [deletedIds, setDeletedIds] = useState<string[]>(() => loadLocalEdits().deletedIds);
   const [overrides, setOverrides] = useState<Record<string, Draft>>(() => loadLocalEdits().overrides);
@@ -172,6 +228,46 @@ export function EventResearch({
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Claim 数据暂时不可用"));
   }, []);
 
+  useEffect(() => {
+    if (!data?.securities.length) return;
+    let active = true;
+    const symbolToTicker = new Map<string, string>();
+    data.securities.forEach((series) => {
+      const symbol = yahooSymbolFor(series);
+      if (symbol) symbolToTicker.set(symbol, series.ticker);
+    });
+    const symbols = [...symbolToTicker.keys()];
+    const refresh = async () => {
+      try {
+        const batches = Array.from({ length: Math.ceil(symbols.length / 8) }, (_, index) => symbols.slice(index * 8, index * 8 + 8));
+        const payloads = await Promise.all(batches.map(async (batch) => {
+          const response = await fetch(`/api/market-prices?symbols=${encodeURIComponent(batch.join(","))}`, { cache: "no-store" });
+          const payload = await response.json() as { generatedAt?: string; series?: LiveMarketSeries[]; error?: string };
+          if (!response.ok) throw new Error(payload.error || "Yahoo Finance 暂时不可用");
+          return payload;
+        }));
+        if (!active) return;
+        const next: Record<string, LiveMarketSeries> = {};
+        payloads.flatMap((payload) => payload.series || []).forEach((series) => {
+          const ticker = symbolToTicker.get(series.symbol);
+          if (ticker) next[ticker] = series;
+        });
+        setLivePrices(next);
+        const generatedAt = payloads.map((payload) => payload.generatedAt).filter(Boolean).sort().at(-1) || new Date().toISOString();
+        setMarketUpdatedAt(generatedAt);
+        setMarketStatus(`Yahoo Finance 已更新 ${Object.keys(next).length}/${symbols.length}`);
+      } catch {
+        if (active) setMarketStatus("Yahoo Finance 暂不可用，使用已核验快照");
+      }
+    };
+    void refresh();
+    const interval = window.setInterval(() => void refresh(), 5 * 60 * 1000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [data]);
+
   const persist = (nextDeleted: string[], nextOverrides: Record<string, Draft>, nextAdded: LedgerClaim[]) => {
     localStorage.setItem("level-grind.claim-edits.v1", JSON.stringify({
       deletedIds: nextDeleted,
@@ -183,6 +279,7 @@ export function EventResearch({
   const claims = useMemo(() => [
     ...(data?.claims || []).filter((claim) => !deletedIds.includes(claim.claimId)).map((claim) => ({
       ...claim,
+      mappings: claim.mappings.map((mapping) => livePrices[mapping.ticker] ? withYahooReturns(mapping, livePrices[mapping.ticker].prices) : mapping),
       ...(overrides[claim.claimId] || {}),
     })),
     ...added.filter((claim) => !deletedIds.includes(claim.claimId)),
@@ -199,7 +296,13 @@ export function EventResearch({
       verificationStatus: claim.verification_status,
       mappings: [],
     })),
-  ], [added, data, deletedIds, liveClaims, overrides]);
+  ], [added, data, deletedIds, liveClaims, livePrices, overrides]);
+
+  const securities = useMemo(() => (data?.securities || []).map((series) => livePrices[series.ticker] ? {
+    ...series,
+    source: "Yahoo Finance live",
+    prices: livePrices[series.ticker].prices,
+  } : series), [data, livePrices]);
 
   const filters = useMemo(() => ({
     speakers: [...new Set(claims.map((claim) => claim.speaker).filter(Boolean) as string[])].sort(),
@@ -293,7 +396,7 @@ export function EventResearch({
         <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
           <option value="desc">从高到低 / 最新</option><option value="asc">从低到高 / 最早</option>
         </select>
-        <span>{filtered.length} 条 · 数据截至 {data.dataCutoff}</span>
+        <span>{filtered.length} 条 · {marketStatus}{marketUpdatedAt ? ` · ${new Date(marketUpdatedAt).toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit" })}` : ""}</span>
       </div>
 
       <div className="claim-table-wrap">
@@ -320,7 +423,7 @@ export function EventResearch({
         </table>
       </div>
 
-      {selected && <ClaimPriceDetail key={selected.claimId} claim={selected} securities={data.securities} />}
+      {selected && <ClaimPriceDetail key={selected.claimId} claim={selected} securities={securities} />}
 
       {editing && (
         <div className="claim-modal-backdrop" onMouseDown={() => setEditing(null)}>

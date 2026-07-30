@@ -18,7 +18,8 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.equal(claims.claims.length, 45);
   assert.ok(data.claims.some((claim) => claim.speaker === "Allen" && claim.claimTimeHkt));
   assert.ok(["CLM-SEED-EVT-0001", "CLM-SEED-EVT-0002", "CLM-SEED-EVT-0003", "CLM-SEED-EVT-0004"]
-    .every((id) => data.claims.find((claim) => claim.claimId === id)?.speaker === "Xu Lei"));
+    .every((id) => data.claims.find((claim) => claim.claimId === id)?.speaker === "BossX"));
+  assert.ok(data.claims.every((claim) => claim.speaker !== "Xu Lei"));
   assert.ok(data.claims.some((claim) => claim.verificationEvidence.length > 0));
   assert.ok(data.claims.every((claim) => claim.contentStatus && claim.priceStatus));
   assert.ok(data.claims.every((claim) => claim.mappings.every((mapping) => Object.values(mapping.returns).every((horizon) => (
@@ -43,6 +44,22 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.match(sync, /event_study_bbg_baseline/);
   assert.match(sync, /comparison_rows/);
   assert.match(sync, /hasObservedPrice/);
+  assert.match(sync, /publicSpeakerAlias/);
+});
+
+test("refreshes event price paths through a bounded Yahoo Finance proxy", async () => {
+  const [component, marketRoute] = await Promise.all([
+    readFile(new URL("../app/event-research.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../public/cloud-functions/api/market-prices.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(component, /\/api\/market-prices\?symbols=/);
+  assert.match(component, /withYahooReturns/);
+  assert.match(component, /5 \* 60 \* 1000/);
+  assert.match(component, /Yahoo Finance 暂不可用，使用已核验快照/);
+  assert.match(marketRoute, /query1\.finance\.yahoo\.com\/v8\/finance\/chart/);
+  assert.match(marketRoute, /symbols\.length > 10/);
+  assert.match(marketRoute, /s-maxage=300/);
+  assert.doesNotMatch(marketRoute, /API_KEY|SECRET/);
 });
 
 test("ships a secret-protected idempotent WeChat claim inbox", async () => {

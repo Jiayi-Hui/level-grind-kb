@@ -223,3 +223,15 @@
 - [x] Missing future BBG horizons are published as null rather than `-100%`.
 - [x] Settings includes an owner-only Clerk member and pending-invitation list.
 - [ ] Signed-in production member-list loading is verified after deployment.
+
+## V5.7 Alias and Yahoo refresh
+
+- [x] Published Claim JSON contains BossX and contains no Xu Lei speaker.
+- [x] New Hope Dairy and all other affected rows display BossX.
+- [x] Yahoo Finance proxy validates symbols and limits each request to ten.
+- [x] GOOGL and 0700.HK return current real daily prices through the proxy.
+- [x] Client refreshes mapped symbols every five minutes and recalculates
+  horizons from observed trading dates.
+- [x] Yahoo failure visibly falls back to the verified snapshot.
+- [x] Missing horizons remain null; sentinel values are never rendered.
+- [x] Production deployment and canonical-domain probe are complete.

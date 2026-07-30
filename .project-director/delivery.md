@@ -275,3 +275,16 @@ and explicit Report/Web/Hybrid evidence modes.
 - Tencent deployment `dpqyrxptxqbo` is live on the canonical domain. The
   corrected Claim JSON, new JS asset, and authenticated invitation function
   were verified after release.
+
+## V5.7 Privacy alias and Yahoo market refresh
+
+- Applies the `BossX` privacy alias while generating publishable Claim JSON.
+  Local source records retain provenance, while public data, filters, and UI
+  no longer expose Xu Lei's real name.
+- Adds a bounded Tencent Cloud Function for Yahoo Finance daily market data.
+  The Event DB refreshes mapped securities every five minutes and recalculates
+  event horizons from observed trading sessions. Missing observations remain
+  blank; a Yahoo outage falls back visibly to the verified snapshot.
+- Tencent deployment `dpy1coemr2uo` is live on `level-grind.com`. The canonical
+  domain serves JS `index-CdsZown2.js`; production probes verified 45 claims,
+  16 `BossX` references, no `Xu Lei`, and live GOOGL/0700.HK price series.

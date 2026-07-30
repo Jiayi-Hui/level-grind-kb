@@ -1,0 +1,68 @@
+const json = (value, status = 200, cache = "no-store") => new Response(JSON.stringify(value), {
+  status,
+  headers: {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": cache,
+  },
+});
+
+const symbolPattern = /^[A-Z0-9.^=-]{1,24}$/i;
+
+async function fetchYahooSeries(symbol) {
+  const endpoint = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d&includePrePost=false&events=div%2Csplits`;
+  const response = await fetch(endpoint, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "Mozilla/5.0 Level-Grind/1.0",
+    },
+  });
+  if (!response.ok) throw new Error(`Yahoo ${response.status}`);
+  const body = await response.json();
+  const result = body.chart?.result?.[0];
+  if (!result || body.chart?.error) throw new Error(body.chart?.error?.description || "Yahoo 无可用数据");
+  const timestamps = result.timestamp || [];
+  const closes = result.indicators?.quote?.[0]?.close || [];
+  const prices = timestamps.flatMap((timestamp, index) => {
+    const close = Number(closes[index]);
+    if (!Number.isFinite(close) || close <= 0) return [];
+    return [{
+      date: new Date(timestamp * 1000).toISOString().slice(0, 10),
+      close,
+      source: "Yahoo Finance",
+    }];
+  });
+  return {
+    symbol,
+    currency: result.meta?.currency || null,
+    exchange: result.meta?.exchangeName || null,
+    marketPrice: Number.isFinite(Number(result.meta?.regularMarketPrice)) ? Number(result.meta.regularMarketPrice) : null,
+    marketTime: result.meta?.regularMarketTime ? new Date(result.meta.regularMarketTime * 1000).toISOString() : null,
+    prices,
+  };
+}
+
+export async function onRequestGet({ request }) {
+  const url = new URL(request.url);
+  const symbols = [...new Set((url.searchParams.get("symbols") || "")
+    .split(",")
+    .map((symbol) => symbol.trim().toUpperCase())
+    .filter(Boolean))];
+  if (!symbols.length) return json({ error: "至少需要一个 Yahoo symbol" }, 400);
+  if (symbols.length > 10) return json({ error: "单次最多查询 10 个 symbol" }, 400);
+  if (symbols.some((symbol) => !symbolPattern.test(symbol))) return json({ error: "symbol 格式不正确" }, 400);
+
+  const settled = await Promise.allSettled(symbols.map(fetchYahooSeries));
+  const series = [];
+  const errors = [];
+  settled.forEach((result, index) => {
+    if (result.status === "fulfilled") series.push(result.value);
+    else errors.push({ symbol: symbols[index], error: result.reason instanceof Error ? result.reason.message : "Yahoo 查询失败" });
+  });
+  if (!series.length) return json({ error: "Yahoo Finance 暂时没有返回可用价格", errors }, 502);
+  return json({
+    provider: "Yahoo Finance",
+    generatedAt: new Date().toISOString(),
+    series,
+    errors,
+  }, 200, "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
+}

@@ -180,3 +180,12 @@
 - [x] Add the Clerk-backed Settings member list.
 - [x] Run lint, targeted tests, and the Tencent production build.
 - [x] Complete desktop/mobile browser QA and publish the Tencent deployment.
+
+## V5.7 — Privacy alias and Yahoo refresh
+
+- [x] Apply the BossX alias before public dashboard JSON is generated.
+- [x] Add the bounded Tencent Yahoo Finance proxy.
+- [x] Refresh mapped securities and recalculate event horizons in the browser.
+- [x] Preserve an explicit verified-snapshot fallback.
+- [x] Add regression tests and validate live Yahoo responses.
+- [x] Complete browser QA, deploy Tencent, and verify the canonical domain.

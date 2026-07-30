@@ -410,3 +410,17 @@ client-side authentication protects static JSON assets.
   must never render as a real `-100%` return.
 - Settings lists active Clerk users and pending invitations for the workspace
   owner, in addition to the existing invitation form.
+
+## V5.7 — Privacy alias and live public-market refresh
+
+- Published Claim data, interface labels, filters, charts, and AskAI context use
+  `BossX` instead of the colleague's real name. The local source ledger may
+  retain the internal name for provenance, but it must not enter public JSON.
+- Event prices refresh from Yahoo Finance through a Tencent Cloud Function.
+  The browser never calls Yahoo directly and no market-data secret is required.
+- The proxy accepts at most ten validated symbols per request, caches public
+  results for five minutes, and returns explicit partial errors.
+- The client refreshes all mapped public symbols on load and every five
+  minutes, recalculating T+0/T+1/T+3/T+5 from observed trading dates.
+- If Yahoo is unavailable, the UI states that it is using the verified
+  snapshot; missing horizons remain null and never become sentinel returns.

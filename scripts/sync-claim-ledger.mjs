@@ -17,6 +17,7 @@ const sourceClaimsRaw = await fs.readFile(sourceClaimsPath, "utf8");
 const sourceClaims = JSON.parse(sourceClaimsRaw);
 const findingsRaw = await fs.readFile(findingsPath, "utf8");
 const findings = JSON.parse(findingsRaw);
+const publicSpeakerAlias = (speaker) => speaker === "Xu Lei" ? "BossX" : speaker;
 
 const sourcePaths = {
   bbg: resolve(siblingRoot, "bbg_baseline/event_study_bbg_baseline.json"),
@@ -143,6 +144,7 @@ const claims = sourceClaims.claims.map((claim) => {
   const verificationEvidence = evidenceByEvent.get(claim.eventId) || [];
   return {
     ...claim,
+    speaker: publicSpeakerAlias(claim.speaker),
     contentStatus: claim.verificationStatus,
     priceStatus: mappings.length ? "BBG event window available" : "No mapped security",
     verificationEvidence,
