@@ -284,3 +284,20 @@
 - [x] All 75 published campuses have a source-linked location.
 - [x] Tooltips and project details state the location precision and source.
 - [ ] Release remains subject to explicit push/deploy approval.
+
+## V5.12 GitHub production and shared-data foundation
+
+- [x] A push to `production`, and no other branch, is configured to deploy the
+  portable Tencent build to the existing Makers project.
+- [x] The production build completes without `aidc-capex-tracker` or live
+  geocoding.
+- [x] The research refresh command still supports an explicit
+  `AIDC_RESEARCH_ROOT`.
+- [x] A work-computer handover names all AIDC inputs and generated JSON.
+- [x] The shared-data schema covers user-private AskAI state, explicit
+  private-to-team publication, team datasets, ACL metadata, objects, versions,
+  soft deletion, audit, background jobs, and private/team vector namespaces.
+- [ ] Automatic deployment is active only after the encrypted
+  `EDGEONE_API_TOKEN` secret is present.
+- [ ] Production database provisioning and migration await company-side cloud
+  approval.

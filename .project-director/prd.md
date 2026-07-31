@@ -322,6 +322,40 @@ time.
 - AC-26: Desktop and phone layouts keep filters, charts, table, project detail,
   and source references readable.
 
+## V5.12 — GitHub production line and shared-data foundation
+
+### Objective
+
+Make GitHub the cross-computer handoff and release authority, with one reviewed
+branch automatically deploying the portable Tencent build, while defining the
+private/team data boundary before production persistence is provisioned.
+
+### Requirements
+
+- FR-61: `production` is the only branch that automatically deploys to the
+  existing EdgeOne project and `level-grind.com`.
+- FR-62: `main` is the stable integration line and `feature/*` isolates bounded
+  work.
+- FR-63: Production builds use committed, checksummed AI Capex JSON and
+  geocodes without a sibling repository or network geocoder.
+- FR-64: Research refresh remains available through an explicit build command
+  and `AIDC_RESEARCH_ROOT`.
+- FR-65: AskAI state and personal knowledge are user-private by default; a
+  separate explicit action publishes selected analysis to team knowledge.
+- FR-66: Claims, Events, price paths, AIDC records, reports, models, members,
+  roles, and audit records are team data with permission-aware retrieval.
+- FR-67: Shared mutations use optimistic versions, soft deletion, and immutable
+  audit history. Files live in object storage; metadata and ACLs live in the
+  relational database.
+- FR-68: Price, geocode, parsing, and vector refresh operations are background
+  jobs independent of a browser session.
+
+### Non-goals
+
+- Do not provision a production database from the personal Mac.
+- Do not commit or infer production credentials.
+- Do not run an unapproved migration against a company cloud account.
+
 ## V5.3 — Real Claim Ledger and Tencent Clerk Gate
 
 ### Objective

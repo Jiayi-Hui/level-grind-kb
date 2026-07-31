@@ -282,6 +282,32 @@ The alias is applied in the sync script before either tracked dashboard copy is
 written, so it protects interface text, downloadable JSON, and LLM context.
 Real names remain only in the non-published local source ledger.
 
+## V5.12 GitHub and shared-data boundary
+
+```text
+feature/* -> main -> production
+                         |
+                         v
+                  GitHub Actions
+                         |
+                         v
+              Tencent EdgeOne Makers
+                         |
+                         v
+                  level-grind.com
+```
+
+Production CI runs `aidc:publish`, which validates and copies tracked JSON plus
+geocodes. Research refresh is a separate operator action and may read
+`AIDC_RESEARCH_ROOT`; runtime and CI never require the sibling repository.
+
+The durable shared-data target is a company-approved PostgreSQL-compatible
+service plus EdgeOne Blob for file bytes. Neither laptop is a server. Clerk
+subject IDs map to application users; private rows always carry an owner ID;
+team rows are filtered through membership and ACL checks. Optimistic versions,
+soft deletion, append-only audit records, private/team vector namespaces, and
+background jobs are part of the base contract in `infra/shared-data/`.
+
 ## V5.11 AI Capex location-evidence hierarchy
 
 ```text

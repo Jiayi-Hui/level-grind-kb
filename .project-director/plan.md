@@ -213,6 +213,23 @@
 - [ ] Preserve editor identity, timestamps, change history, privacy aliases, and
   conflict-safe updates.
 
+## V5.12 — Production branches and shared-data foundation
+
+- [x] Define `production`, `main`, and `feature/*` responsibilities.
+- [x] Add a production-only GitHub Actions deployment to the existing EdgeOne
+  project.
+- [x] Split portable AI Capex publication from research-source refresh and
+  network geocoding.
+- [x] Document exact AIDC CSV/JSON paths and work-computer takeover steps.
+- [x] Define private/team ownership, explicit publication, ACL-aware retrieval,
+  object storage, versions, audit, soft delete, concurrent edits, vector
+  namespaces, background jobs, and raw-evidence separation.
+- [x] Add the provider-neutral PostgreSQL base migration.
+- [ ] Add the EdgeOne API token as a GitHub encrypted secret.
+- [ ] Provision and migrate the approved production database from the work
+  computer.
+- [ ] Connect UI/API state to the production persistence implementation.
+
 ## V5.10 — AI Capex map coverage and AskAI readability
 
 - [x] Identify every unresolved AI Capex map record.

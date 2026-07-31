@@ -1,0 +1,53 @@
+name: Deploy production to EdgeOne
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+concurrency:
+  group: level-grind-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+    environment:
+      name: production
+      url: https://level-grind.com
+    steps:
+      - name: Check out production source
+        uses: actions/checkout@v4
+
+      - name: Use supported Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build portable EdgeOne release
+        run: npm run edgeone-demo:build
+
+      - name: Run source-level tests
+        run: node --test tests/*.test.mjs
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Deploy level-grind.com production
+        if: env.EDGEONE_API_TOKEN != ''
+        run: npx edgeone makers deploy deploy/edgeone-demo/dist -n level-grind-hk-demo -t "$EDGEONE_API_TOKEN" -e production
+
+      - name: Report pending deployment credential
+        if: env.EDGEONE_API_TOKEN == ''
+        run: echo "::warning::Build is valid, but deployment is paused until EDGEONE_API_TOKEN is added to GitHub Actions secrets."

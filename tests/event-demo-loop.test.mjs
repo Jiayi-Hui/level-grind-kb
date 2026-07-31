@@ -25,7 +25,7 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.ok(data.claims.every((claim) => claim.mappings.every((mapping) => Object.values(mapping.returns).every((horizon) => (
     horizon.date && horizon.close !== null ? horizon.return !== null : horizon.return === null
   )))));
-  assert.match(component, /搜索 Claim、公司、发言人、股票代码/);
+  assert.match(component, /语义搜索 Claim、公司、行业、主题或股票代码/);
   assert.match(component, /T\+0/);
   assert.match(component, /T\+1/);
   assert.match(component, /T\+3/);

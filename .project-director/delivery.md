@@ -329,3 +329,18 @@ and explicit Report/Web/Hybrid evidence modes.
 - Updates map tooltips and details to distinguish source coordinate, satellite,
   parcel, address, place-level, and unresolved states.
 - This candidate is local only until explicit push/deploy approval.
+
+## V5.12 GitHub production and shared-data foundation
+
+- Adds a portable AIDC publisher that verifies the tracked manifest and copies
+  75-campus dashboard and location data without reading a sibling repository.
+- Adds a production-only GitHub Actions release path for the existing Tencent
+  Makers project and `level-grind.com`.
+- Documents the canonical branch flow, exact AIDC source/export paths, and the
+  first work-computer session.
+- Adds a provider-neutral PostgreSQL shared-data contract covering private
+  AskAI state, explicit team publication, team research objects, file metadata,
+  optimistic versions, soft deletion, audit records, vector namespaces, and
+  background jobs.
+- Cloud provisioning remains deliberately company-side. The personal Mac
+  prepares source, contracts, and CI but is not the production database.
