@@ -22,6 +22,7 @@ CLERK_AFTER_SIGN_IN_URL=/
 CLERK_AFTER_SIGN_UP_URL=/
 LEVEL_GRIND_INVITED_EMAILS=you@example.com,analyst@example.com
 LEVEL_GRIND_OWNER_EMAIL=you@example.com
+LEVEL_GRIND_MEMBER_MANAGER_EMAILS=co-manager@example.com
 ```
 
 Do not commit `CLERK_SECRET_KEY`.
@@ -30,6 +31,12 @@ Do not commit `CLERK_SECRET_KEY`.
 After that, owners and admins manage persistent members in the Team context
 screen. `LEVEL_GRIND_INVITED_EMAILS` remains an optional, fail-closed migration
 path: listed users are inserted as members after a verified Clerk sign-in.
+
+`LEVEL_GRIND_MEMBER_MANAGER_EMAILS` is a comma-separated set of additional
+member managers. These accounts receive the same member-list, invitation, edit,
+and removal capabilities as the owner while retaining their research persona
+role in the member list. Configure this as a server-side environment variable;
+do not hardcode colleague emails in the repository.
 
 ## 2. Cloudflare D1 and R2
 
@@ -107,7 +114,29 @@ TAVILY_API_KEY=...
 Do not commit the Tavily key. `WEB_SEARCH_API_KEY` is still supported as a
 generic fallback, but `TAVILY_API_KEY` is the preferred name for this deployment.
 
-## 5. Local verification
+## 5. Tencent shared database pilot
+
+The Tencent EdgeOne build uses a Singapore Supabase PostgreSQL project for
+sanitized shared Claim edits and aggregate AI-usage events. Apply the reviewed
+migrations in order:
+
+```text
+infra/shared-data/postgres/001_shared_research.sql
+infra/shared-data/postgres/002_weekend_shared_state.sql
+```
+
+Configure these as server-side EdgeOne environment variables:
+
+```text
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+Never expose the service-role key to browser code or commit it. If these values
+are absent, the Tencent Claim editor intentionally becomes read-only rather
+than saving edits only in one browser.
+
+## 6. Local verification
 
 ```powershell
 npm install
@@ -117,7 +146,7 @@ npm run build
 npm run lint
 ```
 
-## 6. Boundary notes
+## 7. Boundary notes
 
 Level Grind stores context, provenance, permissions, task state, timelines, and
 approved research results. Raw systems such as Obsidian, Bloomberg, Wind,

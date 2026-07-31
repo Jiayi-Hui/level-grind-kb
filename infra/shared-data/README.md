@@ -11,11 +11,16 @@ The production database belongs to the cloud deployment, not to either laptop.
 - The production database and object store must continue running when both
   computers are offline.
 
-The first durable relational implementation should use a company-approved
-PostgreSQL-compatible service reachable by the Tencent EdgeOne server
-functions. `postgres/001_shared_research.sql` is the provider-neutral starting
-schema. Do not execute it against a production account until the company-side
-service, region, backup policy, and network path are approved.
+The first durable relational implementation uses a Singapore Supabase
+PostgreSQL project reachable only through Tencent EdgeOne server functions.
+The weekend pilot is limited to public or sanitized demo data. Company-sensitive
+data still requires company-side approval for region, backups, network policy,
+and credentials before import.
+
+Apply `postgres/001_shared_research.sql` and then
+`postgres/002_weekend_shared_state.sql`. The second migration adds shared Claim
+overlays, optimistic concurrency, immutable audit entries, and privacy-minimal
+AI usage events.
 
 EdgeOne KV and Blob remain useful, but they are not substitutes for the whole
 relational layer:
@@ -64,7 +69,7 @@ relational layer:
 
 ## Provisioning boundary
 
-Provision from the work computer:
+Provision from the work computer for company-sensitive production:
 
 - cloud project/account and billing;
 - Hong Kong/Singapore production region;
@@ -81,6 +86,12 @@ Prepare from either computer:
 - GitHub Actions;
 - sanitized seed exports and import scripts.
 
+The personal computer may provision and administer the Singapore pilot because
+the user explicitly limited it to public or sanitized demo data. Supabase
+service-role credentials must be stored only in Tencent EdgeOne server
+environment variables. If the database is unavailable, shared editors must
+fail closed as read-only; they must never silently fall back to browser-local
+team storage.
+
 Never commit database passwords, EdgeOne tokens, Azure keys, Clerk secrets, or
 raw confidential chats.
-

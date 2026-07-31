@@ -57,7 +57,14 @@ async function clerkRequest(path, secretKey, init = {}) {
   });
 }
 
-async function requireOwner(request, env) {
+function memberManagerEmails(env) {
+  return new Set([
+    env.LEVEL_GRIND_OWNER_EMAIL,
+    ...(env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(","),
+  ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
+}
+
+async function requireMemberManager(request, env) {
   if (!env.CLERK_SECRET_KEY) throw new Error("邀请服务尚未配置 Clerk Secret Key");
   const token = await verifyClerkToken(request, env.CLERK_SECRET_KEY);
   const userResponse = await clerkRequest(`/users/${token.sub}`, env.CLERK_SECRET_KEY);
@@ -65,14 +72,14 @@ async function requireOwner(request, env) {
   const user = await userResponse.json();
   const emails = new Map((user.email_addresses || []).map((item) => [item.id, item.email_address]));
   const currentEmail = emails.get(user.primary_email_address_id);
-  const ownerEmail = env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com";
-  if (currentEmail?.toLowerCase() !== ownerEmail.toLowerCase()) throw new Error("只有 workspace owner 可以发送邀请");
-  return user;
+  const normalizedEmail = String(currentEmail || "").trim().toLowerCase();
+  if (!memberManagerEmails(env).has(normalizedEmail)) throw new Error("成员管理权限不足");
+  return { user, currentEmail: normalizedEmail };
 }
 
 export async function onRequestGet({ request, env }) {
   try {
-    await requireOwner(request, env);
+    await requireMemberManager(request, env);
     const [usersResponse, invitationsResponse] = await Promise.all([
       clerkRequest("/users?limit=100&order_by=-created_at", env.CLERK_SECRET_KEY),
       clerkRequest("/invitations?limit=100", env.CLERK_SECRET_KEY),
@@ -84,7 +91,8 @@ export async function onRequestGet({ request, env }) {
     }
     const users = Array.isArray(usersBody) ? usersBody : usersBody.data || [];
     const invitations = Array.isArray(invitationsBody) ? invitationsBody : invitationsBody.data || [];
-    const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
+    const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "").toLowerCase();
+    const managers = memberManagerEmails(env);
     const activeMembers = users.map((user) => {
       const emails = new Map((user.email_addresses || []).map((item) => [item.id, item.email_address]));
       const email = emails.get(user.primary_email_address_id) || [...emails.values()][0] || "";
@@ -94,6 +102,7 @@ export async function onRequestGet({ request, env }) {
         name: [user.first_name, user.last_name].filter(Boolean).join(" "),
         role: email.toLowerCase() === ownerEmail ? "Owner" : user.public_metadata?.role || "Member",
         status: user.banned ? "disabled" : "active",
+        protectedManager: managers.has(email.toLowerCase()),
       };
     }).filter((member) => member.email && member.status !== "disabled");
     const activeEmails = new Set(activeMembers.map((member) => member.email.toLowerCase()));
@@ -105,6 +114,7 @@ export async function onRequestGet({ request, env }) {
         name: "",
         role: invitation.public_metadata?.role || "Invited",
         status: invitation.status === "revoked" ? "revoked" : "pending",
+        protectedManager: managers.has(String(invitation.email_address || "").toLowerCase()),
       }));
     return json({ members: [...activeMembers, ...pendingMembers] });
   } catch (error) {
@@ -114,7 +124,7 @@ export async function onRequestGet({ request, env }) {
 
 export async function onRequestPost({ request, env }) {
   try {
-    await requireOwner(request, env);
+    await requireMemberManager(request, env);
     const { email, role } = await request.json();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "邮箱格式不正确" }, 400);
     if (!["Analyst", "PM", "GEM PM"].includes(role)) return json({ error: "角色不正确" }, 400);
@@ -153,15 +163,15 @@ function primaryEmail(user) {
 
 export async function onRequestPatch({ request, env }) {
   try {
-    await requireOwner(request, env);
+    await requireMemberManager(request, env);
     const { id, email, name, role, status } = await request.json();
     if (!id || !validRole(role)) return json({ error: "成员和角色不能为空" }, 400);
-    const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
+    const managers = memberManagerEmails(env);
     const user = await selectedUser(id, env);
 
     if (user) {
-      if (primaryEmail(user).toLowerCase() === ownerEmail) {
-        return json({ error: "Owner 账户不能在这里修改" }, 409);
+      if (managers.has(primaryEmail(user).toLowerCase())) {
+        return json({ error: "成员管理账户不能在这里修改" }, 409);
       }
       const displayName = cleanMemberName(name);
       const [profileResponse, metadataResponse] = await Promise.all([
@@ -214,14 +224,13 @@ function cleanMemberName(value) {
 
 export async function onRequestDelete({ request, env }) {
   try {
-    await requireOwner(request, env);
+    await requireMemberManager(request, env);
     const { id } = await request.json();
     if (!id) return json({ error: "成员不能为空" }, 400);
     const user = await selectedUser(id, env);
     if (user) {
-      const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
-      if (primaryEmail(user).toLowerCase() === ownerEmail) {
-        return json({ error: "Owner 账户不能删除" }, 409);
+      if (memberManagerEmails(env).has(primaryEmail(user).toLowerCase())) {
+        return json({ error: "成员管理账户不能删除" }, 409);
       }
       const response = await clerkRequest(`/users/${encodeURIComponent(id)}/ban`, env.CLERK_SECRET_KEY, { method: "POST" });
       return response.ok

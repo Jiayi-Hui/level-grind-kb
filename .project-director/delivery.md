@@ -344,3 +344,20 @@ and explicit Report/Web/Hybrid evidence modes.
   background jobs.
 - Cloud provisioning remains deliberately company-side. The personal Mac
   prepares source, contracts, and CI but is not the production database.
+
+## V5.13 Shared-persistence release
+
+- Provisions the public/sanitized shared-data pilot in Supabase Singapore and
+  applies the base schema plus weekend Claim/usage migration.
+- Adds Clerk-authenticated Tencent server APIs for shared Claim overlays with
+  optimistic versions, soft deletion, and immutable audit records.
+- Migrates prior browser-local Claim edits only when no newer shared row exists;
+  missing shared configuration becomes visibly read-only.
+- Records privacy-minimal DeepSeek usage events without storing complete user
+  prompts.
+- Gives the configured co-manager the same member-administration checks as the
+  owner while protecting both manager accounts from accidental removal.
+- Stores Supabase credentials only as masked Tencent EdgeOne environment
+  variables. No database secret or colleague address is committed to GitHub.
+- AskAI chat persistence, shared report/model files, automatic market refresh,
+  and backup automation remain explicit follow-up increments.

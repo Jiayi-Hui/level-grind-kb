@@ -324,3 +324,18 @@ the production AI Capex view remains integrated in the authenticated
 | Lint | Pass with existing warning | No errors; one pre-existing unused import warning remains in `scripts/export-production-backup.mjs` |
 | Browser gate | Partial | Local Tencent shell loads cleanly to the Clerk sign-in gate; authenticated post-login visual inspection is deferred because this candidate is not deployed |
 | Release | Pending approval | No push or Tencent deployment performed |
+
+## V5.13 Shared-persistence release candidate
+
+| Check | Result | Notes |
+|---|---|---|
+| Database provisioning | Pass | Supabase free project is healthy in Singapore (`ap-southeast-1`); both reviewed migrations completed successfully |
+| Secret boundary | Pass | Supabase URL and service-role key are masked Tencent EdgeOne server variables and absent from the repository |
+| Shared Claim API | Pass | Clerk-authenticated GET/POST/DELETE, payload bounds, optimistic versions, `409` conflicts, audit rows, and read-only fail-closed behavior are implemented |
+| Local takeover | Pass | Existing browser-local Claim overlays migrate once only when the shared row is absent; a timestamped backup is retained |
+| Usage telemetry | Pass | DeepSeek attempts store user, model, thinking flag, tokens, web credits, latency, status, and server timestamp without full prompts |
+| Member-manager parity | Pass | Owner and configured co-manager share list/invite/edit/remove authorization; protected managers cannot be removed through the UI |
+| Database health | Pass | Service-role REST checks for Claim overlays and AI usage events both returned HTTP 200 |
+| Automated validation | Pass | ESLint, 26/26 tests, portable Claim/AIDC publication, Tencent Vite build, and `git diff --check` pass |
+| Two-user production check | Pending after deployment | Owner/Tiff cross-refresh verification requires the newly deployed EdgeOne functions and both physical Clerk sessions |
+| Residual scope | Explicit | AskAI chat persistence, report/model object storage, automatic price jobs, and restore automation remain later increments |

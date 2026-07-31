@@ -178,6 +178,8 @@
 - [x] Add event and AI Capex sorting with missing values last.
 - [x] Move module research entry to the page header and unified AskAI view.
 - [x] Add the Clerk-backed Settings member list.
+- [x] Give the owner and configured co-manager the same member-management
+  authorization without exposing a named-person-only permission statement.
 - [x] Run lint, targeted tests, and the Tencent production build.
 - [x] Complete desktop/mobile browser QA and publish the Tencent deployment.
 
@@ -229,6 +231,39 @@
 - [ ] Provision and migrate the approved production database from the work
   computer.
 - [ ] Connect UI/API state to the production persistence implementation.
+
+## V5.13 — Weekend shared-persistence cutover
+
+- [x] Reconfirm the private/team data boundary and takeover gate.
+- [x] Reject browser-local state and tracked JSON as authoritative shared
+  storage.
+- [x] Confirm weekend shared persistence will contain only public or sanitized
+  demo data.
+- [x] Confirm the cloud account/provider, region, and billing route.
+- [x] Provision the HTTPS-reachable relational service and server-only secrets.
+- [x] Apply the reviewed migrations for the public/sanitized pilot.
+- [x] Add Clerk-authenticated shared APIs with version, soft-delete,
+  and audit enforcement.
+- [x] Replace device-local Claim mutations with shared reads/writes and migrate
+  existing local overlays without overwriting newer shared rows.
+- [ ] Persist AskAI projects/chats privately by Clerk user.
+- [x] Persist every Tencent DeepSeek request timestamp and usage event by Clerk
+  user so adoption can be measured without storing full prompts by default.
+- [ ] Add export/restore automation and a migration handoff.
+- [ ] Run two-user, two-device, redeploy-survival, and conflict tests.
+- [ ] Merge to `main` only after the takeover acceptance gate passes.
+
+## V5.15 — Platform release train
+
+- [x] Define feature branches as bounded implementation batches rather than
+  individual production releases.
+- [x] Require integration testing on `main` before production promotion.
+- [x] Keep `production` quiet except for an approved release candidate.
+- [x] Package shared persistence, member-manager parity, and usage auditing into
+  one tested release candidate instead of deploying them separately.
+- [x] Record full QA evidence and obtain release approval before promotion.
+- [ ] Run authenticated and canonical-domain smoke tests after the single
+  production deployment.
 
 ## V5.10 — AI Capex map coverage and AskAI readability
 

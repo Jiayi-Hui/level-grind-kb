@@ -1,6 +1,10 @@
 import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
-import { requireAppUser } from "../../../lib/access";
+import {
+  isMemberManager,
+  memberManagerEmails,
+  requireAppUser,
+} from "../../../lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +40,14 @@ export async function GET(request: NextRequest) {
        CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
        display_name, email`
   ).all();
-  return NextResponse.json({ user, members: members.results });
+  const managers = memberManagerEmails();
+  return NextResponse.json({
+    user,
+    members: members.results.map((member) => ({
+      ...member,
+      protected_manager: managers.has(String(member.email).toLowerCase()),
+    })),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -61,11 +72,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
   }
 
-  const existing = await env.DB.prepare(
-    "SELECT role FROM team_members WHERE email = ?1"
-  ).bind(email).first<{ role: string }>();
-  if (existing?.role === "owner") {
-    return NextResponse.json({ error: "The owner account cannot be changed here." }, { status: 409 });
+  if (isMemberManager(email)) {
+    return NextResponse.json({ error: "This member-management account cannot be changed here." }, { status: 409 });
   }
 
   const now = new Date().toISOString();
@@ -101,8 +109,8 @@ export async function DELETE(request: NextRequest) {
   if (!existing) {
     return NextResponse.json({ error: "Member not found." }, { status: 404 });
   }
-  if (existing.role === "owner") {
-    return NextResponse.json({ error: "The owner account cannot be removed." }, { status: 409 });
+  if (isMemberManager(email)) {
+    return NextResponse.json({ error: "This member-management account cannot be removed." }, { status: 409 });
   }
 
   await env.DB.prepare(

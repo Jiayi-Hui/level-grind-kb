@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -72,6 +73,13 @@ type Draft = {
   entity: string;
   title: string;
   originalClaim: string;
+};
+type SharedClaimOverlay = {
+  sourceClaimId: string;
+  operation: "add" | "update" | "delete";
+  payload: Draft;
+  version: number;
+  updatedAt: string;
 };
 type ClaimSortField = "date" | "t0" | "t1" | "t3" | "t5" | "drawdown" | "upside";
 type SortDirection = "desc" | "asc";
@@ -195,10 +203,13 @@ function toDraft(claim: LedgerClaim): Draft {
 
 export function EventResearch({
   liveClaims,
+  persistence = "local",
 }: {
   liveClaims: LiveClaim[];
   onAsk: (title: string, detail: string) => void;
+  persistence?: "local" | "shared";
 }) {
+  const { getToken } = useAuth();
   const [data, setData] = useState<ClaimLedgerPayload | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -219,6 +230,49 @@ export function EventResearch({
   const [added, setAdded] = useState<LedgerClaim[]>(() => loadLocalEdits().added);
   const [editing, setEditing] = useState<LedgerClaim | "new" | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [sharedOverlays, setSharedOverlays] = useState<SharedClaimOverlay[]>([]);
+  const [sharedReady, setSharedReady] = useState(persistence === "local");
+  const [sharedStatus, setSharedStatus] = useState(
+    persistence === "shared" ? "正在连接共享数据库…" : "",
+  );
+
+  const sharedFetch = useCallback(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const token = await getToken();
+    const headers = new Headers(init.headers);
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return fetch(input, { ...init, headers });
+  }, [getToken]);
+
+  const applySharedOverlays = useCallback((overlays: SharedClaimOverlay[]) => {
+    const nextDeleted: string[] = [];
+    const nextOverrides: Record<string, Draft> = {};
+    const nextAdded: LedgerClaim[] = [];
+    overlays.forEach((overlay) => {
+      if (overlay.operation === "delete") {
+        nextDeleted.push(overlay.sourceClaimId);
+      } else if (overlay.operation === "update") {
+        nextOverrides[overlay.sourceClaimId] = overlay.payload;
+      } else {
+        nextAdded.push({
+          claimDateStart: overlay.payload.claimDateStart,
+          claimDateEnd: null,
+          claimTimeHkt: overlay.payload.claimTimeHkt || null,
+          claimId: overlay.sourceClaimId,
+          eventId: overlay.sourceClaimId.replace(/^CLM/, "EVT"),
+          speaker: overlay.payload.speaker || null,
+          entity: overlay.payload.entity || null,
+          title: overlay.payload.title || overlay.payload.originalClaim.slice(0, 42),
+          originalClaim: overlay.payload.originalClaim,
+          verificationStatus: "待核验",
+          mappings: [],
+        });
+      }
+    });
+    setDeletedIds(nextDeleted);
+    setOverrides(nextOverrides);
+    setAdded(nextAdded);
+    setSharedOverlays(overlays);
+  }, []);
 
   useEffect(() => {
     fetch("/data/claim-ledger-dashboard.json", { cache: "no-store" })
@@ -232,6 +286,97 @@ export function EventResearch({
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Claim 数据暂时不可用"));
   }, []);
+
+  useEffect(() => {
+    if (persistence !== "shared") return;
+    let active = true;
+    const loadShared = async () => {
+      try {
+        const response = await sharedFetch("/api/shared-claims", { cache: "no-store" });
+        const payload = await response.json() as {
+          configured?: boolean;
+          overlays?: SharedClaimOverlay[];
+          error?: string;
+        };
+        if (!response.ok) throw new Error(payload.error || "共享数据库暂时不可用");
+        if (!payload.configured) {
+          if (active) {
+            setSharedReady(false);
+            setSharedStatus("共享数据库接入中 · 当前只读");
+          }
+          return;
+        }
+        let overlays = payload.overlays || [];
+        const remoteIds = new Set(overlays.map((overlay) => overlay.sourceClaimId));
+        const local = loadLocalEdits() as {
+          deletedIds?: string[];
+          overrides?: Record<string, Draft>;
+          added?: LedgerClaim[];
+        };
+        const pending = [
+          ...(local.deletedIds || []).map((sourceClaimId) => ({
+            sourceClaimId,
+            operation: "delete" as const,
+            payload: emptyDraft,
+          })),
+          ...Object.entries(local.overrides || {}).map(([sourceClaimId, value]) => ({
+            sourceClaimId,
+            operation: "update" as const,
+            payload: value,
+          })),
+          ...(local.added || []).map((claim) => ({
+            sourceClaimId: claim.claimId,
+            operation: "add" as const,
+            payload: toDraft(claim),
+          })),
+        ].filter((item) => !remoteIds.has(item.sourceClaimId));
+
+        let imported = 0;
+        for (const item of pending) {
+          const migrationResponse = await sharedFetch("/api/shared-claims", {
+            method: item.operation === "delete" ? "DELETE" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sourceClaimId: item.sourceClaimId,
+              operation: item.operation,
+              payload: item.payload,
+              expectedVersion: 0,
+            }),
+          });
+          if (!migrationResponse.ok) {
+            const migrationPayload = await migrationResponse.json() as { error?: string };
+            throw new Error(migrationPayload.error || "旧浏览器 Claim 迁移失败");
+          }
+          imported += 1;
+        }
+        if (pending.length) {
+          const backupKey = `level-grind.claim-edits.migrated.${new Date().toISOString()}`;
+          window.localStorage.setItem(
+            backupKey,
+            window.localStorage.getItem("level-grind.claim-edits.v1") || "{}",
+          );
+          window.localStorage.removeItem("level-grind.claim-edits.v1");
+          const refreshed = await sharedFetch("/api/shared-claims", { cache: "no-store" });
+          const refreshedPayload = await refreshed.json() as { overlays?: SharedClaimOverlay[] };
+          if (refreshed.ok) overlays = refreshedPayload.overlays || overlays;
+        }
+        if (active) {
+          applySharedOverlays(overlays);
+          setSharedReady(true);
+          setSharedStatus(imported ? `共享数据库已连接 · 已迁移 ${imported} 条本地修改` : "共享数据库已连接");
+        }
+      } catch (caught) {
+        if (active) {
+          setSharedReady(false);
+          setSharedStatus(caught instanceof Error ? `${caught.message} · 当前只读` : "共享数据库暂时不可用 · 当前只读");
+        }
+      }
+    };
+    void loadShared();
+    return () => {
+      active = false;
+    };
+  }, [applySharedOverlays, persistence, sharedFetch]);
 
   useEffect(() => {
     if (!data?.securities.length) return;
@@ -274,11 +419,40 @@ export function EventResearch({
   }, [data]);
 
   const persist = (nextDeleted: string[], nextOverrides: Record<string, Draft>, nextAdded: LedgerClaim[]) => {
+    if (persistence === "shared") return;
     localStorage.setItem("level-grind.claim-edits.v1", JSON.stringify({
       deletedIds: nextDeleted,
       overrides: nextOverrides,
       added: nextAdded,
     }));
+  };
+
+  const saveSharedOverlay = async (
+    sourceClaimId: string,
+    operation: SharedClaimOverlay["operation"],
+    payload: Draft,
+  ) => {
+    const current = sharedOverlays.find((overlay) => overlay.sourceClaimId === sourceClaimId);
+    const response = await sharedFetch("/api/shared-claims", {
+      method: operation === "delete" ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceClaimId,
+        operation,
+        payload,
+        expectedVersion: current?.version || 0,
+      }),
+    });
+    const result = await response.json() as { overlay?: SharedClaimOverlay; error?: string };
+    if (!response.ok || !result.overlay) {
+      throw new Error(result.error || "共享 Claim 保存失败");
+    }
+    const next = [
+      result.overlay,
+      ...sharedOverlays.filter((overlay) => overlay.sourceClaimId !== sourceClaimId),
+    ];
+    applySharedOverlays(next);
+    return result.overlay;
   };
 
   const claims = useMemo(() => [
@@ -424,8 +598,31 @@ export function EventResearch({
     setDraft(claim === "new" ? { ...emptyDraft, claimDateStart: new Date().toISOString().slice(0, 10) } : toDraft(claim));
   };
 
-  const saveDraft = () => {
+  const saveDraft = async () => {
     if (!draft.claimDateStart || !draft.originalClaim.trim()) return;
+    if (persistence === "shared") {
+      if (!sharedReady) {
+        setSharedStatus("共享数据库尚未就绪 · 已阻止本地假保存");
+        return;
+      }
+      const sourceClaimId = editing === "new"
+        ? `CLM-${crypto.randomUUID()}`
+        : editing?.claimId;
+      if (!sourceClaimId) return;
+      try {
+        await saveSharedOverlay(
+          sourceClaimId,
+          editing === "new" ? "add" : "update",
+          draft,
+        );
+        setSelectedId(sourceClaimId);
+        setEditing(null);
+        setSharedStatus("已保存到团队共享数据库");
+      } catch (caught) {
+        setSharedStatus(caught instanceof Error ? caught.message : "共享 Claim 保存失败");
+      }
+      return;
+    }
     if (editing === "new") {
       const nextClaim: LedgerClaim = {
         claimDateStart: draft.claimDateStart,
@@ -452,8 +649,22 @@ export function EventResearch({
     setEditing(null);
   };
 
-  const removeClaim = (claimId: string) => {
+  const removeClaim = async (claimId: string) => {
     if (!window.confirm("删除这条 Claim？")) return;
+    if (persistence === "shared") {
+      if (!sharedReady) {
+        setSharedStatus("共享数据库尚未就绪 · 已阻止本地假删除");
+        return;
+      }
+      try {
+        await saveSharedOverlay(claimId, "delete", emptyDraft);
+        setSelectedId("");
+        setSharedStatus("已从团队共享视图删除，可通过审计记录恢复");
+      } catch (caught) {
+        setSharedStatus(caught instanceof Error ? caught.message : "共享 Claim 删除失败");
+      }
+      return;
+    }
     const nextDeleted = [...deletedIds, claimId];
     setDeletedIds(nextDeleted);
     setSelectedId("");
@@ -467,7 +678,7 @@ export function EventResearch({
     <section className="claim-workbench">
       <div className="claim-toolbar-primary">
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="语义搜索 Claim、公司、行业、主题或股票代码" />
-        <button onClick={() => startEdit("new")}>＋ 添加 Claim</button>
+        <button disabled={persistence === "shared" && !sharedReady} onClick={() => startEdit("new")}>＋ 添加 Claim</button>
       </div>
       <div className="claim-filter-row">
         <select value={speaker} onChange={(event) => setSpeaker(event.target.value)}><option value="all">全部发言人</option>{filters.speakers.map((item) => <option key={item}>{item}</option>)}</select>
@@ -481,7 +692,7 @@ export function EventResearch({
         <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
           <option value="desc">从高到低 / 最新</option><option value="asc">从低到高 / 最早</option>
         </select>
-        <span>{filtered.length} 条{searchStatus ? ` · ${searchStatus}` : ""} · {marketStatus}{marketUpdatedAt ? ` · ${new Date(marketUpdatedAt).toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit" })}` : ""}</span>
+        <span>{filtered.length} 条{searchStatus ? ` · ${searchStatus}` : ""} · {marketStatus}{marketUpdatedAt ? ` · ${new Date(marketUpdatedAt).toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit" })}` : ""}{sharedStatus ? ` · ${sharedStatus}` : ""}</span>
       </div>
 
       <div className="claim-table-wrap">
@@ -501,7 +712,7 @@ export function EventResearch({
               })}
               <td className="claim-row-actions">
                 <button onClick={(event) => { event.stopPropagation(); startEdit(claim); }}>编辑</button>
-                <button onClick={(event) => { event.stopPropagation(); removeClaim(claim.claimId); }}>删除</button>
+                <button onClick={(event) => { event.stopPropagation(); void removeClaim(claim.claimId); }}>删除</button>
               </td>
             </tr>
           ))}</tbody>
@@ -512,7 +723,7 @@ export function EventResearch({
 
       {editing && (
         <div className="claim-modal-backdrop" onMouseDown={() => setEditing(null)}>
-          <form className="claim-editor" onSubmit={(event) => { event.preventDefault(); saveDraft(); }} onMouseDown={(event) => event.stopPropagation()}>
+          <form className="claim-editor" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }} onMouseDown={(event) => event.stopPropagation()}>
             <header><strong>{editing === "new" ? "添加 Claim" : "编辑 Claim"}</strong><button type="button" onClick={() => setEditing(null)}>×</button></header>
             <div className="claim-editor-grid">
               <label><span>日期</span><input type="date" required value={draft.claimDateStart} onChange={(event) => setDraft({ ...draft, claimDateStart: event.target.value })} /></label>

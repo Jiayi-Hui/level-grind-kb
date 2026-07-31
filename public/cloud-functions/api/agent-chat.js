@@ -1,3 +1,9 @@
+import {
+  clerkIdentity,
+  sharedDbConfigured,
+  supabaseRequest,
+} from "./_shared-auth.js";
+
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
   headers: {
@@ -6,49 +12,6 @@ const json = (value, status = 200) => new Response(JSON.stringify(value), {
     "X-Content-Type-Options": "nosniff",
   },
 });
-
-const decodeBase64Url = (value) => {
-  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-  return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
-};
-
-async function verifyClerkToken(request, secretKey) {
-  const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) throw new Error("请先登录");
-  const parts = token.split(".");
-  if (parts.length !== 3) throw new Error("登录状态无效");
-  const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
-  const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
-  const jwksResponse = await fetch("https://api.clerk.com/v1/jwks", {
-    headers: { Authorization: `Bearer ${secretKey}` },
-  });
-  if (!jwksResponse.ok) throw new Error("无法验证 Clerk 登录状态");
-  const jwks = await jwksResponse.json();
-  const jwk = jwks.keys.find((key) => key.kid === header.kid);
-  if (!jwk) throw new Error("登录密钥已过期，请重新登录");
-  const publicKey = await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["verify"],
-  );
-  const valid = await crypto.subtle.verify(
-    "RSASSA-PKCS1-v1_5",
-    publicKey,
-    decodeBase64Url(parts[2]),
-    new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
-  );
-  const now = Math.floor(Date.now() / 1000);
-  if (!valid || payload.exp < now || payload.nbf > now || ![
-    "https://www.level-grind.com",
-    "https://level-grind.com",
-  ].includes(payload.azp)) {
-    throw new Error("登录状态验证失败");
-  }
-  return payload;
-}
 
 function cleanText(value, maxLength) {
   return String(value || "").replace(/\u0000/g, "").trim().slice(0, maxLength);
@@ -191,10 +154,50 @@ async function deepSeekAnswer(input, webResults, env) {
   };
 }
 
+async function recordAiUsage(env, identity, usage) {
+  if (!identity || !sharedDbConfigured(env)) return;
+  try {
+    const userResponse = await supabaseRequest(env, "app_users?on_conflict=auth_subject", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify({
+        auth_subject: identity.subject,
+        email: identity.email,
+        display_name: identity.name,
+      }),
+    });
+    const users = await userResponse.json();
+    const user = Array.isArray(users) ? users[0] : null;
+    if (!userResponse.ok || !user?.id) return;
+    await supabaseRequest(env, "ai_usage_events", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        user_id: user.id,
+        provider: "DeepSeek",
+        model: usage.model || env.AI_MODEL || "deepseek-v4-flash",
+        thinking_enabled: usage.thinkingEnabled,
+        input_tokens: Math.max(0, Number(usage.inputTokens || 0)),
+        output_tokens: Math.max(0, Number(usage.outputTokens || 0)),
+        web_credits: Math.max(0, Number(usage.webCredits || 0)),
+        latency_ms: Math.max(0, Number(usage.latencyMs || 0)),
+        status: usage.status === "error" ? "error" : "success",
+        error_code: usage.errorCode || null,
+        request_id: usage.requestId || null,
+      }),
+    });
+  } catch {
+    // Usage telemetry must never block a research answer.
+  }
+}
+
 export async function onRequestPost({ request, env }) {
+  const startedAt = Date.now();
+  const requestId = crypto.randomUUID();
+  let identity = null;
   try {
     if (!env.CLERK_SECRET_KEY) throw new Error("登录验证服务尚未配置");
-    await verifyClerkToken(request, env.CLERK_SECRET_KEY);
+    identity = await clerkIdentity(request, env);
     const input = normalizeBody(await request.json());
     const includeWeb = input.mode === "hybrid" || input.mode === "web";
     const includeContext = input.mode === "hybrid" || input.mode === "context";
@@ -205,6 +208,13 @@ export async function onRequestPost({ request, env }) {
       ...input,
       contextEntries: includeContext ? input.contextEntries : [],
     }, search.results, env);
+    await recordAiUsage(env, identity, {
+      ...answer.usage,
+      webCredits: search.credits,
+      latencyMs: Date.now() - startedAt,
+      status: "success",
+      requestId,
+    });
     return json({
       answer: answer.answer,
       sources: search.results,
@@ -212,6 +222,14 @@ export async function onRequestPost({ request, env }) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "研究服务暂时不可用";
+    await recordAiUsage(env, identity, {
+      model: env.AI_MODEL || "deepseek-v4-flash",
+      thinkingEnabled: null,
+      latencyMs: Date.now() - startedAt,
+      status: "error",
+      errorCode: message.slice(0, 120),
+      requestId,
+    });
     const status = /登录/.test(message) ? 401 : /请输入/.test(message) ? 400 : 503;
     return json({ error: message }, status);
   }

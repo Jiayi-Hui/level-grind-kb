@@ -157,6 +157,7 @@ function ContinuityApp() {
           ) : view === "events" ? (
             <EventResearch
               liveClaims={[]}
+              persistence="shared"
               onAsk={() => openAsk("events")}
             />
           ) : view === "aidc" ? (
@@ -185,6 +186,7 @@ function InviteSettings() {
     name: string;
     role: string;
     status: "active" | "pending" | "revoked";
+    protectedManager?: boolean;
   }>>([]);
   const [memberStatus, setMemberStatus] = useState("");
   const [loadingMembers, setLoadingMembers] = useState(true);
@@ -194,6 +196,7 @@ function InviteSettings() {
     name: string;
     role: string;
     status: "active" | "pending" | "revoked";
+    protectedManager?: boolean;
   } | null>(null);
 
   const loadMembers = useCallback(async () => {
@@ -208,7 +211,7 @@ function InviteSettings() {
         throw new Error("成员服务仅在已部署环境可用");
       }
       const payload = await response.json() as {
-        members?: Array<{ id: string; email: string; name: string; role: string; status: "active" | "pending" | "revoked" }>;
+        members?: Array<{ id: string; email: string; name: string; role: string; status: "active" | "pending" | "revoked"; protectedManager?: boolean }>;
         error?: string;
       };
       if (!response.ok) throw new Error(payload.error || "无法读取成员");
@@ -335,7 +338,7 @@ function InviteSettings() {
               <div><strong>{member.name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
               <span>{member.role}</span>
               <span className={`member-state ${member.status}`}>{member.status === "active" ? "已加入" : member.status === "pending" ? "待接受" : "已撤销"}</span>
-              {member.role !== "Owner" && (
+              {!member.protectedManager && (
                 <span className="settings-member-actions">
                   <button type="button" onClick={() => editMember(member)}>编辑</button>
                   <button type="button" className="danger" onClick={() => void removeMember(member)}>删除</button>

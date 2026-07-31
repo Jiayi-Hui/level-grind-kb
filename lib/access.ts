@@ -33,6 +33,21 @@ export function invitedEmails() {
   );
 }
 
+export function memberManagerEmails() {
+  const configuredManagers = runtimeEnv("LEVEL_GRIND_MEMBER_MANAGER_EMAILS") ?? "";
+  const ownerEmail = runtimeEnv("LEVEL_GRIND_OWNER_EMAIL") ?? "";
+  return new Set(
+    `${ownerEmail},${configuredManagers}`
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function isMemberManager(email: string) {
+  return memberManagerEmails().has(email.trim().toLowerCase());
+}
+
 export function isEmailInvited(email: string) {
   const invited = invitedEmails();
   return invited.size > 0 && invited.has(email.trim().toLowerCase());
@@ -82,6 +97,7 @@ export async function getAppUser(request?: NextRequest): Promise<AppUser | null>
   await env.DB.prepare(membersSchema).run();
   const normalizedOwner = (runtimeEnv("LEVEL_GRIND_OWNER_EMAIL") ?? "").trim().toLowerCase();
   const isBootstrapOwner = Boolean(normalizedOwner) && email === normalizedOwner;
+  const isConfiguredManager = isMemberManager(email);
   const isLegacyInvite = isEmailInvited(email);
   let member = await env.DB.prepare(
     "SELECT role, status FROM team_members WHERE email = ?1"
@@ -98,7 +114,11 @@ export async function getAppUser(request?: NextRequest): Promise<AppUser | null>
   }
 
   if (!member || member.status !== "active") return null;
-  const role = member.role === "owner" || member.role === "admin" ? member.role : "member";
+  const role = isBootstrapOwner
+    ? "owner"
+    : isConfiguredManager || member.role === "admin"
+      ? "admin"
+      : "member";
 
   return {
     id: user.id,

@@ -442,8 +442,8 @@ client-side authentication protects static JSON assets.
   observation date, project name, or owner.
 - Missing BBG horizon observations are null. Sentinel values such as `-1`
   must never render as a real `-100%` return.
-- Settings lists active Clerk users and pending invitations for the workspace
-  owner, in addition to the existing invitation form.
+- Settings lists active Clerk users and pending invitations for configured
+  workspace member managers, in addition to the existing invitation form.
 
 ## V5.7 — Privacy alias and live public-market refresh
 
@@ -483,3 +483,20 @@ client-side authentication protects static JSON assets.
   parcel.
 - Missing reliable evidence must leave the project off-map; the product must
   not invent coordinates to improve visual coverage.
+
+## V5.13 — Shared persistence before work-computer takeover
+
+- The personal Mac may continue source development, but neither laptop is the
+  runtime database. Shared state must live in a cloud service that remains
+  available while both computers are offline.
+- Team Claims, Events, price paths, AIDC records, memberships, and audit events
+  are shared. AskAI projects, chats, messages, saved personal research, and
+  preferences are private to the signed-in Clerk user unless explicitly
+  published to team knowledge.
+- A frontend deployment must never overwrite live records with the tracked
+  portable JSON snapshot. Snapshots are seed/import inputs only.
+- Every shared mutation records actor, timestamp, source, previous version, and
+  next version. Deletes are soft; concurrent stale writes return `409`.
+- Work-computer takeover is allowed only after cross-user visibility,
+  cross-device private-state recovery, deployment survival, and conflict
+  handling are verified against the live service.

@@ -22,6 +22,37 @@ feature/<name> -> main -> production -> GitHub Actions -> Tencent EdgeOne -> lev
 Only merge `main` into `production` after a release check. Never develop
 directly on `production`.
 
+## Release-train discipline
+
+Level Grind uses batched platform releases:
+
+```text
+bounded feature/fix batch
+  -> feature/* implementation and targeted checks
+  -> main integration and full regression
+  -> release candidate with QA evidence
+  -> one approved production promotion
+  -> canonical-domain smoke test
+```
+
+Do not push each small visual correction or isolated bug fix directly to
+production. Group related changes by one user outcome or data/API contract,
+verify the combined behavior, and release them together. A production hotfix is
+reserved for a security issue, authentication outage, data-loss risk, or a
+blocking regression and must still receive a focused test plus post-deploy
+verification.
+
+A release candidate is ready only when:
+
+- the batch scope and affected contracts are recorded;
+- targeted tests pass during feature development;
+- lint, complete tests, and the portable production build pass on `main`;
+- database migrations, seed imports, and rollback/restore implications are
+  reviewed;
+- desktop/mobile and authenticated critical paths are checked when affected;
+- `.project-director/qa-report.md` records evidence and known residual risks;
+- production promotion has explicit approval.
+
 ## Automatic deployment
 
 Workflow: `.github/workflows/production-edgeone.yml`
@@ -32,6 +63,10 @@ It performs:
 2. portable Claim/AIDC EdgeOne build;
 3. source-level tests and lint;
 4. deploy to the existing `level-grind-hk-demo` Makers project.
+
+The workflow deploys every `production` push, so the organizational control is
+to keep `production` quiet: only a reviewed release-candidate promotion may
+reach it.
 
 The GitHub repository must contain one Actions secret:
 
@@ -100,22 +135,25 @@ outputs are intentionally being refreshed.
 
 ## Shared database boundary
 
-Do not host the shared database on either laptop. Provision it from the work
-computer in the approved cloud account, then let EdgeOne server functions
-connect using server-side credentials.
+Do not host the shared database on either laptop. The public/sanitized pilot is
+now provisioned in Supabase Singapore and is reached only through authenticated
+Tencent EdgeOne server functions. Company-sensitive imports remain blocked
+until the work-computer owner approves the provider, region, backup/encryption
+policy, and network path.
 
 Code and schema prepared in this repository:
 
 ```text
 infra/shared-data/README.md
 infra/shared-data/postgres/001_shared_research.sql
+infra/shared-data/postgres/002_weekend_shared_state.sql
 ```
 
-The work-computer owner must confirm the production database provider, region,
-backup/encryption policy, and network path before executing the migration.
-PostgreSQL is the recommended relational contract; EdgeOne Blob stores file
-bytes. Makers KV can hold small configuration/session data but is not the
-authoritative store for multi-user research records.
+Both migrations were applied to the Singapore pilot on 2026-07-31. EdgeOne
+stores `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` only as masked server-side
+environment variables. The service-role key must never enter GitHub, client
+JavaScript, screenshots, or handoff messages. Claim overlays and AI usage
+events are relational; file bytes remain outside this increment.
 
 ## First work-computer session
 
@@ -124,8 +162,16 @@ git clone https://github.com/Jiayi-Hui/level-grind-kb.git
 cd level-grind-kb
 git switch main
 npm ci
-npm run edgeone-demo:build
+npm run lint
 node --test tests/*.test.mjs
+npm run edgeone-demo:build
+```
+
+Confirm the production handoff point before beginning new work:
+
+```bash
+git fetch github
+git log --oneline --decorate -5
 ```
 
 Create a feature branch before changing code:
@@ -134,13 +180,18 @@ Create a feature branch before changing code:
 git switch -c feature/shared-research-api
 ```
 
-Company-only work belongs there:
+Company-only work belongs on a new `feature/*` branch:
 
-- provision and migrate the shared database;
 - configure the approved Azure OpenAI server-side gateway;
 - connect Bloomberg/Dymon/WIND verification jobs;
 - import authorized reports and team data;
 - configure background workers and production secrets.
+
+The shared pilot currently covers Claim add/edit/delete overlays, optimistic
+version checks, audit rows, and DeepSeek usage events. AskAI projects/chats,
+reports, model workbooks, object storage, background price refresh, and backup
+automation remain the next shared-persistence increments; do not describe them
+as already migrated.
 
 Personal-Mac-only work remains:
 

@@ -36,7 +36,8 @@ test("agentic research UI supports scoped chats and portable answer actions", as
 test("agent chat function authenticates and calls configured search and model providers", async () => {
   const source = await read("public/cloud-functions/api/agent-chat.js");
 
-  assert.match(source, /verifyClerkToken/);
+  assert.match(source, /clerkIdentity/);
+  assert.match(source, /recordAiUsage/);
   assert.match(source, /https:\/\/api\.tavily\.com\/search/);
   assert.match(source, /search_depth: "basic"/);
   assert.match(source, /Authorization: `Bearer \$\{apiKey\}`/);

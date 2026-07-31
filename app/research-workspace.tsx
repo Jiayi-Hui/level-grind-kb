@@ -72,6 +72,7 @@ type TeamMember = {
   display_name: string;
   role: "owner" | "admin" | "member" | "analyst" | "pm" | "gem_pm";
   status: "active" | "suspended";
+  protected_manager?: boolean;
 };
 
 type CorpusDocument = {
@@ -1204,7 +1205,7 @@ export function ResearchWorkspace() {
   }
 
   async function removeMember(member: TeamMember) {
-    if (member.role === "owner") return;
+    if (member.protected_manager) return;
     const confirmed = window.confirm(language === "zh"
       ? `删除成员“${member.display_name || member.email}”？该成员将立即失去访问权限。`
       : `Remove “${member.display_name || member.email}”? They will immediately lose access.`);
@@ -1317,7 +1318,7 @@ export function ResearchWorkspace() {
           <h1>Ask the workspace owner for access.</h1>
           <p>
             You are signed in with Clerk, but this email is not an active Level
-            Grind team member yet. Ask the owner/admin to add your email in
+            Grind team member yet. Ask a workspace manager to add your email in
             Settings → Team Access, then refresh this page.
           </p>
           <div className="auth-actions">
@@ -1954,7 +1955,7 @@ export function ResearchWorkspace() {
                                 ? "Analyst"
                                 : member.role}
                         </span>
-                        {member.role !== "owner" && (
+                        {!member.protected_manager && (
                           <span className="member-actions">
                             <button type="button" onClick={() => setEditingMember(member)}>{language === "zh" ? "编辑" : "Edit"}</button>
                             <button type="button" className="danger" onClick={() => void removeMember(member)}>{language === "zh" ? "删除" : "Remove"}</button>

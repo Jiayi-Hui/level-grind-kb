@@ -221,7 +221,8 @@
 - [x] Event company and industry/theme filters are separate.
 - [x] The four New Hope Dairy rows identify Xu Lei as speaker.
 - [x] Missing future BBG horizons are published as null rather than `-100%`.
-- [x] Settings includes an owner-only Clerk member and pending-invitation list.
+- [x] Settings includes a manager-authorized Clerk member and
+  pending-invitation list.
 - [ ] Signed-in production member-list loading is verified after deployment.
 
 ## V5.7 Alias and Yahoo refresh
@@ -301,3 +302,49 @@
   `EDGEONE_API_TOKEN` secret is present.
 - [ ] Production database provisioning and migration await company-side cloud
   approval.
+
+## V5.13 Shared persistence takeover gate
+
+- [x] Shared Claim mutations use Clerk-authenticated EdgeOne APIs rather than
+  browser-local team storage.
+- [x] A stale update returns `409 Conflict` and does not silently overwrite the
+  newer record.
+- [x] Every shared Claim mutation records actor, timestamp, before/after data,
+  and version in the audit trail.
+- [x] Missing database configuration fails closed as read-only instead of
+  pretending to save locally.
+- [ ] A Claim created by the owner appears for a second authorized user after
+  refresh without rebuilding or redeploying the site.
+- [ ] A shared edit made by the second user appears to the owner with actor,
+  timestamp, previous version, and next version.
+- [ ] AskAI projects/chats created by one user are available on that user's
+  second device and are not returned to another user.
+- [ ] Soft-deleted records disappear from normal reads and remain present in
+  the audit trail.
+- [ ] Rebuilding and redeploying the EdgeOne frontend leaves all live database
+  records unchanged.
+- [ ] Seed imports are idempotent and do not replace newer live edits.
+- [ ] A dated export/restore rehearsal succeeds before work-computer takeover.
+
+## V5.14 Member-manager parity and AI usage timestamps
+
+- [x] The owner and configured co-manager pass the same server-side
+  authorization check for listing, inviting, editing, and removing members.
+- [x] Neither protected member-manager account can be edited or removed through
+  the member list.
+- [x] The interface and API errors do not state that a named individual alone
+  has member-management permission.
+- [x] Existing D1 backup timestamps are reported as historical evidence only.
+- [x] Tencent AskAI writes each DeepSeek attempt to shared persistence with
+  Clerk user, model, status, tokens, latency, and server timestamp.
+
+## V5.15 Platform release train
+
+- [x] CI/CD documentation defines one bounded, integrated, tested release batch.
+- [x] Small non-urgent fixes do not independently trigger production releases.
+- [x] `feature/*`, `main`, and `production` have separate implementation,
+  integration, and deployment responsibilities.
+- [x] The next production push contains the complete shared-persistence release
+  candidate and its QA evidence.
+- [ ] Production is verified once after promotion with authenticated critical
+  paths and canonical-domain probes.

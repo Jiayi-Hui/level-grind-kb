@@ -263,8 +263,10 @@ DeepSeek receives only the last six messages and a bounded context package.
 - Event company and industry/theme dimensions are derived from mapping type:
   direct mappings populate company; proxy baskets populate industry/theme.
 - The Settings member list is server-derived from Clerk users and invitations.
-  The same owner-only JWT verification protects both listing and invitation
-  creation.
+  `LEVEL_GRIND_OWNER_EMAIL` and `LEVEL_GRIND_MEMBER_MANAGER_EMAILS` resolve to
+  one protected manager set. Every member-list, invitation, edit, and removal
+  request uses the same manager check; manager accounts cannot be modified or
+  removed through the member-management surface.
 
 ## V5.7 public price refresh and alias boundary
 
@@ -307,6 +309,32 @@ subject IDs map to application users; private rows always carry an owner ID;
 team rows are filtered through membership and ACL checks. Optimistic versions,
 soft deletion, append-only audit records, private/team vector namespaces, and
 background jobs are part of the base contract in `infra/shared-data/`.
+
+## V5.13 Shared persistence cutover
+
+```text
+Clerk session
+  -> EdgeOne `/api/shared/*`
+  -> verify JWT and resolve application user/team membership
+  -> HTTPS data gateway
+  -> authoritative relational store
+       - private rows keyed by user id
+       - team rows keyed by team id
+       - immutable audit rows
+  -> versioned response
+```
+
+The EdgeOne runtime should reach persistence over HTTPS; it must not rely on a
+laptop, browser-local storage, or an edge-node-local process. The existing
+provider-neutral PostgreSQL migration remains the durable contract. EdgeOne KV
+is not the authoritative research store because access is allowlisted and its
+high-read/eventually-consistent shape does not provide the required relational
+constraints and mutation audit.
+
+Portable Claim and AIDC JSON remains a reproducible bootstrap source. Import is
+idempotent by stable source ID and never deletes or replaces a newer live row.
+Production reads the database first and uses the tracked snapshot only during a
+declared bootstrap/unavailable state.
 
 ## V5.11 AI Capex location-evidence hierarchy
 
