@@ -46,6 +46,10 @@ test("persists preferences, private history, storage visibility, and governed ac
   assert.match(askRoute, /INSERT INTO research_queries/);
   assert.match(membersRoute, /Admin access required/);
   assert.match(membersRoute, /"analyst", "pm", "gem_pm"/);
+  assert.match(membersRoute, /export async function DELETE/);
+  assert.match(membersRoute, /status = 'suspended'/);
+  assert.match(askRoute, /thinkingEnabled/);
+  assert.match(askRoute, /thinking: \{ type: thinkingEnabled \? "enabled" : "disabled" \}/);
   assert.match(access, /team_members/);
   assert.match(access, /LEVEL_GRIND_OWNER_EMAIL/);
   assert.match(research, /CREATE TABLE IF NOT EXISTS user_preferences/);

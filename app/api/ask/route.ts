@@ -313,10 +313,12 @@ export async function POST(request: NextRequest) {
     mode?: string;
     projectId?: string;
     chatId?: string;
+    thinkingEnabled?: boolean;
   };
   const question = String(body.question ?? "").trim().slice(0, 2000);
   const mode: EvidenceMode =
     body.mode === "reports" || body.mode === "web" ? body.mode : "hybrid";
+  const thinkingEnabled = body.thinkingEnabled !== false;
   if (question.length < 3) {
     return NextResponse.json({ error: "Please enter a more specific question." }, { status: 400 });
   }
@@ -535,6 +537,9 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: provider.model,
+        ...(provider.name === "DeepSeek"
+          ? { thinking: { type: thinkingEnabled ? "enabled" : "disabled" } }
+          : {}),
         temperature: 0.1,
         max_tokens: Math.min(
           4000,

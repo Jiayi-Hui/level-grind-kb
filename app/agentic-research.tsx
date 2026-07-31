@@ -11,7 +11,14 @@ type ResearchMessage = {
   role: "user" | "assistant";
   content: string;
   sources?: Array<{ index: number; title: string; url: string; snippet?: string }>;
-  usage?: { inputTokens: number; outputTokens: number; provider: string; model: string; webCredits: number };
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    provider: string;
+    model: string;
+    webCredits: number;
+    thinkingEnabled?: boolean;
+  };
   createdAt: string;
 };
 type ResearchProject = {
@@ -54,6 +61,7 @@ type ContextEntry = {
 const storeKey = "level-grind.agentic-research.v1";
 const knowledgeKey = "level-grind.personal-knowledge.v1";
 const vaultKey = "lg-obsidian-vault";
+const thinkingKey = "level-grind.askai-thinking.v1";
 
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -262,6 +270,9 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const [activeChatId, setActiveChatId] = useState("");
   const [question, setQuestion] = useState("");
   const [mode, setMode] = useState<EvidenceMode>("hybrid");
+  const [thinkingEnabled, setThinkingEnabled] = useState(() =>
+    readJson<boolean>(thinkingKey, true)
+  );
   const [thinkingSince, setThinkingSince] = useState<number | null>(null);
   const [thinkingSeconds, setThinkingSeconds] = useState(0);
   const [error, setError] = useState("");
@@ -294,6 +305,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const commitStore = (next: AgentStore) => {
     setStore(next);
     writeJson(storeKey, next);
+  };
+
+  const selectThinking = (enabled: boolean) => {
+    setThinkingEnabled(enabled);
+    writeJson(thinkingKey, enabled);
   };
 
   const newProject = () => {
@@ -411,6 +427,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           projectTitle: activeProject.title,
           chatTitle: optimistic.title,
           contextEntries,
+          thinkingEnabled,
           history: optimistic.messages.slice(-6).map((message) => ({ role: message.role, content: message.content })),
         }),
       });
@@ -475,7 +492,10 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     <section className="agentic-layer">
       <header className="agentic-head">
         <div><p className="eyebrow">AGENTIC RESEARCH</p><h2>{scope === "events" ? "询问事件与价格" : "询问 AI Capex"}</h2></div>
-        <span>DeepSeek · Tavily</span>
+        <div className="agentic-engine">
+          <strong>DeepSeek V4 Flash</strong>
+          <small>{thinkingEnabled ? "Thinking 开启" : "Thinking 关闭"} · Tavily</small>
+        </div>
       </header>
       <div className="agentic-layout">
         <aside className="agentic-sidebar">
@@ -522,7 +542,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
                       <button onClick={() => void actOnAnswer("save", message, index)}>保存</button>
                       <button onClick={() => void actOnAnswer("download", message, index)}>下载 .md</button>
                       <button onClick={() => void actOnAnswer("obsidian", message, index)}>导出 Obsidian</button>
-                      {message.usage && <small>{message.usage.model} · {(message.usage.inputTokens + message.usage.outputTokens).toLocaleString()} tokens · Tavily {message.usage.webCredits} credits</small>}
+                      {message.usage && <small>{message.usage.model} · {message.usage.thinkingEnabled === false ? "Thinking 关闭" : "Thinking 开启"} · {(message.usage.inputTokens + message.usage.outputTokens).toLocaleString()} tokens · Tavily {message.usage.webCredits} credits</small>}
                     </footer>
                   )}
                 </div>
@@ -535,6 +555,9 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
               <button type="button" className={mode === "hybrid" ? "active" : ""} onClick={() => setMode("hybrid")}>混合</button>
               <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>内部数据</button>
               <button type="button" className={mode === "web" ? "active" : ""} onClick={() => setMode("web")}>联网</button>
+              <span className="agentic-mode-spacer" />
+              <button type="button" className={thinkingEnabled ? "active" : ""} onClick={() => selectThinking(true)}>Thinking 开</button>
+              <button type="button" className={!thinkingEnabled ? "active" : ""} onClick={() => selectThinking(false)}>Thinking 关</button>
             </div>
             <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "events" ? "例如：哪些事件可以用 AI Capex 的园区和容量数据交叉验证？" : "例如：哪些事件库 Claim 能由 AI Capex 数据支持或反驳？"} />
             <button type="submit" disabled={!question.trim() || !!thinkingSince}>{thinkingSince ? "分析中" : "发送"}</button>

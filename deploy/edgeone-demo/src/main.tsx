@@ -174,6 +174,7 @@ function ContinuityApp() {
 
 function InviteSettings() {
   const { getToken } = useAuth();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Analyst");
   const [status, setStatus] = useState("");
@@ -187,6 +188,13 @@ function InviteSettings() {
   }>>([]);
   const [memberStatus, setMemberStatus] = useState("");
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [editingMember, setEditingMember] = useState<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    status: "active" | "pending" | "revoked";
+  } | null>(null);
 
   const loadMembers = useCallback(async () => {
     setLoadingMembers(true);
@@ -217,27 +225,71 @@ function InviteSettings() {
     return () => window.clearTimeout(task);
   }, [loadMembers]);
 
-  const invite = async (event: React.FormEvent) => {
+  const saveMember = async (event: React.FormEvent) => {
     event.preventDefault();
     setSending(true);
     setStatus("");
     try {
       const token = await getToken();
       const response = await fetch("/api/invitations", {
-        method: "POST",
+        method: editingMember ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify(editingMember
+          ? { id: editingMember.id, email, name, role, status: editingMember.status }
+          : { email, role }),
       });
       const payload = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "邀请发送失败");
-      setStatus(`邀请已发送至 ${email}`);
+      if (!response.ok) throw new Error(payload.error || (editingMember ? "成员修改失败" : "邀请发送失败"));
+      setStatus(editingMember ? `已更新 ${email}` : `邀请已发送至 ${email}`);
+      setName("");
       setEmail("");
+      setRole("Analyst");
+      setEditingMember(null);
       await loadMembers();
     } catch (caught) {
       setStatus(caught instanceof Error ? caught.message : "邀请发送失败");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const editMember = (member: NonNullable<typeof editingMember>) => {
+    setEditingMember(member);
+    setName(member.name);
+    setEmail(member.email);
+    setRole(["Analyst", "PM", "GEM PM"].includes(member.role) ? member.role : "Analyst");
+    setStatus("");
+  };
+
+  const removeMember = async (member: NonNullable<typeof editingMember>) => {
+    if (!window.confirm(`删除“${member.name || member.email}”？该成员将立即失去访问权限。`)) return;
+    setSending(true);
+    setStatus("");
+    try {
+      const token = await getToken();
+      const response = await fetch("/api/invitations", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ id: member.id }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "成员删除失败");
+      if (editingMember?.id === member.id) {
+        setEditingMember(null);
+        setName("");
+        setEmail("");
+        setRole("Analyst");
+      }
+      setStatus("成员访问权限已撤销");
+      await loadMembers();
+    } catch (caught) {
+      setStatus(caught instanceof Error ? caught.message : "成员删除失败");
     } finally {
       setSending(false);
     }
@@ -248,11 +300,18 @@ function InviteSettings() {
       <div className="settings-grid">
         <article className="settings-card">
           <p className="eyebrow">TEAM ACCESS</p>
-          <h2>邀请团队成员</h2>
-          <form onSubmit={invite}>
-            <label><span>公司邮箱</span><input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@dymonasia.com" /></label>
+          <h2>{editingMember ? "编辑团队成员" : "邀请团队成员"}</h2>
+          <form onSubmit={saveMember}>
+            {editingMember && <label><span>姓名</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} /></label>}
+            <label><span>公司邮箱</span><input type="email" required readOnly={Boolean(editingMember)} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@dymonasia.com" /></label>
             <label><span>角色</span><select value={role} onChange={(event) => setRole(event.target.value)}><option>Analyst</option><option>PM</option><option>GEM PM</option></select></label>
-            <button type="submit" disabled={sending}>{sending ? "发送中…" : "发送邀请"}</button>
+            <button type="submit" disabled={sending}>{sending ? "保存中…" : editingMember ? "保存修改" : "发送邀请"}</button>
+            {editingMember && <button type="button" className="quiet-button" onClick={() => {
+              setEditingMember(null);
+              setName("");
+              setEmail("");
+              setRole("Analyst");
+            }}>取消</button>}
           </form>
           {status && <p className="settings-status">{status}</p>}
         </article>
@@ -276,6 +335,12 @@ function InviteSettings() {
               <div><strong>{member.name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
               <span>{member.role}</span>
               <span className={`member-state ${member.status}`}>{member.status === "active" ? "已加入" : member.status === "pending" ? "待接受" : "已撤销"}</span>
+              {member.role !== "Owner" && (
+                <span className="settings-member-actions">
+                  <button type="button" onClick={() => editMember(member)}>编辑</button>
+                  <button type="button" className="danger" onClick={() => void removeMember(member)}>删除</button>
+                </span>
+              )}
             </div>
           ))}
         </div>

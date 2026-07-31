@@ -93,9 +93,9 @@ export async function onRequestGet({ request, env }) {
         email,
         name: [user.first_name, user.last_name].filter(Boolean).join(" "),
         role: email.toLowerCase() === ownerEmail ? "Owner" : user.public_metadata?.role || "Member",
-        status: "active",
+        status: user.banned ? "disabled" : "active",
       };
-    }).filter((member) => member.email);
+    }).filter((member) => member.email && member.status !== "disabled");
     const activeEmails = new Set(activeMembers.map((member) => member.email.toLowerCase()));
     const pendingMembers = invitations
       .filter((invitation) => !activeEmails.has(String(invitation.email_address || "").toLowerCase()))
@@ -133,5 +133,106 @@ export async function onRequestPost({ request, env }) {
     }, response.status);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "邀请服务不可用" }, 401);
+  }
+}
+
+function validRole(value) {
+  return ["Analyst", "PM", "GEM PM"].includes(value);
+}
+
+async function selectedUser(id, env) {
+  const response = await clerkRequest(`/users/${encodeURIComponent(id)}`, env.CLERK_SECRET_KEY);
+  if (!response.ok) return null;
+  return response.json();
+}
+
+function primaryEmail(user) {
+  const emails = new Map((user.email_addresses || []).map((item) => [item.id, item.email_address]));
+  return emails.get(user.primary_email_address_id) || [...emails.values()][0] || "";
+}
+
+export async function onRequestPatch({ request, env }) {
+  try {
+    await requireOwner(request, env);
+    const { id, email, name, role, status } = await request.json();
+    if (!id || !validRole(role)) return json({ error: "成员和角色不能为空" }, 400);
+    const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
+    const user = await selectedUser(id, env);
+
+    if (user) {
+      if (primaryEmail(user).toLowerCase() === ownerEmail) {
+        return json({ error: "Owner 账户不能在这里修改" }, 409);
+      }
+      const displayName = cleanMemberName(name);
+      const [profileResponse, metadataResponse] = await Promise.all([
+        clerkRequest(`/users/${encodeURIComponent(id)}`, env.CLERK_SECRET_KEY, {
+          method: "PATCH",
+          body: JSON.stringify({ first_name: displayName, last_name: "" }),
+        }),
+        clerkRequest(`/users/${encodeURIComponent(id)}/metadata`, env.CLERK_SECRET_KEY, {
+          method: "PATCH",
+          body: JSON.stringify({ public_metadata: { role } }),
+        }),
+      ]);
+      if (!profileResponse.ok || !metadataResponse.ok) {
+        const body = await (profileResponse.ok ? metadataResponse : profileResponse).json();
+        return json({ error: body.errors?.[0]?.long_message || "成员修改失败" }, profileResponse.ok ? metadataResponse.status : profileResponse.status);
+      }
+      if (status === "disabled" && user.banned) {
+        const unbanResponse = await clerkRequest(`/users/${encodeURIComponent(id)}/unban`, env.CLERK_SECRET_KEY, { method: "POST" });
+        if (!unbanResponse.ok) return json({ error: "成员恢复失败" }, unbanResponse.status);
+      }
+      return json({ ok: true, id, role });
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: "待接受邀请的邮箱无效" }, 400);
+    }
+    const revokeResponse = await clerkRequest(`/invitations/${encodeURIComponent(id)}/revoke`, env.CLERK_SECRET_KEY, { method: "POST" });
+    if (!revokeResponse.ok) return json({ error: "原邀请无法撤销" }, revokeResponse.status);
+    const inviteResponse = await clerkRequest("/invitations", env.CLERK_SECRET_KEY, {
+      method: "POST",
+      body: JSON.stringify({
+        email_address: email.trim().toLowerCase(),
+        redirect_url: "https://www.level-grind.com",
+        public_metadata: { role, displayName: cleanMemberName(name), invitedFrom: "Level Grind Settings" },
+        notify: true,
+      }),
+    });
+    const inviteBody = await inviteResponse.json();
+    return inviteResponse.ok
+      ? json({ ok: true, id: inviteBody.id, role, invitationReissued: true })
+      : json({ error: inviteBody.errors?.[0]?.long_message || "新邀请发送失败" }, inviteResponse.status);
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "成员修改失败" }, 401);
+  }
+}
+
+function cleanMemberName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, 120);
+}
+
+export async function onRequestDelete({ request, env }) {
+  try {
+    await requireOwner(request, env);
+    const { id } = await request.json();
+    if (!id) return json({ error: "成员不能为空" }, 400);
+    const user = await selectedUser(id, env);
+    if (user) {
+      const ownerEmail = (env.LEVEL_GRIND_OWNER_EMAIL || "jiayihui01@gmail.com").toLowerCase();
+      if (primaryEmail(user).toLowerCase() === ownerEmail) {
+        return json({ error: "Owner 账户不能删除" }, 409);
+      }
+      const response = await clerkRequest(`/users/${encodeURIComponent(id)}/ban`, env.CLERK_SECRET_KEY, { method: "POST" });
+      return response.ok
+        ? json({ ok: true, id, status: "disabled" })
+        : json({ error: "成员访问权限撤销失败" }, response.status);
+    }
+    const response = await clerkRequest(`/invitations/${encodeURIComponent(id)}/revoke`, env.CLERK_SECRET_KEY, { method: "POST" });
+    return response.ok
+      ? json({ ok: true, id, status: "revoked" })
+      : json({ error: "邀请撤销失败" }, response.status);
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "成员删除失败" }, 401);
   }
 }

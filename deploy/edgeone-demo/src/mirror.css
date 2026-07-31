@@ -52,7 +52,9 @@
 .settings-card input, .settings-card select {
   height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
 }
+.settings-card input:read-only { color: var(--muted); background: #eeeee8; }
 .settings-card button { height: 44px; padding: 0 18px; border: 0; border-radius: 8px; background: var(--green); color: #fff; font-weight: 800; }
+.settings-card form .quiet-button { border: 1px solid var(--line); color: var(--green); background: #fff; }
 .settings-status { margin: 14px 0 0; color: var(--green); font-size: 11px; }
 .settings-card dl { margin: 0; display: grid; }
 .settings-card dl div { padding: 12px 0; display: grid; grid-template-columns: 100px 1fr; border-bottom: 1px solid var(--line); }
@@ -72,7 +74,7 @@
   min-height: 64px;
   padding: 10px 0;
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) 100px 80px;
+  grid-template-columns: 38px minmax(0, 1fr) 90px 72px auto;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--line);
@@ -95,6 +97,16 @@
 .member-state { justify-self: end; padding: 5px 8px; border-radius: 999px; background: #edf0ec; color: var(--muted); }
 .member-state.active { background: #e2efe7; color: var(--green); }
 .member-state.pending { background: #f5e9cb; color: #8b691f; }
+.settings-member-actions { display: flex; justify-content: flex-end; gap: 5px; }
+.settings-card .settings-member-actions button {
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  color: var(--green);
+  background: #fff;
+  font-size: 8px;
+}
+.settings-card .settings-member-actions button.danger { color: #a84f30; }
 
 @media (max-width: 820px) {
   .settings-grid { grid-template-columns: 1fr; }
@@ -103,6 +115,8 @@
   .page-ask-button { flex: 0 0 auto; min-height: 34px; padding: 0 10px; }
   .settings-member-row { grid-template-columns: 34px minmax(0, 1fr) auto; }
   .settings-member-row > span:nth-child(3) { display: none; }
+  .settings-member-row .member-state { display: none; }
+  .settings-member-actions { grid-column: 3; grid-row: 1; }
 }
 
 .continuity-live {

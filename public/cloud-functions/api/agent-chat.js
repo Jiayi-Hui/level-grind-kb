@@ -76,6 +76,7 @@ function normalizeBody(body) {
     question,
     scope,
     mode,
+    thinkingEnabled: body.thinkingEnabled !== false,
     contextEntries,
     history,
     projectTitle: cleanText(body.projectTitle, 120),
@@ -135,6 +136,7 @@ async function deepSeekAnswer(input, webResults, env) {
     },
     body: JSON.stringify({
       model,
+      thinking: { type: input.thinkingEnabled ? "enabled" : "disabled" },
       temperature: 0.1,
       max_tokens: Math.min(3600, Math.max(500, Number(env.AI_MAX_OUTPUT_TOKENS || 1800))),
       messages: [
@@ -184,6 +186,7 @@ async function deepSeekAnswer(input, webResults, env) {
       outputTokens: Number(payload.usage?.completion_tokens || 0),
       provider: "DeepSeek",
       model,
+      thinkingEnabled: input.thinkingEnabled,
     },
   };
 }
@@ -218,6 +221,8 @@ export async function onRequestGet() {
   return json({
     ok: true,
     service: "Level Grind Agentic Research",
+    model: "deepseek-v4-flash",
+    thinkingModes: ["enabled", "disabled"],
     providers: ["DeepSeek", "Tavily"],
     authentication: "required for POST",
   });

@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
   await prepareDb();
   const members = await env.DB.prepare(
     `SELECT email, display_name, role, status, invited_by, created_at, updated_at
-     FROM team_members ORDER BY
+     FROM team_members
+     WHERE status != 'suspended'
+     ORDER BY
        CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
        display_name, email`
   ).all();
@@ -78,4 +80,33 @@ export async function POST(request: NextRequest) {
   ).bind(email, String(payload.displayName ?? "").trim().slice(0, 120), role, status, user.email, now).run();
 
   return NextResponse.json({ ok: true, email, role, status });
+}
+
+export async function DELETE(request: NextRequest) {
+  const { user, response } = await requireAppUser(request);
+  if (!user) return response;
+  if (user.role !== "owner" && user.role !== "admin") {
+    return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  }
+  await prepareDb();
+
+  const payload = await request.json() as { email?: string };
+  const email = String(payload.email ?? "").trim().toLowerCase();
+  if (!email) {
+    return NextResponse.json({ error: "Member email is required." }, { status: 400 });
+  }
+  const existing = await env.DB.prepare(
+    "SELECT role FROM team_members WHERE email = ?1"
+  ).bind(email).first<{ role: string }>();
+  if (!existing) {
+    return NextResponse.json({ error: "Member not found." }, { status: 404 });
+  }
+  if (existing.role === "owner") {
+    return NextResponse.json({ error: "The owner account cannot be removed." }, { status: 409 });
+  }
+
+  await env.DB.prepare(
+    "UPDATE team_members SET status = 'suspended', updated_at = ?1 WHERE email = ?2"
+  ).bind(new Date().toISOString(), email).run();
+  return NextResponse.json({ ok: true, email, status: "suspended" });
 }

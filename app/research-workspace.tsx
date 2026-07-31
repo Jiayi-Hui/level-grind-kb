@@ -490,6 +490,7 @@ export function ResearchWorkspace() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [corpus, setCorpus] = useState<CorpusPayload | null>(null);
   const [eventsPayload, setEventsPayload] = useState<EventsPayload | null>(null);
   const [claimsPayload, setClaimsPayload] = useState<ClaimsPayload | null>(null);
@@ -513,6 +514,10 @@ export function ResearchWorkspace() {
   const [reportYearFilter, setReportYearFilter] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [questionDraft, setQuestionDraft] = useState("");
+  const [thinkingEnabled, setThinkingEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("level-grind.askai-thinking.v1") !== "false";
+  });
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -1048,6 +1053,7 @@ export function ResearchWorkspace() {
         body: JSON.stringify({
           question,
           mode,
+          thinkingEnabled,
           projectId: activeProjectId || projects[0]?.id,
           chatId: activeChatId || undefined,
         }),
@@ -1187,10 +1193,37 @@ export function ResearchWorkspace() {
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Member update failed.");
       event.currentTarget.reset();
+      setEditingMember(null);
       setToast(language === "zh" ? "团队成员已保存" : "Team member saved");
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Member update failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeMember(member: TeamMember) {
+    if (member.role === "owner") return;
+    const confirmed = window.confirm(language === "zh"
+      ? `删除成员“${member.display_name || member.email}”？该成员将立即失去访问权限。`
+      : `Remove “${member.display_name || member.email}”? They will immediately lose access.`);
+    if (!confirmed) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await authorizedFetch("/api/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: member.email }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Member removal failed.");
+      if (editingMember?.email === member.email) setEditingMember(null);
+      setToast(language === "zh" ? "成员访问权限已撤销" : "Member access revoked");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Member removal failed.");
     } finally {
       setSaving(false);
     }
@@ -1708,7 +1741,10 @@ export function ResearchWorkspace() {
                       <p>{language === "zh" ? "默认使用报告库 + 公开网络；每条结论都应该标注来源。" : "Hybrid is the default: report library plus public web, with sources attached to material claims."}</p>
                     </div>
                     <span className="chat-engine">
-                      DeepSeek · Tavily
+                      DeepSeek V4 Flash
+                      <small>{thinkingEnabled
+                        ? (language === "zh" ? "Thinking 开启 · Tavily" : "Thinking on · Tavily")
+                        : (language === "zh" ? "Thinking 关闭 · Tavily" : "Thinking off · Tavily")}</small>
                       <small>{language === "zh" ? "拖动面板右下角调整大小" : "Drag the lower-right corner to resize"}</small>
                     </span>
                   </div>
@@ -1769,6 +1805,29 @@ export function ResearchWorkspace() {
                         </button>
                       ))}
                     </fieldset>
+                    <div className="thinking-picker" aria-label={language === "zh" ? "Thinking 模式" : "Thinking mode"}>
+                      <span>DeepSeek V4 Flash</span>
+                      <button
+                        type="button"
+                        className={thinkingEnabled ? "active" : ""}
+                        onClick={() => {
+                          setThinkingEnabled(true);
+                          window.localStorage.setItem("level-grind.askai-thinking.v1", "true");
+                        }}
+                      >
+                        {language === "zh" ? "Thinking 开" : "Thinking on"}
+                      </button>
+                      <button
+                        type="button"
+                        className={!thinkingEnabled ? "active" : ""}
+                        onClick={() => {
+                          setThinkingEnabled(false);
+                          window.localStorage.setItem("level-grind.askai-thinking.v1", "false");
+                        }}
+                      >
+                        {language === "zh" ? "Thinking 关" : "Thinking off"}
+                      </button>
+                    </div>
                     <textarea name="question" required rows={4} value={questionDraft} onChange={(event) => setQuestionDraft(event.target.value)} placeholder={c.askPlaceholder} />
                     <div className="composer-foot">
                       <span>{mode === "reports" ? c.evidenceReports : mode === "web" ? c.evidenceWeb : c.evidenceHybrid}</span>
@@ -1895,21 +1954,28 @@ export function ResearchWorkspace() {
                                 ? "Analyst"
                                 : member.role}
                         </span>
+                        {member.role !== "owner" && (
+                          <span className="member-actions">
+                            <button type="button" onClick={() => setEditingMember(member)}>{language === "zh" ? "编辑" : "Edit"}</button>
+                            <button type="button" className="danger" onClick={() => void removeMember(member)}>{language === "zh" ? "删除" : "Remove"}</button>
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <form className="member-form" onSubmit={saveMember}>
-                    <label>{c.name}<input name="displayName" maxLength={120} /></label>
-                    <label>{c.email}<input name="email" type="email" required /></label>
+                  <form key={editingMember?.email || "new-member"} className="member-form" onSubmit={saveMember}>
+                    <label>{c.name}<input name="displayName" maxLength={120} defaultValue={editingMember?.display_name || ""} /></label>
+                    <label>{c.email}<input name="email" type="email" required readOnly={Boolean(editingMember)} defaultValue={editingMember?.email || ""} /></label>
                     <label>
                       {c.role}
-                      <select name="role" defaultValue="analyst">
+                      <select name="role" defaultValue={editingMember?.role || "analyst"}>
                         <option value="analyst">Analyst</option>
                         <option value="pm">PM</option>
                         <option value="gem_pm">GEM PM</option>
                       </select>
                     </label>
-                    <button className="upload-button" disabled={saving}>{saving ? c.saving : c.addUpdate}</button>
+                    <button className="upload-button" disabled={saving}>{saving ? c.saving : editingMember ? (language === "zh" ? "保存修改" : "Save changes") : c.addUpdate}</button>
+                    {editingMember && <button type="button" className="quiet-button" onClick={() => setEditingMember(null)}>{language === "zh" ? "取消" : "Cancel"}</button>}
                   </form>
                 </article>
               )}
