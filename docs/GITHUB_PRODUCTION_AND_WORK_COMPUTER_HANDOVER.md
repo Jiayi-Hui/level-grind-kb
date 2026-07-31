@@ -68,6 +68,15 @@ The workflow deploys every `production` push, so the organizational control is
 to keep `production` quiet: only a reviewed release-candidate promotion may
 reach it.
 
+Current production handoff (2026-07-31):
+
+- deployed source commit: `1f3472f`;
+- GitHub Actions run: `30621461864`;
+- canonical domain: `https://level-grind.com`;
+- the one-year `EDGEONE_API_TOKEN` is stored as a GitHub encrypted secret;
+- Supabase Singapore and the masked EdgeOne server variables are active;
+- homepage, unauthenticated shared-API guard, and Agent health probes pass.
+
 The GitHub repository must contain one Actions secret:
 
 ```text
@@ -173,6 +182,12 @@ Confirm the production handoff point before beginning new work:
 git fetch github
 git log --oneline --decorate -5
 ```
+
+The first company-computer acceptance check is intentionally human: sign in as
+the owner and co-manager in two independent browser sessions, create one public
+test Claim, confirm cross-refresh visibility, then edit it from the second
+session and confirm the owner sees the new version. Remove the test Claim
+through the UI afterward; its audit row should remain.
 
 Create a feature branch before changing code:
 

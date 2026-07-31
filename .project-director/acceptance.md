@@ -298,10 +298,10 @@
 - [x] The shared-data schema covers user-private AskAI state, explicit
   private-to-team publication, team datasets, ACL metadata, objects, versions,
   soft deletion, audit, background jobs, and private/team vector namespaces.
-- [ ] Automatic deployment is active only after the encrypted
+- [x] Automatic deployment is active after the encrypted
   `EDGEONE_API_TOKEN` secret is present.
-- [ ] Production database provisioning and migration await company-side cloud
-  approval.
+- [x] The public/sanitized Supabase Singapore pilot is provisioned and migrated;
+  company-sensitive data remains outside its approved scope.
 
 ## V5.13 Shared persistence takeover gate
 
@@ -346,5 +346,7 @@
   integration, and deployment responsibilities.
 - [x] The next production push contains the complete shared-persistence release
   candidate and its QA evidence.
-- [ ] Production is verified once after promotion with authenticated critical
-  paths and canonical-domain probes.
+- [x] Production is verified after promotion with canonical-domain, function
+  health, and unauthenticated access-control probes.
+- [ ] Owner/co-manager cross-user mutation remains a physical-session check on
+  the company computer.

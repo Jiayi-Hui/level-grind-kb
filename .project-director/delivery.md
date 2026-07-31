@@ -361,3 +361,7 @@ and explicit Report/Web/Hybrid evidence modes.
   variables. No database secret or colleague address is committed to GitHub.
 - AskAI chat persistence, shared report/model files, automatic market refresh,
   and backup automation remain explicit follow-up increments.
+- Production source `1f3472f` deployed through GitHub Actions run
+  `30621461864`. The canonical site and both new function boundaries passed
+  post-deploy probes; the two-real-user visibility check is handed to the first
+  company-computer session.

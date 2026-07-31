@@ -339,3 +339,18 @@ the production AI Capex view remains integrated in the authenticated
 | Automated validation | Pass | ESLint, 26/26 tests, portable Claim/AIDC publication, Tencent Vite build, and `git diff --check` pass |
 | Two-user production check | Pending after deployment | Owner/Tiff cross-refresh verification requires the newly deployed EdgeOne functions and both physical Clerk sessions |
 | Residual scope | Explicit | AskAI chat persistence, report/model object storage, automatic price jobs, and restore automation remain later increments |
+
+### Production evidence
+
+- Source commit `1f3472f` promoted through `feature/shared-persistence` to
+  `main` and `production`.
+- GitHub Actions run `30621461864` completed successfully; build, 26 tests,
+  lint, and EdgeOne deployment all passed.
+- `https://level-grind.com/` resolves to the canonical `www` site and returns
+  HTTP 200 with `assets/index-DiSYN6qU.js`.
+- `/api/shared-claims` returns HTTP 401 without a Clerk token, proving the new
+  route is deployed and fail-closed.
+- `/api/agent-chat` returns HTTP 200 with `deepseek-v4-flash`, DeepSeek/Tavily,
+  and authentication-required metadata.
+- Authenticated owner/co-manager cross-refresh remains the first company-device
+  acceptance check; it is not represented as completed evidence.
