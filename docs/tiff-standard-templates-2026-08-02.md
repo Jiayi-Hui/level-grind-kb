@@ -1,7 +1,7 @@
 # Tiff Standard Templates Mapping
 
 Date: 2026-08-02  
-Context: Tiff said the monthly meeting tonight will briefly cover upcoming team arrangements and standardized templates. He tagged Jiayi to check whether Level Grind's knowledge base can add several new file types based on these materials, then use them for tracking and analysis.
+Context: Tiff said the monthly meeting tonight will briefly cover upcoming team arrangements and standardized templates. He tagged Jiayi to check whether Level Grind's knowledge base can add several new file types based on these materials, then use them for tracking and analysis. Tiff also asked Tiana to share the Excel and Word/PDF templates she uses for each weekly; Tiana shared her weekly tracker workbook and a 20260726 weekly PDF.
 
 ## Candidate Knowledge Base Files
 
@@ -85,13 +85,53 @@ Tracking and analysis use:
 - Compare idea outcomes by sub-sector, analyst, direction, catalyst type, and consensus gap.
 - Provide a structured upstream layer for later quant/event-study/backtest work.
 
+### 4. Weekly Tracker And Weekly Memo
+
+Source templates:
+
+- `Weekly  Tracker_Tiana(1).xlsx`
+- `20260726 Weekly(1).pdf`
+
+Purpose: capture each analyst's recurring weekly research process, combining a structured tracker with a narrative weekly memo.
+
+Observed workbook structure:
+
+- `Summary`: industry and company rows, latest update notes, company name lookup, market cap, net profit estimates, PE, net profit YoY, and other model or market fields.
+- `Short Interest`: date-stamped short-interest snapshots and changes for consumer-related stocks.
+
+Observed memo structure:
+
+- Narrative weekly organized by sector and company.
+- Includes company updates, earnings previews, management or channel comments, guidance changes, one-off impacts, valuation comments, and analyst judgment.
+- The PDF is less structured than the tracker but closer to the analyst's natural idea-note flow.
+
+Core fields:
+
+- Analyst or owner
+- Weekly date and version
+- Sector, industry, company, ticker
+- Latest update text
+- Earnings preview or result
+- Guidance or consensus-expectation change
+- Key data points and source type
+- Valuation or multiple comment
+- Short-interest level and change, where applicable
+- Analyst judgment, conviction change, and follow-up items
+
+Tracking and analysis use:
+
+- Convert yellow/latest-update style tracker changes into timestamped evidence updates.
+- Link narrative weekly notes to company idea, claim, catalyst, and expectation-gap records.
+- Track whether weekly signals later led to estimate changes, price reaction, or catalyst confirmation.
+- Compare recurring weekly inputs across analysts once more team templates are shared.
+
 ## Product Implication For Level Grind
 
 These templates should not become a static attachment archive. They should become standardized knowledge-base file types that preserve ex-ante research logic, PM validation, version history, and later outcomes.
 
 Recommended first implementation order:
 
-1. Add file type metadata for `Investment Memo`, `Meeting Notes`, and `Coverage And Trade View`.
+1. Add file type metadata for `Investment Memo`, `Meeting Notes`, `Coverage And Trade View`, and `Weekly Tracker / Weekly Memo`.
 2. Preserve the original source file and extract a structured summary layer.
 3. Require company/ticker, source date, author or owner, and PM validation status.
 4. Link extracted fields to existing company idea, claim, catalyst, upside/downside, and backtest entities.
@@ -102,5 +142,7 @@ Open questions for Tiff:
 - Which templates are mandatory for the whole team, and which are optional?
 - Should analysts upload drafts directly, or should Tiff validate and hand over files before they enter Level Grind?
 - Does `Coverage And Trade View` belong at team level, sub-sector level, or analyst level?
+- Should `Weekly Tracker` and `Weekly Memo` be treated as one linked weekly package or two separate file types?
+- Which weekly fields should be standardized across all analysts versus left in each analyst's own format?
 - What is the first tracking question Tiff wants answered: idea hit rate, catalyst follow-through, conviction change accuracy, consensus-gap realization, or price reaction?
 - What counts as an analysis result good enough for the first demo?
