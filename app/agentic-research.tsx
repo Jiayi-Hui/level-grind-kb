@@ -62,12 +62,18 @@ type ContextEntry = {
 type ModelCapability = { model: string; thinkingSupported: boolean };
 type ModelProvider = "default" | "openrouter";
 
-// Presentation-only preview choices. They never activate a provider or send a
-// request until the authenticated server capability list contains the exact id.
+// Presentation-only choices verified against OpenRouter's public /api/v1/models
+// catalogue on 2026-08-04. They never activate a provider or send a request
+// until the authenticated server capability list contains the exact id.
 const openRouterPreviewModels = [
-  { model: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet 4.6" },
-  { model: "openai/gpt-4.1", label: "GPT-4.1" },
-  { model: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { model: "openai/gpt-5.6-sol", label: "GPT-5.6 Sol" },
+  { model: "openai/gpt-5.6-terra", label: "GPT-5.6 Terra" },
+  { model: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna" },
+  { model: "openai/gpt-5.5", label: "GPT-5.5" },
+  { model: "anthropic/claude-opus-4.8", label: "Claude Opus 4.8" },
+  { model: "anthropic/claude-fable-5", label: "Claude Fable 5" },
+  { model: "z-ai/glm-5.2", label: "GLM-5.2" },
+  { model: "moonshotai/kimi-k3", label: "Kimi K3" },
 ] as const;
 
 const storeKey = "level-grind.agentic-research.v1";

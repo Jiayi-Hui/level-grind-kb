@@ -1276,7 +1276,7 @@ button { color: inherit; }
 .agentic-engine { display: grid; justify-items: end; gap: 3px; text-align: right; }
 .agentic-engine strong { color: var(--green); font-size: 10px; letter-spacing: .04em; }
 .agentic-engine small { color: var(--muted); font-size: 8px; }
-.agentic-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); height: 720px; min-height: 620px; }
+.agentic-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); height: clamp(420px, calc(100dvh - 330px), 780px); min-height: 0; }
 .agentic-sidebar {
   display: grid;
   grid-template-rows: auto minmax(90px, .55fr) auto minmax(120px, 1fr);
@@ -1325,8 +1325,9 @@ button { color: inherit; }
 .agentic-row-main strong { color: var(--ink); font-size: 10px; }
 .agentic-row-main small { margin-top: 3px; color: var(--muted); font-size: 8px; }
 .agentic-empty-list { margin: 15px 12px; color: var(--muted); font-size: 9px; }
-.agentic-chat { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; min-width: 0; min-height: 0; }
+.agentic-chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
 .agentic-messages {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1428,6 +1429,9 @@ button { color: inherit; }
   animation: spin .8s linear infinite;
 }
 .agentic-composer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 9px;
@@ -1473,7 +1477,7 @@ button { color: inherit; }
   cursor: pointer;
 }
 .agentic-composer > button:disabled { opacity: .45; cursor: default; }
-.agentic-status { margin: 0; padding: 7px 13px; border-top: 1px solid var(--line); background: #edf3ee; color: var(--green); font-size: 9px; }
+.agentic-status { flex: 0 0 auto; margin: 0; padding: 7px 13px; border-top: 1px solid var(--line); background: #edf3ee; color: var(--green); font-size: 9px; }
 .agentic-status.error { background: #f7e9e5; color: #9f402e; }
 
 .personal-knowledge-live {
@@ -1554,7 +1558,7 @@ button { color: inherit; }
   .agentic-model-picker select { max-width: min(76vw, 260px); }
   .agentic-layout { grid-template-columns: 1fr; height: auto; }
   .agentic-sidebar { height: 330px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .agentic-chat { height: 690px; }
+  .agentic-chat { height: min(690px, calc(100dvh - 104px)); min-height: 520px; }
   .agentic-messages { padding: 14px 11px; }
   .agentic-message { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; }
   .agentic-message > span { width: 28px; height: 28px; }

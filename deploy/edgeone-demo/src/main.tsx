@@ -20,11 +20,11 @@ const viewCopy = {
   },
   notes: {
     eyebrow: "TEAM RESEARCH",
-    title: "Notes",
+    title: "Notes库",
   },
   ideas: {
     eyebrow: "IDEA TRACKING",
-    title: "Idea Book",
+    title: "Ideas库",
   },
   events: {
     eyebrow: "CLAIM LEDGER",
@@ -97,14 +97,14 @@ function ContinuityApp() {
             onClick={() => selectView("notes")}
           >
             <span className="nav-symbol">▧</span>
-            <span>Notes</span>
+            <span>Notes库</span>
           </button>
           <button
             className={`nav-item ${view === "ideas" ? "active" : ""}`}
             onClick={() => selectView("ideas")}
           >
             <span className="nav-symbol">◫</span>
-            <span>Idea Book</span>
+            <span>Ideas库</span>
           </button>
           <button
             className={`nav-item ${view === "events" ? "active" : ""}`}

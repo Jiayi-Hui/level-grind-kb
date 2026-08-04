@@ -5,10 +5,16 @@ type Note = {
   id: string;
   title: string;
   body?: string;
+  templateFields?: Record<string, string>;
   sensitivityLevel: "public" | "internal" | "confidential" | "restricted";
   aiProcessingAllowed: boolean;
   externalSearchAllowed: boolean;
   downloadAllowed: boolean;
+  viewAllowed?: boolean;
+  internalAiAllowed?: boolean;
+  externalAiAllowed?: boolean;
+  webSearchAllowed?: boolean;
+  redactionRequired?: boolean;
   sourceKind: string;
   version: number;
   createdAt: string;
@@ -116,6 +122,10 @@ export function SharedNotesView() {
   const [aiProcessingAllowed, setAiProcessingAllowed] = useState(false);
   const [externalSearchAllowed, setExternalSearchAllowed] = useState(false);
   const [downloadAllowed, setDownloadAllowed] = useState(false);
+  const [viewAllowed, setViewAllowed] = useState(true);
+  const [externalAiAllowed, setExternalAiAllowed] = useState(false);
+  const [redactionRequired, setRedactionRequired] = useState(false);
+  const [templateFields, setTemplateFields] = useState<Record<string, string>>({ meetingType: "", meetingDate: "", analyst: "", attendeesContext: "", executiveSummary: "", keyTakeaway: "", changeVsPreviousView: "", expectationGap: "", qandaHighlights: "", followUps: "" });
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(demoMode || realReadEnabled);
   const [saving, setSaving] = useState(false);
@@ -170,13 +180,13 @@ export function SharedNotesView() {
   }, [load]);
 
   const resetComposer = () => {
-    setSelected(null); setTitle(""); setBody(""); setSourceKind("manual_note"); setSensitivityLevel("internal"); setAiProcessingAllowed(false); setExternalSearchAllowed(false); setDownloadAllowed(false); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setPreviewState("ready"); setMessage("");
+    setSelected(null); setTitle(""); setBody(""); setSourceKind("manual_note"); setSensitivityLevel("internal"); setAiProcessingAllowed(false); setExternalSearchAllowed(false); setDownloadAllowed(false); setViewAllowed(true); setExternalAiAllowed(false); setRedactionRequired(false); setTemplateFields({ meetingType: "", meetingDate: "", analyst: "", attendeesContext: "", executiveSummary: "", keyTakeaway: "", changeVsPreviousView: "", expectationGap: "", qandaHighlights: "", followUps: "" }); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setPreviewState("ready"); setMessage("");
   };
   const choose = async (note: Note) => {
     setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setPreviewState("ready");
     if (demoMode) {
       setSelected(note); setTitle(note.title); setBody(note.body || ""); setSourceKind(note.sourceKind || "manual_note");
-      setSensitivityLevel(note.sensitivityLevel); setAiProcessingAllowed(note.aiProcessingAllowed); setExternalSearchAllowed(note.externalSearchAllowed); setDownloadAllowed(note.downloadAllowed);
+      setSensitivityLevel(note.sensitivityLevel); setAiProcessingAllowed(note.internalAiAllowed ?? note.aiProcessingAllowed); setExternalSearchAllowed(note.webSearchAllowed ?? note.externalSearchAllowed); setDownloadAllowed(note.downloadAllowed); setViewAllowed(note.viewAllowed !== false); setExternalAiAllowed(note.externalAiAllowed === true); setRedactionRequired(note.redactionRequired === true); setTemplateFields(note.templateFields || {});
       return;
     }
     if (!realReadEnabled) return;
@@ -185,7 +195,7 @@ export function SharedNotesView() {
       const payload = await responseJson(await request(`/api/shared-notes/${note.id}`, { cache: "no-store" })) as { note: Note };
       const full = payload.note;
       setSelected(full); setTitle(full.title); setBody(full.body || ""); setSourceKind(full.sourceKind || "manual_note");
-      setSensitivityLevel(full.sensitivityLevel); setAiProcessingAllowed(full.aiProcessingAllowed); setExternalSearchAllowed(full.externalSearchAllowed); setDownloadAllowed(full.downloadAllowed);
+      setSensitivityLevel(full.sensitivityLevel); setAiProcessingAllowed(full.internalAiAllowed ?? full.aiProcessingAllowed); setExternalSearchAllowed(full.webSearchAllowed ?? full.externalSearchAllowed); setDownloadAllowed(full.downloadAllowed); setViewAllowed(full.viewAllowed !== false); setExternalAiAllowed(full.externalAiAllowed === true); setRedactionRequired(full.redactionRequired === true); setTemplateFields(full.templateFields || {});
       const attachmentPayload = await responseJson(await request(`/api/shared-notes/${full.id}/attachments`, { cache: "no-store" })) as { attachments?: Attachment[] };
       setAttachments(attachmentPayload.attachments || []);
     } catch (error) { setMessage(error instanceof Error ? error.message : "无法打开 Note。"); }
@@ -197,8 +207,8 @@ export function SharedNotesView() {
     if (demoMode) {
       const now = new Date().toISOString();
       const next: Note = selected
-        ? { ...selected, title: title.trim(), body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed, version: selected.version + 1, updatedAt: now }
-        : { id: `demo-note-${now}`, title: title.trim(), body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed, version: 1, createdAt: now, updatedAt: now, owner: { display_name: "Demo user" } };
+        ? { ...selected, title: title.trim(), body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, redactionRequired, templateFields, version: selected.version + 1, updatedAt: now }
+        : { id: `demo-note-${now}`, title: title.trim(), body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, redactionRequired, templateFields, version: 1, createdAt: now, updatedAt: now, owner: { display_name: "Demo user" } };
       setNotes((current) => selected ? current.map((item) => item.id === selected.id ? next : item) : [next, ...current]);
       setSelected(next); setPreviewState("success"); setWriteConfirmation(""); setMessage(queuedFile ? "本地演示记录已更新；附件没有上传，刷新页面后记录和文件都会消失。" : "本地演示记录已更新；刷新页面即还原，没有发送到团队服务。");
       return;
@@ -213,7 +223,7 @@ export function SharedNotesView() {
       const payload = await responseJson(await request(endpoint, {
         method: selected ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version ?? 0, title, body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed }),
+        body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version ?? 0, title, body, sourceKind, sensitivityLevel, templateFields, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, downloadAllowed, redactionRequired, aiProcessingAllowed, externalSearchAllowed }),
       })) as { note: Note };
       const refreshed = await responseJson(await request("/api/shared-notes", { cache: "no-store" })) as { notes?: Note[] };
       const confirmed = (refreshed.notes || []).find((note) => note.id === payload.note?.id);
@@ -322,29 +332,33 @@ export function SharedNotesView() {
   };
 
   return <section className="shared-notes-workspace">
-    <header className="shared-notes-header shared-notes-toolbar" aria-label="Notes 操作">
+    <header className="shared-notes-header shared-notes-toolbar" aria-label="Notes库操作">
       <div className="shared-notes-actions">
         <span className={demoMode ? "demo-pill" : "coming-pill"}>{demoMode ? "本地演示模式 · 不会上传或写入团队" : !realReadEnabled ? "团队 Notes API 未启用" : !sharedWriteEnabled ? "团队写入开关未启用" : "团队写入待确认"}</span>
         {demoMode && <label className="research-preview-control">预览状态<select value={previewState} onChange={(event) => setPreviewState(event.target.value as PreviewState)}>{Object.entries({ loading: "加载中", empty: "空状态", error: "错误", uploading: "上传中", processing: "后台解析中", partial: "部分完成", ocr_required: "需要 OCR", failed: "解析失败", conflict: "版本冲突", success: "成功", ready: "正常" }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
-        <button className="quiet-button" onClick={() => void load()} disabled={loading || (!demoMode && !realReadEnabled)}>{loading ? "刷新中…" : "刷新"}</button><button onClick={resetComposer} disabled={!writeOpen}>＋ 新建 Note</button>
+        <button className="quiet-button" onClick={() => void load()} disabled={loading || (!demoMode && !realReadEnabled)}>{loading ? "刷新中…" : "刷新"}</button><button onClick={resetComposer} disabled={!writeOpen}>＋ 新建会议纪要</button>
       </div>
     </header>
     <p className="research-preview-boundary">{demoMode ? "当前是本地演示：选择文件、保存 Note 都不会发送到 API、COS 或团队数据库。" : "附件先由后端初始化，再由浏览器直传 COS，最后由后台解析。新建 Note 会先保存主体再上传暂存附件；任何失败都会明确显示，不会伪装成功。"}</p>
     {previewState !== "ready" && <div className={`research-preview-state state-${previewState}`} role="status"><strong>{stateCopy[previewState].title}</strong><span>{stateCopy[previewState].detail}</span></div>}
     {unavailable ? <div className="shared-notes-unavailable"><strong>共享 Notes 暂不可用</strong><p>{message}</p><button className="quiet-button" onClick={() => void load()}>重试</button></div> : <div className="shared-notes-layout">
       <aside className="shared-notes-list"><input aria-label="检索 Notes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="检索标题或正文" />
-        <div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条共享 Notes`}</div>
-        {!loading && !filtered.length && <p className="shared-notes-empty">还没有团队 Notes。</p>}
+        <div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条共享纪要`}</div>
+        {!loading && !filtered.length && <p className="shared-notes-empty">还没有团队会议纪要。</p>}
         {filtered.map((note) => <button key={note.id} className={`shared-note-row ${selected?.id === note.id ? "selected" : ""}`} onClick={() => void choose(note)}><strong>{note.title}</strong><span>{note.owner?.display_name || note.owner?.email || "团队成员"} · {new Date(note.updatedAt).toLocaleDateString("zh-CN")}</span><small>{note.sourceKind} · {note.sensitivityLevel}</small></button>)}
       </aside>
       <form className="shared-notes-editor" onSubmit={save}>
-        <div className="shared-notes-editor-head"><div><p className="eyebrow">{selected ? "EDIT SHARED NOTE" : "NEW SHARED NOTE"}</p><h3>{selected ? "编辑共享 Note" : "新增共享 Note"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
+        <div className="shared-notes-editor-head"><div><p className="eyebrow">MEETING NOTES</p><h3>{selected ? "编辑会议纪要" : "新增会议纪要"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
         <div className="editor-metadata-grid notes-metadata-grid">
-          <label className="metadata-title"><span>标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={240} placeholder="例如：NVDA management meeting · key takeaways" /></label>
+          <label className="metadata-title"><span>标的名称 / 标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={240} placeholder="例如：NVDA（NVDA）— Management Meeting" /></label>
+          <label><span>会议类型</span><select value={templateFields.meetingType || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, meetingType: event.target.value }))}><option value="">请选择</option><option>Management Meeting</option><option>Earnings Call</option><option>Expert Call</option><option>Site Visit</option></select></label>
+          <label><span>日期</span><input type="date" value={templateFields.meetingDate || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, meetingDate: event.target.value }))} /></label>
+          <label><span>Analyst</span><input value={templateFields.analyst || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, analyst: event.target.value }))} placeholder="Name" /></label>
           <label><span>来源类型</span><select value={sourceKind} onChange={(event) => setSourceKind(event.target.value)}><option value="manual_note">手动 Note</option><option value="meeting_note">会议纪要</option><option value="weekly_note">周度跟踪</option><option value="uploaded_pdf">PDF 文档</option><option value="uploaded_docx">DOCX 文档</option><option value="uploaded_text">上传文本</option></select></label>
-          <label><span>敏感级别</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Note["sensitivityLevel"])}><option value="public">公开</option><option value="internal">内部</option><option value="confidential">机密</option><option value="restricted">受限</option></select></label>
+          <label><span>数据分级</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Note["sensitivityLevel"])}><option value="public">Public · 公开</option><option value="internal">Internal · 内部</option><option value="confidential">Confidential · 机密</option><option value="restricted">Restricted · 严格受限</option></select></label>
         </div>
-        <fieldset className="shared-notes-flags"><legend>使用权限</legend><label><input type="checkbox" checked={aiProcessingAllowed} onChange={(event) => setAiProcessingAllowed(event.target.checked)} />允许团队 AI 处理</label><label><input type="checkbox" checked={externalSearchAllowed} onChange={(event) => setExternalSearchAllowed(event.target.checked)} />允许外部联网检索</label><label><input type="checkbox" checked={downloadAllowed} onChange={(event) => setDownloadAllowed(event.target.checked)} />允许下载</label></fieldset>
+        <fieldset className="shared-notes-flags"><legend>访问与处理权限</legend><label><input type="checkbox" checked={viewAllowed} onChange={(event) => setViewAllowed(event.target.checked)} />允许团队用户查看</label><label><input type="checkbox" checked={downloadAllowed} onChange={(event) => setDownloadAllowed(event.target.checked)} />允许下载</label><label><input type="checkbox" checked={aiProcessingAllowed} onChange={(event) => setAiProcessingAllowed(event.target.checked)} />允许内部 AI</label><label><input type="checkbox" checked={externalAiAllowed} onChange={(event) => setExternalAiAllowed(event.target.checked)} />允许外部 AI</label><label><input type="checkbox" checked={externalSearchAllowed} onChange={(event) => setExternalSearchAllowed(event.target.checked)} />允许 Web Search</label><label><input type="checkbox" checked={redactionRequired} onChange={(event) => setRedactionRequired(event.target.checked)} />发送外部前需脱敏</label></fieldset>
+        <div className="editor-metadata-grid notes-metadata-grid"><label><span>Executive Summary</span><textarea value={templateFields.executiveSummary || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, executiveSummary: event.target.value }))} placeholder="3–5 sentences: key takeaway, what changed, and conviction impact." /></label><label><span>Key Takeaway</span><textarea value={templateFields.keyTakeaway || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, keyTakeaway: event.target.value }))} /></label><label><span>Change vs. Previous View</span><textarea value={templateFields.changeVsPreviousView || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, changeVsPreviousView: event.target.value }))} /></label><label><span>Potential Expectation Gap</span><textarea value={templateFields.expectationGap || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, expectationGap: event.target.value }))} /></label><label><span>Attendees & Context</span><textarea value={templateFields.attendeesContext || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, attendeesContext: event.target.value }))} /></label><label><span>Q&amp;A Highlights</span><textarea value={templateFields.qandaHighlights || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, qandaHighlights: event.target.value }))} /></label><label><span>Follow-ups / Action Items</span><textarea value={templateFields.followUps || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, followUps: event.target.value }))} /></label></div>
         <input ref={fileInput} type="file" accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden onChange={(event) => void importDocument(event)} />
         <div className="notes-content-grid">
           <section className="notes-file-panel" aria-label="上传与文件状态">

@@ -35,14 +35,43 @@ async function clientRecord(record, env) {
   const result = { ...record, [plainField]: await open(record[secretField], env, `${record.resource}:${record.id}`) };
   delete result[secretField]; return result;
 }
-async function listRecords(resource, env) {
+function managerEmails(env) {
+  return new Set([
+    env.LEVEL_GRIND_OWNER_EMAIL,
+    ...String(env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(","),
+  ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
+}
+function canView(record, actor, env) {
+  return record.viewAllowed !== false
+    || record.owner?.user_id === actor.subject
+    || managerEmails(env).has(String(actor.email || "").trim().toLowerCase());
+}
+function templateFields(value, resource) {
+  const allowed = resource === "notes"
+    ? ["meetingType", "meetingDate", "analyst", "attendeesContext", "executiveSummary", "keyTakeaway", "changeVsPreviousView", "expectationGap", "qandaHighlights", "followUps"]
+    : ["marketCap", "fwdPe", "analyst", "businessIndustryOverview", "consensusGap", "financialForecast", "valuation", "catalysts"];
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(allowed.map((key) => [key, clean(source[key], 40_000)]));
+}
+function policyPayload(value) {
+  return {
+    sensitivityLevel: ["public", "internal", "confidential", "restricted"].includes(value.sensitivityLevel) ? value.sensitivityLevel : "internal",
+    viewAllowed: value.viewAllowed !== false,
+    downloadAllowed: Boolean(value.downloadAllowed),
+    internalAiAllowed: Boolean(value.internalAiAllowed ?? value.aiProcessingAllowed),
+    externalAiAllowed: Boolean(value.externalAiAllowed),
+    webSearchAllowed: Boolean(value.webSearchAllowed ?? value.externalSearchAllowed),
+    redactionRequired: Boolean(value.redactionRequired),
+  };
+}
+async function listRecords(resource, env, actor) {
   const listing = await records.list({ prefix: `${resource}/`, consistency: "strong", limit: 500 });
   const stored = await Promise.all(listing.blobs.map(({ key }) => records.get(key, { type: "json", consistency: "strong" })));
-  const expanded = await Promise.all(stored.filter((item) => item && !item.deletedAt).map((item) => clientRecord(item, env)));
+  const expanded = await Promise.all(stored.filter((item) => item && !item.deletedAt && canView(item, actor, env)).map((item) => clientRecord(item, env)));
   return expanded.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
-function notePayload(value) { return { title: clean(value.title, 500), sourceKind: clean(value.sourceKind || "manual_note", 100), sensitivityLevel: ["public", "internal", "confidential", "restricted"].includes(value.sensitivityLevel) ? value.sensitivityLevel : "internal", aiProcessingAllowed: Boolean(value.aiProcessingAllowed), externalSearchAllowed: Boolean(value.externalSearchAllowed), downloadAllowed: Boolean(value.downloadAllowed), body: clean(value.body, 200_000) }; }
-function ideaPayload(value) { return { title: clean(value.title, 500), ticker: clean(value.ticker, 120), thesis: clean(value.thesis, 200_000), status: ["draft", "review", "approved", "rejected", "archived"].includes(value.status) ? value.status : "draft", direction: ["long", "short", "watch"].includes(value.direction) ? value.direction : "watch", noteIds: Array.isArray(value.noteIds) ? value.noteIds.map((id) => clean(id, 80)).filter(Boolean).slice(0, 100) : [] }; }
+function notePayload(value) { const policy = policyPayload(value); return { title: clean(value.title, 500), sourceKind: clean(value.sourceKind || "manual_note", 100), templateFields: templateFields(value.templateFields, "notes"), ...policy, aiProcessingAllowed: policy.internalAiAllowed, externalSearchAllowed: policy.webSearchAllowed, body: clean(value.body, 200_000) }; }
+function ideaPayload(value) { return { title: clean(value.title, 500), ticker: clean(value.ticker, 120), thesis: clean(value.thesis, 200_000), status: ["draft", "pending_review", "approved", "rejected", "archived"].includes(value.status) ? value.status : "draft", direction: ["long", "short", "watch"].includes(value.direction) ? value.direction : "watch", noteIds: Array.isArray(value.noteIds) ? value.noteIds.map((id) => clean(id, 80)).filter(Boolean).slice(0, 100) : [], templateFields: templateFields(value.templateFields, "ideas"), ...policyPayload(value) }; }
 async function createRecord(resource, value, actor, env) {
   const payload = resource === "notes" ? notePayload(value) : ideaPayload(value); if (!payload.title) return response({ error: "标题不能为空。" }, 400);
   const id = crypto.randomUUID(); const now = new Date().toISOString(); const secretField = resource === "notes" ? "bodySecret" : "thesisSecret"; const plainField = resource === "notes" ? "body" : "thesis";
@@ -59,7 +88,10 @@ async function mutateRecord(resource, id, request, env, actor) {
   const updated = { ...current, ...payload, [secretField]: await seal(payload[plainField], env, `${resource}:${id}`), [plainField]: undefined, version: current.version + 1, updatedAt: new Date().toISOString(), updatedBy: actor.subject };
   await records.setJSON(recordKey(resource, id), updated, { cacheControl: "no-store" }); return response({ [resource === "notes" ? "note" : "idea"]: await clientRecord(updated, env), configured: true, ingestionFrozen: false });
 }
-async function listAttachments(resource, parentId) {
+async function listAttachments(resource, parentId, actor, env) {
+  const parent = await getRecord(resource, parentId);
+  if (!parent || parent.deletedAt) return null;
+  if (!canView(parent, actor, env)) return false;
   const listing = await records.list({ prefix: "attachments/", consistency: "strong", limit: 500 }); const stored = await Promise.all(listing.blobs.map(({ key }) => records.get(key, { type: "json", consistency: "strong" })));
   return stored.filter((item) => item && !item.deletedAt && item.targetId === parentId && item.targetType === (resource === "notes" ? "note" : "idea")).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
@@ -72,9 +104,9 @@ async function initAttachment(resource, parentId, value, actor) {
   await records.setJSON(attachmentKey(id), attachment, { onlyIfNew: true, cacheControl: "no-store" }); const signed = await files.createUploadUrl(objectKey, { expireSeconds: 900, contentType: mediaType });
   return response({ attachment, upload: { url: signed.url, method: "PUT", headers: { "Content-Type": mediaType }, expiresAt: signed.expiresAt } }, 201);
 }
-async function handleAttachment(resource, suffix, request, actor) {
+async function handleAttachment(resource, suffix, request, actor, env) {
   const parent = suffix.match(/^\/([^/]+)\/attachments$/);
-  if (parent) { if (request.method === "GET") return response({ attachments: await listAttachments(resource, parent[1]), configured: true, ingestionFrozen: false }); if (request.method === "POST") return initAttachment(resource, parent[1], await input(request), actor); }
+  if (parent) { if (request.method === "GET") { const attachments = await listAttachments(resource, parent[1], actor, env); if (attachments === null) return response({ error: "父记录不存在。" }, 404); if (attachments === false) return response({ error: "没有查看权限。" }, 403); return response({ attachments, configured: true, ingestionFrozen: false }); } if (request.method === "POST") return initAttachment(resource, parent[1], await input(request), actor); }
   const item = suffix.match(/^\/([^/]+)(?:\/(complete|retry))?$/); if (!item) return response({ error: "附件路径无效。" }, 404);
   const id = item[1]; const action = item[2] || "status"; const attachment = await records.get(attachmentKey(id), { type: "json", consistency: "strong" }); if (!attachment || attachment.deletedAt) return response({ error: "附件不存在。" }, 404);
   if (request.method === "GET" && action === "status") return response({ attachment });
@@ -86,11 +118,11 @@ async function handleAttachment(resource, suffix, request, actor) {
 
 export async function nativeResearchRequest(request, env, { resource = "notes", suffix = "" } = {}) {
   const actor = await clerkIdentity(request, env);
-  if (resource === "attachments") return handleAttachment("notes", suffix, request, actor);
-  if (/\/attachments(?:\/|$)/.test(suffix)) return handleAttachment(resource, suffix, request, actor);
+  if (resource === "attachments") return handleAttachment("notes", suffix, request, actor, env);
+  if (/\/attachments(?:\/|$)/.test(suffix)) return handleAttachment(resource, suffix, request, actor, env);
   const id = suffix.match(/^\/([^/]+)$/)?.[1];
-  if (!id) { if (request.method === "GET") return response({ [resource]: await listRecords(resource, env), configured: true, ingestionFrozen: false, storage: "tencent-edgeone-blob" }); if (request.method === "POST") return createRecord(resource, await input(request), actor, env); return response({ error: "不支持的请求。" }, 405); }
-  if (request.method === "GET") { const record = await getRecord(resource, id); return record && !record.deletedAt ? response({ [resource === "notes" ? "note" : "idea"]: await clientRecord(record, env), configured: true, ingestionFrozen: false }) : response({ error: "记录不存在。" }, 404); }
+  if (!id) { if (request.method === "GET") return response({ [resource]: await listRecords(resource, env, actor), configured: true, ingestionFrozen: false, storage: "tencent-edgeone-blob" }); if (request.method === "POST") return createRecord(resource, await input(request), actor, env); return response({ error: "不支持的请求。" }, 405); }
+  if (request.method === "GET") { const record = await getRecord(resource, id); if (!record || record.deletedAt) return response({ error: "记录不存在。" }, 404); if (!canView(record, actor, env)) return response({ error: "没有查看权限。" }, 403); return response({ [resource === "notes" ? "note" : "idea"]: await clientRecord(record, env), configured: true, ingestionFrozen: false }); }
   if (["PATCH", "DELETE"].includes(request.method)) return mutateRecord(resource, id, request, env, actor);
   return response({ error: "不支持的请求。" }, 405);
 }

@@ -54,11 +54,11 @@ test("refreshes event price paths through a bounded Yahoo Finance proxy", async 
   ]);
   assert.match(component, /\/api\/market-prices\?symbols=/);
   assert.match(component, /withYahooReturns/);
-  assert.match(component, /5 \* 60 \* 1000/);
+  assert.match(component, /60 \* 60 \* 1000/);
   assert.match(component, /Yahoo Finance 暂不可用，使用已核验快照/);
   assert.match(marketRoute, /query1\.finance\.yahoo\.com\/v8\/finance\/chart/);
   assert.match(marketRoute, /symbols\.length > 10/);
-  assert.match(marketRoute, /s-maxage=300/);
+  assert.match(marketRoute, /s-maxage=3600/);
   assert.doesNotMatch(marketRoute, /API_KEY|SECRET/);
 });
 

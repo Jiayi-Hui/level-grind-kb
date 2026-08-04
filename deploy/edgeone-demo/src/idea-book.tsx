@@ -11,6 +11,14 @@ type Idea = {
   status: IdeaStatus;
   direction: IdeaDirection;
   thesis?: string;
+  templateFields?: Record<string, string>;
+  sensitivityLevel?: "public" | "internal" | "confidential" | "restricted";
+  viewAllowed?: boolean;
+  internalAiAllowed?: boolean;
+  externalAiAllowed?: boolean;
+  webSearchAllowed?: boolean;
+  downloadAllowed?: boolean;
+  redactionRequired?: boolean;
   noteIds?: string[];
   noteTitles?: string[];
   version: number;
@@ -49,7 +57,7 @@ const directions: Record<IdeaDirection, string> = { long: "看多", short: "看�
 
 async function readJson(response: Response) {
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || "Idea Book 服务暂时不可用。");
+  if (!response.ok) throw new Error(payload.error || "Ideas库服务暂时不可用。");
   return payload;
 }
 
@@ -68,6 +76,14 @@ export function IdeaBookView() {
   const [status, setStatus] = useState<IdeaStatus>(demoMode ? fixtures[0].status : "draft");
   const [direction, setDirection] = useState<IdeaDirection>(demoMode ? fixtures[0].direction : "watch");
   const [noteIds, setNoteIds] = useState<string[]>(demoMode ? fixtures[0].noteIds || [] : []);
+  const [sensitivityLevel, setSensitivityLevel] = useState<Idea["sensitivityLevel"]>("internal");
+  const [viewAllowed, setViewAllowed] = useState(true);
+  const [internalAiAllowed, setInternalAiAllowed] = useState(false);
+  const [externalAiAllowed, setExternalAiAllowed] = useState(false);
+  const [webSearchAllowed, setWebSearchAllowed] = useState(false);
+  const [downloadAllowed, setDownloadAllowed] = useState(false);
+  const [redactionRequired, setRedactionRequired] = useState(false);
+  const [templateFields, setTemplateFields] = useState<Record<string, string>>({ marketCap: "", fwdPe: "", analyst: "", businessIndustryOverview: "", consensusGap: "", financialForecast: "", valuation: "", catalysts: "" });
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(demoMode || realReadEnabled);
   const [configured, setConfigured] = useState(false);
@@ -80,13 +96,13 @@ export function IdeaBookView() {
 
   const request = useCallback(async (path: string, init: RequestInit = {}) => {
     const token = await getToken();
-    if (!token && !demoMode) throw new Error("登录凭证不可用；请重新登录后再访问团队 Idea Book 服务。");
+    if (!token && !demoMode) throw new Error("登录凭证不可用；请重新登录后再访问团队 Ideas库服务。");
     return fetch(path, { ...init, headers: { ...(init.headers || {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
   }, [getToken]);
 
   const load = useCallback(async () => {
     if (demoMode) { setLoading(false); setIdeas((current) => current.length ? current : fixtures); setNotes((current) => current.length ? current : demoNotes); return; }
-    if (!realReadEnabled) { setLoading(false); setMessage("共享 Idea Book 的读取与写入尚未在生产环境开放。当前页面不会发送任何 Idea 内容。"); return; }
+    if (!realReadEnabled) { setLoading(false); setMessage("共享 Ideas库的读取与写入尚未在生产环境开放。当前页面不会发送任何 Idea 内容。"); return; }
     setLoading(true);
     try {
       const [ideaPayload, notePayload] = await Promise.all([
@@ -94,7 +110,7 @@ export function IdeaBookView() {
         readJson(await request("/api/shared-notes", { cache: "no-store" })) as Promise<{ notes?: LinkedNote[] }>,
       ]);
       setIdeas(ideaPayload.ideas || []); setNotes(notePayload.notes || []); setConfigured(Boolean(ideaPayload.configured)); setIngestionFrozen(ideaPayload.ingestionFrozen !== false);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Idea Book 服务暂时不可用。"); setPreviewState("error"); }
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Ideas库服务暂时不可用。"); setPreviewState("error"); }
     finally { setLoading(false); }
   }, [request]);
 
@@ -102,7 +118,7 @@ export function IdeaBookView() {
 
   const filtered = useMemo(() => ideas.filter((idea) => `${idea.title} ${idea.ticker || ""} ${idea.thesis || ""} ${idea.owner?.display_name || ""}`.toLowerCase().includes(query.trim().toLowerCase())), [ideas, query]);
   const writeOpen = demoMode || (sharedWriteEnabled && configured && !ingestionFrozen);
-  const populateIdea = (idea: Idea) => { setSelected(idea); setTitle(idea.title); setTicker(idea.ticker || ""); setThesis(idea.thesis || ""); setStatus(idea.status); setDirection(idea.direction || "watch"); setNoteIds(idea.noteIds || []); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setMessage(""); };
+  const populateIdea = (idea: Idea) => { setSelected(idea); setTitle(idea.title); setTicker(idea.ticker || ""); setThesis(idea.thesis || ""); setStatus(idea.status); setDirection(idea.direction || "watch"); setNoteIds(idea.noteIds || []); setSensitivityLevel(idea.sensitivityLevel || "internal"); setViewAllowed(idea.viewAllowed !== false); setInternalAiAllowed(idea.internalAiAllowed === true); setExternalAiAllowed(idea.externalAiAllowed === true); setWebSearchAllowed(idea.webSearchAllowed === true); setDownloadAllowed(idea.downloadAllowed === true); setRedactionRequired(idea.redactionRequired === true); setTemplateFields(idea.templateFields || {}); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setMessage(""); };
   const selectIdea = async (idea: Idea) => {
     if (demoMode) { populateIdea(idea); return; }
     try {
@@ -112,24 +128,24 @@ export function IdeaBookView() {
       setAttachments(attachmentPayload.attachments || []);
     } catch (error) { setMessage(error instanceof Error ? error.message : "无法打开 Idea。"); setPreviewState("error"); }
   };
-  const newIdea = () => { setSelected(null); setTitle(""); setTicker(""); setThesis(""); setStatus("draft"); setDirection("watch"); setNoteIds([]); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setMessage(""); setPreviewState("ready"); };
+  const newIdea = () => { setSelected(null); setTitle(""); setTicker(""); setThesis(""); setStatus("draft"); setDirection("watch"); setNoteIds([]); setSensitivityLevel("internal"); setViewAllowed(true); setInternalAiAllowed(false); setExternalAiAllowed(false); setWebSearchAllowed(false); setDownloadAllowed(false); setRedactionRequired(false); setTemplateFields({ marketCap: "", fwdPe: "", analyst: "", businessIndustryOverview: "", consensusGap: "", financialForecast: "", valuation: "", catalysts: "" }); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setMessage(""); setPreviewState("ready"); };
   const save = async () => {
     if (!title.trim()) { setMessage("请先填写 Idea 标题。"); return; }
     if (demoMode) {
       const now = new Date().toISOString();
       const next: Idea = selected
-        ? { ...selected, title: title.trim(), ticker: ticker.trim(), thesis, status, direction, noteIds, noteTitles: notes.filter((note) => noteIds.includes(note.id)).map((note) => note.title), version: selected.version + 1, updatedAt: now }
-        : { id: `demo-idea-${now}`, title: title.trim(), ticker: ticker.trim(), thesis, status, direction, noteIds, noteTitles: notes.filter((note) => noteIds.includes(note.id)).map((note) => note.title), owner: { display_name: "Demo user" }, version: 1, updatedAt: now };
+        ? { ...selected, title: title.trim(), ticker: ticker.trim(), thesis, status, direction, noteIds, templateFields, sensitivityLevel, viewAllowed, internalAiAllowed, externalAiAllowed, webSearchAllowed, downloadAllowed, redactionRequired, noteTitles: notes.filter((note) => noteIds.includes(note.id)).map((note) => note.title), version: selected.version + 1, updatedAt: now }
+        : { id: `demo-idea-${now}`, title: title.trim(), ticker: ticker.trim(), thesis, status, direction, noteIds, templateFields, sensitivityLevel, viewAllowed, internalAiAllowed, externalAiAllowed, webSearchAllowed, downloadAllowed, redactionRequired, noteTitles: notes.filter((note) => noteIds.includes(note.id)).map((note) => note.title), owner: { display_name: "Demo user" }, version: 1, updatedAt: now };
       setIdeas((current) => selected ? current.map((idea) => idea.id === selected.id ? next : idea) : [next, ...current]); setSelected(next); setPreviewState("success"); setMessage("演示操作完成：只写入本地内存，刷新页面即恢复；没有保存到团队数据。"); return;
     }
     if (!writeOpen) { setMessage("尚未开放上传：共享数据库、对象存储或写入队列未配置完成，不会发送或保存这条 Idea。"); return; }
     try {
       const endpoint = selected ? `/api/shared-ideas/${selected.id}` : "/api/shared-ideas";
-      const payload = await readJson(await request(endpoint, { method: selected ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version || 0, title, ticker, thesis, status, direction, noteIds }) })) as { idea: Idea };
+      const payload = await readJson(await request(endpoint, { method: selected ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version || 0, title, ticker, thesis, status, direction, noteIds, templateFields, sensitivityLevel, viewAllowed, internalAiAllowed, externalAiAllowed, webSearchAllowed, downloadAllowed, redactionRequired }) })) as { idea: Idea };
       const refreshed = await readJson(await request("/api/shared-ideas", { cache: "no-store" })) as { ideas?: Idea[] };
       const confirmed = (refreshed.ideas || []).find((idea) => idea.id === payload.idea?.id);
       if (!confirmed) throw new Error("团队 Idea 写入未能在刷新后确认；已停止后续附件上传。");
-      setIdeas(refreshed.ideas || []); setSelected(confirmed); setWriteConfirmation(`团队写入已确认 · Idea ID: ${confirmed.id} · v${confirmed.version}`); setMessage("已保存并已在共享 Idea Book 列表确认。"); if (queuedFile) await uploadAttachment(confirmed.id, queuedFile);
+      setIdeas(refreshed.ideas || []); setSelected(confirmed); setWriteConfirmation(`团队写入已确认 · Idea ID: ${confirmed.id} · v${confirmed.version}`); setMessage("已保存并已在共享 Ideas库列表确认。"); if (queuedFile) await uploadAttachment(confirmed.id, queuedFile);
     } catch (error) { const text = error instanceof Error ? error.message : "保存失败"; setMessage(text); setPreviewState(/conflict|版本/i.test(text) ? "conflict" : "error"); }
   };
   const loadAttachments = async (ideaId: string) => { const payload = await readJson(await request(`/api/shared-ideas/${ideaId}/attachments`, { cache: "no-store" })) as { attachments?: IdeaAttachment[] }; setAttachments(payload.attachments || []); return payload.attachments || []; };
@@ -164,27 +180,33 @@ export function IdeaBookView() {
   };
 
   const stateCopy: Record<PreviewState, { title: string; detail: string }> = {
-    ready: { title: "", detail: "" }, loading: { title: "Idea Book 正在加载", detail: "正在读取已发布的共享 Ideas。" }, empty: { title: "还没有 Ideas", detail: "目前没有符合筛选条件的记录。" }, error: { title: "Idea Book 暂时无法读取", detail: "请稍后重试；不会将空白页面伪装成没有数据。" }, uploading: { title: "附件正在上传", detail: "原文件正发送到受鉴权的后台解析服务。" }, processing: { title: "后台正在解析", detail: "浏览器不会本地解析附件；等待解析服务完成。" }, partial: { title: "附件已解析，等待审核", detail: "可将解析内容写入或补充到核心判断。" }, ocr_required: { title: "需要 OCR", detail: "附件未返回可检索文字，尚未写入核心判断。" }, failed: { title: "处理未完成", detail: "没有写入共享库。请检查输入后重试。" }, conflict: { title: "版本冲突", detail: "另一位成员已更新此 Idea。请读取最新版本后再合并修改。" }, success: { title: "演示操作完成", detail: "仅在本地演示内存中变更；没有写入团队数据。" },
+    ready: { title: "", detail: "" }, loading: { title: "Ideas库正在加载", detail: "正在读取已发布的共享 Ideas。" }, empty: { title: "还没有 Ideas", detail: "目前没有符合筛选条件的记录。" }, error: { title: "Ideas库暂时无法读取", detail: "请稍后重试；不会将空白页面伪装成没有数据。" }, uploading: { title: "附件正在上传", detail: "原文件正发送到受鉴权的后台解析服务。" }, processing: { title: "后台正在解析", detail: "浏览器不会本地解析附件；等待解析服务完成。" }, partial: { title: "附件已解析，等待审核", detail: "可将解析内容写入或补充到核心判断。" }, ocr_required: { title: "需要 OCR", detail: "附件未返回可检索文字，尚未写入核心判断。" }, failed: { title: "处理未完成", detail: "没有写入共享库。请检查输入后重试。" }, conflict: { title: "版本冲突", detail: "另一位成员已更新此 Idea。请读取最新版本后再合并修改。" }, success: { title: "演示操作完成", detail: "仅在本地演示内存中变更；没有写入团队数据。" },
   };
 
   return <section className="idea-book-workspace shared-notes-workspace">
-    <header className="shared-notes-header shared-notes-toolbar" aria-label="Idea Book 操作"><div className="shared-notes-actions"><span className={demoMode ? "demo-pill" : "coming-pill"}>{demoMode ? "公开/合成演示数据 · 不会保存" : !realReadEnabled ? "团队 Idea API 未启用" : !sharedWriteEnabled ? "团队写入开关未启用" : !configured || ingestionFrozen ? "团队存储或上传服务未就绪" : "团队共享已连接"}</span>{demoMode && <label className="research-preview-control">预览状态<select value={previewState} onChange={(event) => setPreviewState(event.target.value as PreviewState)}>{Object.entries({ loading: "加载中", empty: "空状态", error: "错误", uploading: "上传中", processing: "后台解析中", partial: "部分完成", ocr_required: "需要 OCR", failed: "失败", conflict: "版本冲突", success: "成功", ready: "正常" }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}<button className="quiet-button" onClick={() => void load()} disabled={loading || (!demoMode && !realReadEnabled)}>{loading ? "刷新中…" : "刷新"}</button><button type="button" onClick={newIdea} disabled={!writeOpen}>＋ 新建 Idea</button></div></header>
+    <header className="shared-notes-header shared-notes-toolbar" aria-label="Ideas库操作"><div className="shared-notes-actions"><span className={demoMode ? "demo-pill" : "coming-pill"}>{demoMode ? "公开/合成演示数据 · 不会保存" : !realReadEnabled ? "团队 Idea API 未启用" : !sharedWriteEnabled ? "团队写入开关未启用" : !configured || ingestionFrozen ? "团队存储或上传服务未就绪" : "团队共享已连接"}</span>{demoMode && <label className="research-preview-control">预览状态<select value={previewState} onChange={(event) => setPreviewState(event.target.value as PreviewState)}>{Object.entries({ loading: "加载中", empty: "空状态", error: "错误", uploading: "上传中", processing: "后台解析中", partial: "部分完成", ocr_required: "需要 OCR", failed: "失败", conflict: "版本冲突", success: "成功", ready: "正常" }).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}<button className="quiet-button" onClick={() => void load()} disabled={loading || (!demoMode && !realReadEnabled)}>{loading ? "刷新中…" : "刷新"}</button><button type="button" onClick={newIdea} disabled={!writeOpen}>＋ 新建投资备忘录</button></div></header>
     <p className="research-preview-boundary">附件先由后端初始化，再由浏览器直传 COS，最后由后台解析。新建 Idea 会先保存主体再上传暂存附件；任何失败都会明确显示，不会伪装成功。</p>
     {previewState !== "ready" && <div className={`research-preview-state state-${previewState}`} role="status"><strong>{stateCopy[previewState].title}</strong><span>{stateCopy[previewState].detail}</span></div>}
     <div className="shared-notes-layout">
-      <aside className="shared-notes-list"><input aria-label="检索 Idea Book" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="检索 Idea、Ticker 或负责人" /><div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条 Ideas`}</div>{!loading && !filtered.length && <p className="shared-notes-empty">没有匹配 Idea。</p>}{filtered.map((idea) => <button type="button" key={idea.id} className={`shared-note-row ${selected?.id === idea.id ? "selected" : ""}`} onClick={() => void selectIdea(idea)}><strong>{idea.title}</strong><span>{idea.ticker || "未标注 ticker"} · {idea.owner?.display_name || idea.owner?.email || "团队成员"}</span><small className={`idea-status status-${idea.status}`}>{directions[idea.direction || "watch"]} · {statuses[idea.status]} · v{idea.version}</small></button>)}</aside>
+      <aside className="shared-notes-list"><input aria-label="检索 Ideas库" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="检索 Idea、Ticker 或负责人" /><div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条投资备忘录`}</div>{!loading && !filtered.length && <p className="shared-notes-empty">没有匹配的投资备忘录。</p>}{filtered.map((idea) => <button type="button" key={idea.id} className={`shared-note-row ${selected?.id === idea.id ? "selected" : ""}`} onClick={() => void selectIdea(idea)}><strong>{idea.title}</strong><span>{idea.ticker || "未标注 ticker"} · {idea.owner?.display_name || idea.owner?.email || "团队成员"}</span><small className={`idea-status status-${idea.status}`}>{directions[idea.direction || "watch"]} · {statuses[idea.status]} · v{idea.version}</small></button>)}</aside>
       <div className="shared-notes-editor">
-        <div className="shared-notes-editor-head"><div><p className="eyebrow">{selected ? "EDIT IDEA" : "NEW IDEA"}</p><h3>{selected ? selected.title : "新增 Idea"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
+        <div className="shared-notes-editor-head"><div><p className="eyebrow">INVESTMENT MEMO</p><h3>{selected ? selected.title : "新增投资备忘录"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
         <div className="editor-metadata-grid idea-metadata-grid">
-          <label className="metadata-title"><span>Idea 标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} disabled={!writeOpen} placeholder="例如：IDC pricing recovery" /></label>
+          <label className="metadata-title"><span>标的名称 / Memo 标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} disabled={!writeOpen} placeholder="例如：Company（TICKER）— Initiation" /></label>
           <label><span>Ticker / 覆盖对象</span><input value={ticker} onChange={(event) => setTicker(event.target.value)} disabled={!writeOpen} placeholder="例如：DEMO IDC" /></label>
+          <label><span>Market Cap</span><input value={templateFields.marketCap || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, marketCap: event.target.value }))} disabled={!writeOpen} placeholder="US$ bn" /></label>
+          <label><span>Fwd P/E (NTM)</span><input value={templateFields.fwdPe || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, fwdPe: event.target.value }))} disabled={!writeOpen} placeholder="x" /></label>
+          <label><span>Analyst</span><input value={templateFields.analyst || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, analyst: event.target.value }))} disabled={!writeOpen} placeholder="Name" /></label>
           <label><span>方向</span><select value={direction} onChange={(event) => setDirection(event.target.value as IdeaDirection)} disabled={!writeOpen}>{Object.entries(directions).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label><span>审核状态</span><select value={status} onChange={(event) => setStatus(event.target.value as IdeaStatus)} disabled={!writeOpen}>{Object.entries(statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <label><span>数据分级</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Idea["sensitivityLevel"])} disabled={!writeOpen}><option value="public">Public · 公开</option><option value="internal">Internal · 内部</option><option value="confidential">Confidential · 机密</option><option value="restricted">Restricted · 严格受限</option></select></label>
         </div>
         <div className="idea-content-grid">
-          <label className="shared-notes-body"><span>核心判断</span><textarea value={thesis} onChange={(event) => setThesis(event.target.value)} disabled={!writeOpen} placeholder="写清需要验证的假设、反向证据和下一步条件。" /></label>
+          <label className="shared-notes-body"><span>2. Investment Thesis</span><textarea value={thesis} onChange={(event) => setThesis(event.target.value)} disabled={!writeOpen} placeholder="2–4 个可证伪、与可量化驱动相连的判断。" /></label>
           <fieldset className="shared-notes-flags idea-note-links"><legend>关联 Notes</legend>{notes.map((note) => <label key={note.id}><input type="checkbox" checked={noteIds.includes(note.id)} disabled={!writeOpen} onChange={(event) => setNoteIds((current) => event.target.checked ? [...current, note.id] : current.filter((id) => id !== note.id))} />{note.title}</label>)}</fieldset>
         </div>
+        <div className="editor-metadata-grid idea-metadata-grid"><label><span>1. Business & Industry Overview</span><textarea value={templateFields.businessIndustryOverview || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, businessIndustryOverview: event.target.value }))} disabled={!writeOpen} /></label><label><span>3. Our Case vs. Consensus Expectations</span><textarea value={templateFields.consensusGap || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, consensusGap: event.target.value }))} disabled={!writeOpen} /></label><label><span>4. Financial Forecast</span><textarea value={templateFields.financialForecast || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, financialForecast: event.target.value }))} disabled={!writeOpen} /></label><label><span>5. Historical Valuation</span><textarea value={templateFields.valuation || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, valuation: event.target.value }))} disabled={!writeOpen} /></label><label><span>Upcoming Catalysts</span><textarea value={templateFields.catalysts || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, catalysts: event.target.value }))} disabled={!writeOpen} /></label></div>
+        <fieldset className="shared-notes-flags"><legend>访问与处理权限</legend><label><input type="checkbox" checked={viewAllowed} onChange={(event) => setViewAllowed(event.target.checked)} />允许团队用户查看</label><label><input type="checkbox" checked={downloadAllowed} onChange={(event) => setDownloadAllowed(event.target.checked)} />允许下载</label><label><input type="checkbox" checked={internalAiAllowed} onChange={(event) => setInternalAiAllowed(event.target.checked)} />允许内部 AI</label><label><input type="checkbox" checked={externalAiAllowed} onChange={(event) => setExternalAiAllowed(event.target.checked)} />允许外部 AI</label><label><input type="checkbox" checked={webSearchAllowed} onChange={(event) => setWebSearchAllowed(event.target.checked)} />允许 Web Search</label><label><input type="checkbox" checked={redactionRequired} onChange={(event) => setRedactionRequired(event.target.checked)} />发送外部前需脱敏</label></fieldset>
         <input ref={fileInput} type="file" accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden onChange={chooseAttachment} />
         <section className="idea-attachment-panel" aria-label="Idea 附件上传与解析"><div><p className="eyebrow">ATTACHMENT PARSING</p><h4>附件</h4></div><p>{attachments.length ? `${attachments.length} 个附件` : queuedFile ? "待保存后上传" : "可上传支撑材料"}</p>{attachments.length ? <div className="attachment-list">{attachments.map((attachment) => <div className="notes-file-details" key={attachment.id}><strong title={attachment.fileName}>{attachment.fileName}</strong><span>{(attachment.mediaType || "document").toUpperCase()} · {(attachment.byteSize / 1024 / 1024).toFixed(2)} MB</span><span>{attachmentLabel(attachment)} · v{attachment.version}</span>{attachment.extraction?.warnings?.map((warning) => <small key={warning}>{warning}</small>)}{attachment.parseErrorCode && <small>{attachment.parseErrorCode}</small>}<div className="attachment-actions">{attachment.parseStatus === "failed" && <button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => void retryAttachment(attachment)}>重试</button>}<button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => void deleteAttachment(attachment)}>删除</button>{attachment.extraction?.text && <><button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => replaceThesisFromAttachment(attachment)}>替换判断</button><button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => appendThesisFromAttachment(attachment)}>补充判断</button></>}</div></div>)}</div> : <small>支持 PDF、DOCX、TXT、Markdown；先由后台解析，再决定如何用于 Idea。</small>}<div className="attachment-actions"><button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => fileInput.current?.click()}>选择附件</button>{queuedFile && selected && <button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => void uploadAttachment(selected.id, queuedFile)}>重试上传</button>}</div></section>
         <div className="shared-notes-editor-actions">{demoMode && <button type="button" className="quiet-button" onClick={() => setPreviewState("conflict")}>模拟版本冲突</button>}<button type="button" disabled={!writeOpen || !title.trim()} onClick={() => void save()}>保存 Idea</button>{selected && <button type="button" className="danger-button" disabled={!writeOpen} onClick={() => void remove()}>删除</button>}</div>

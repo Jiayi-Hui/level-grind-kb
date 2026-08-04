@@ -391,7 +391,7 @@ export function EventResearch({
       try {
         const batches = Array.from({ length: Math.ceil(symbols.length / 8) }, (_, index) => symbols.slice(index * 8, index * 8 + 8));
         const payloads = await Promise.all(batches.map(async (batch) => {
-          const response = await fetch(`/api/market-prices?symbols=${encodeURIComponent(batch.join(","))}`, { cache: "no-store" });
+          const response = await fetch(`/api/market-prices?symbols=${encodeURIComponent(batch.join(","))}`);
           const payload = await response.json() as { generatedAt?: string; series?: LiveMarketSeries[]; error?: string };
           if (!response.ok) throw new Error(payload.error || "Yahoo Finance 暂时不可用");
           return payload;
@@ -411,7 +411,10 @@ export function EventResearch({
       }
     };
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 5 * 60 * 1000);
+    // The EdgeOne route keeps a one-hour shared Yahoo cache. An open workspace
+    // revalidates on the same cadence; the first viewer after a quiet period
+    // triggers the next refresh without depending on a personal computer.
+    const interval = window.setInterval(() => void refresh(), 60 * 60 * 1000);
     return () => {
       active = false;
       window.clearInterval(interval);

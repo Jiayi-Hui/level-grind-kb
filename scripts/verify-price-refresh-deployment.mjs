@@ -9,7 +9,7 @@ import { access, readFile } from "node:fs/promises";
 
 const strict = process.argv.includes("--strict");
 const problems = [];
-const required = ["DATABASE_URL"];
+const required = ["DATABASE_URL", "PRICE_REFRESH_TRIGGER_TOKEN"];
 const missing = required.filter((name) => !String(process.env[name] || "").trim());
 
 if (missing.length) problems.push(`Missing required server variables: ${missing.join(", ")}`);
@@ -18,6 +18,9 @@ if (strict && String(process.env.NODE_ENV || "").toLowerCase() !== "production")
 }
 if (strict && String(process.env.DATABASE_SSL || "").toLowerCase() !== "true") {
   problems.push("DATABASE_SSL must be true for a production TencentDB connection.");
+}
+if (strict && String(process.env.PRICE_REFRESH_ENABLED || "").toLowerCase() !== "true") {
+  problems.push("PRICE_REFRESH_ENABLED must be true before enabling a production timer.");
 }
 if (String(process.env.SUPABASE_URL || "").trim() || String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim()) {
   problems.push("Price refresh must target the configured TencentDB shared-research database, not a Supabase fallback.");

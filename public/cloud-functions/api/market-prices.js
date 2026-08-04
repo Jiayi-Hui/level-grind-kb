@@ -64,5 +64,5 @@ export async function onRequestGet({ request }) {
     generatedAt: new Date().toISOString(),
     series,
     errors,
-  }, 200, "public, max-age=60, s-maxage=300, stale-while-revalidate=600");
+  }, 200, "public, max-age=300, s-maxage=3600, stale-while-revalidate=300");
 }

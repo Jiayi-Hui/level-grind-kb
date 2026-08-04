@@ -108,16 +108,21 @@ run in EdgeOne or in an analyst's browser.
 3. Inject only `DATABASE_URL`, `DATABASE_SSL=true`, and `NODE_ENV=production`
    as server-side runtime variables. Do not put database credentials in
    EdgeOne, a browser build, a job event, or GitHub.
-4. Configure a weekday timer after all covered markets have closed. Start with
-   one Hong Kong-time run at 22:00 on weekdays; the worker uses each ticker's
-   exchange timezone and actual Yahoo sessions, so a single refresh safely
-   handles US/HK/China listings. The PostgreSQL advisory lock makes overlap or
-   retry exit safely as `PRICE_REFRESH_ALREADY_RUNNING`.
+4. Configure one Hong Kong-time timer every hour. It uses each ticker's
+   exchange timezone and actual Yahoo sessions, so the same run safely handles
+   US/HK/China listings. The PostgreSQL advisory lock makes overlap or retry
+   exit safely as `PRICE_REFRESH_ALREADY_RUNNING`; repeated runs update only
+   provider observations that are actually available.
 5. Run `DATABASE_URL=… DATABASE_SSL=true NODE_ENV=production npm run
    price-refresh:preflight` before deployment; it checks only variable presence
    and checked-in wiring, never connects or prints values. After deployment,
    inspect the job's safe `refreshed` / `failed` counts and the
    `price_refresh_runs` table.
+
+The exact private timer trigger, required token and rollback instructions are
+in [PRICE_REFRESH_DEPLOYMENT.md](./PRICE_REFRESH_DEPLOYMENT.md). The handler
+requires `PRICE_REFRESH_ENABLED=true` plus a matching
+`PRICE_REFRESH_TRIGGER_TOKEN`; never give it an HTTP trigger.
 
 Tencent documents CloudBase/SCF timer triggers as managed cron-based function
 execution; use the platform's timer rather than a `setInterval` in the web

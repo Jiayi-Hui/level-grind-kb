@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("EdgeOne ships first-class Notes and Idea Book navigation with fail-closed writes", async () => {
+test("EdgeOne ships first-class Notes库 and Ideas库 navigation with fail-closed writes", async () => {
   const [main, notes, ideas] = await Promise.all([
     readFile(new URL("../deploy/edgeone-demo/src/main.tsx", import.meta.url), "utf8"),
     readFile(new URL("../deploy/edgeone-demo/src/shared-notes.tsx", import.meta.url), "utf8"),
@@ -10,8 +10,8 @@ test("EdgeOne ships first-class Notes and Idea Book navigation with fail-closed 
   ]);
 
   assert.match(main, /"notes" \| "ideas"/);
-  assert.match(main, /<span>Notes<\/span>/);
-  assert.match(main, /<span>Idea Book<\/span>/);
+  assert.match(main, /<span>Notes库<\/span>/);
+  assert.match(main, /<span>Ideas库<\/span>/);
   assert.match(main, /<SharedNotesView \/>/);
   assert.match(main, /<IdeaBookView \/>/);
 
@@ -24,8 +24,14 @@ test("EdgeOne ships first-class Notes and Idea Book navigation with fail-closed 
   }
   assert.match(notes, /本地演示模式 · 不会上传或写入团队/);
   assert.match(notes, /团队 Notes API 未启用/);
+  assert.match(notes, /Executive Summary/);
+  assert.match(notes, /Potential Expectation Gap/);
+  assert.match(notes, /发送外部前需脱敏/);
   assert.match(ideas, /公开\/合成演示数据 · 不会保存/);
   assert.match(ideas, /尚未开放上传/);
+  assert.match(ideas, /Business & Industry Overview/);
+  assert.match(ideas, /Our Case vs\. Consensus Expectations/);
+  assert.match(ideas, /发送外部前需脱敏/);
 });
 
 test("Notes uses the authenticated direct-COS attachment contract without browser parsing", async () => {

@@ -40,6 +40,14 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /OpenRouter/);
   assert.match(source, /modelProvider/);
   assert.match(source, /openRouterPreviewModels/);
+  assert.match(source, /openai\/gpt-5\.6-sol/);
+  assert.match(source, /openai\/gpt-5\.6-terra/);
+  assert.match(source, /openai\/gpt-5\.6-luna/);
+  assert.match(source, /openai\/gpt-5\.5/);
+  assert.match(source, /anthropic\/claude-opus-4\.8/);
+  assert.match(source, /anthropic\/claude-fable-5/);
+  assert.match(source, /z-ai\/glm-5\.2/);
+  assert.match(source, /moonshotai\/kimi-k3/);
   assert.match(source, /待配置预览/);
   assert.match(source, /if \(openRouterUnavailable\)/);
   assert.match(source, /不会发送请求/);
@@ -91,8 +99,10 @@ test("Tencent shell exposes live knowledge and one contextual AskAI workspace wh
   assert.match(invitations, /\/ban/);
   assert.match(invitations, /\/revoke/);
   assert.match(source, /待上线/);
-  assert.match(css, /\.agentic-layer[\s\S]*height: 720px/);
+  assert.match(css, /\.agentic-layout[\s\S]*100dvh/);
   assert.match(css, /\.agentic-messages[\s\S]*overflow-y: auto/);
+  assert.match(css, /\.agentic-chat \{ display: flex; flex-direction: column/);
+  assert.match(css, /\.agentic-messages \{[\s\S]*flex: 1 1 auto/);
   assert.match(css, /\.agentic-model-status/);
   assert.match(vite, /VITE_AGENT_CHAT_PROXY_URL/);
   assert.match(vite, /LOCAL_AGENT_FUNCTION_NOT_CONNECTED/);
