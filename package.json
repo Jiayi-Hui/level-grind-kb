@@ -40,6 +40,7 @@
     "@clerk/react": "^6.12.7",
     "@edgeone/pages-blob": "^0.0.15",
     "@huggingface/transformers": "^3.8.1",
+    "cos-nodejs-sdk-v5": "^2.15.4",
     "cross-env": "^10.1.0",
     "d3-geo": "^3.1.1",
     "drizzle-orm": "0.45.2",
