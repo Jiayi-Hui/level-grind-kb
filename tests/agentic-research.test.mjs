@@ -71,7 +71,8 @@ test("agent chat function authenticates and calls configured search and model pr
   assert.match(source, /stream_options: \{ include_usage: true \}/);
   assert.match(source, /OPENROUTER_ALLOWED_MODELS/);
   assert.match(source, /所选模型不在团队允许列表中/);
-  assert.match(source, /input\.contextEntries\.length \|\| input\.history\.length/);
+  assert.doesNotMatch(source, /OpenRouter 仅可用于公开网络问题/);
+  assert.match(source, /Notes\/Ideas are/);
   assert.match(source, /DEEPSEEK_API_KEY/);
   assert.match(source, /estimated_cost_usd/);
   assert.match(source, /模型服务账户余额不足或服务未开通/);

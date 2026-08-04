@@ -20,7 +20,8 @@
 
 ## Production boundaries
 
-- OpenRouter credentials remain server-side. The browser can select only model IDs returned by the authenticated server capability response.
+- OpenRouter credentials remain server-side. The browser can select only model IDs returned by the authenticated server capability response. Event DB and AI Capex evidence may be sent after an explicit OpenRouter model selection; Notes/Ideas remain excluded until their record-level external-AI and redaction policies are enforced by retrieval.
 - Notes/Ideas retain prior records; new template and policy fields use backward-compatible defaults.
 - The current production price path is revalidated at most once per hour through the EdgeOne cache, and an open Event page requests a refresh hourly. The included SCF timer worker is not active until its database migration, environment variables, and timer trigger are deployed.
+- The live proxy uses Yahoo Chart first and Yahoo Spark as a same-provider fallback when shared cloud egress is rate-limited; it never converts missing or zero values into returns.
 - Clerk configuration and keys are intentionally untouched.

@@ -16,7 +16,7 @@ async function fetchYahooSeries(symbol) {
       "User-Agent": "Mozilla/5.0 Level-Grind/1.0",
     },
   });
-  if (!response.ok) throw new Error(`Yahoo ${response.status}`);
+  if (!response.ok) return fetchYahooSparkSeries(symbol, response.status);
   const body = await response.json();
   const result = body.chart?.result?.[0];
   if (!result || body.chart?.error) throw new Error(body.chart?.error?.description || "Yahoo 无可用数据");
@@ -37,6 +37,44 @@ async function fetchYahooSeries(symbol) {
     exchange: result.meta?.exchangeName || null,
     marketPrice: Number.isFinite(Number(result.meta?.regularMarketPrice)) ? Number(result.meta.regularMarketPrice) : null,
     marketTime: result.meta?.regularMarketTime ? new Date(result.meta.regularMarketTime * 1000).toISOString() : null,
+    prices,
+  };
+}
+
+async function fetchYahooSparkSeries(symbol, chartStatus = null) {
+  // Yahoo's chart route intermittently rate-limits shared cloud egress while
+  // its first-party Spark route continues to serve the same daily closes.
+  // Keep this as a Yahoo-only fallback so the displayed provider and lineage
+  // stay truthful rather than silently substituting another vendor.
+  const endpoint = `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(symbol)}&range=3mo&interval=1d`;
+  const response = await fetch(endpoint, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "Mozilla/5.0 Level-Grind/1.0",
+    },
+  });
+  if (!response.ok) throw new Error(`Yahoo ${response.status}${chartStatus ? ` (chart ${chartStatus})` : ""}`);
+  const body = await response.json();
+  const result = body?.[symbol];
+  if (!result || result.error) throw new Error(result?.error?.description || "Yahoo Spark 无可用数据");
+  const timestamps = result.timestamp || [];
+  const closes = result.close || [];
+  const prices = timestamps.flatMap((timestamp, index) => {
+    const close = Number(closes[index]);
+    if (!Number.isFinite(close) || close <= 0) return [];
+    return [{
+      date: new Date(timestamp * 1000).toISOString().slice(0, 10),
+      close,
+      source: "Yahoo Finance",
+    }];
+  });
+  if (!prices.length) throw new Error("Yahoo Spark 无可用价格");
+  return {
+    symbol,
+    currency: null,
+    exchange: null,
+    marketPrice: prices.at(-1)?.close || null,
+    marketTime: timestamps.at(-1) ? new Date(timestamps.at(-1) * 1000).toISOString() : null,
     prices,
   };
 }

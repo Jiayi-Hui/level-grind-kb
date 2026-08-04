@@ -138,14 +138,11 @@ function modelConfig(input, env) {
   const model = input.model || String(env.OPENROUTER_DEFAULT_MODEL || "").trim();
   if (!env.OPENROUTER_API_KEY) throw new Error("OpenRouter 尚未配置");
   if (!model || !allowed.includes(model)) throw new Error("所选模型不在团队允许列表中");
-  // Internal notes, claims, and AI Capex context must not be sent to an arbitrary
-  // third-party provider unless the deployment owner opts in server-side.
-  // A follow-up can contain prior internal research in `history` even when the
-  // current mode is public-web-only. Treat both as internal context; never send
-  // either to OpenRouter unless an operator has made that server-side choice.
-  if ((input.contextEntries.length || input.history.length) && env.OPENROUTER_ALLOW_INTERNAL_DATA !== "true") {
-    throw new Error("OpenRouter 仅可用于公开网络问题；内部研究数据仍使用团队默认模型");
-  }
+  // AskAI currently retrieves only the governed Event DB and public AI Capex
+  // datasets. Selecting an OpenRouter model is an explicit user action, so the
+  // same scoped evidence can be sent to that selected provider. Notes/Ideas are
+  // intentionally not part of this context pipeline until their per-record
+  // externalAiAllowed/redactionRequired policies are enforced during retrieval.
   return {
     provider: "OpenRouter",
     model,
