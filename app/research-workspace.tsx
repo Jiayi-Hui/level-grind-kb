@@ -51,6 +51,20 @@ type DocumentRecord = {
   confidence: "low" | "medium" | "high";
 };
 
+type ResearchNote = {
+  document_id: string;
+  title: string;
+  author_name: string;
+  author_email: string;
+  file_name?: string | null;
+  file_size?: number | null;
+  extraction_status: "uploaded" | "queued" | "processing" | "partial" | "ready" | "failed" | "needs_review";
+  extraction_error?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+};
+
 type PersonalContext = {
   email: string;
   display_name: string;
@@ -489,6 +503,7 @@ export function ResearchWorkspace() {
   });
   const c = copy[language];
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [notes, setNotes] = useState<ResearchNote[]>([]);
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -527,6 +542,8 @@ export function ResearchWorkspace() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [composer, setComposer] = useState(false);
+  const [captureKind, setCaptureKind] = useState<"note" | "material">("note");
+  const [selectedAttachmentName, setSelectedAttachmentName] = useState("");
   const [editingDocument, setEditingDocument] = useState<DocumentRecord | null>(null);
   const [mobileNav, setMobileNav] = useState(false);
   const [welcome, setWelcome] = useState(false);
@@ -558,6 +575,7 @@ export function ResearchWorkspace() {
     try {
       const responses = await Promise.all([
         authorizedFetch("/api/documents?scope=team"),
+        authorizedFetch("/api/notes"),
         authorizedFetch("/api/context"),
         authorizedFetch("/api/members"),
         authorizedFetch("/api/corpus"),
@@ -573,9 +591,10 @@ export function ResearchWorkspace() {
       if (responses.some((response) => !response.ok)) {
         throw new Error("The research workspace could not be loaded.");
       }
-      const [documentsData, contextData, membersData, corpusData, eventsData, preferenceData, askData, claimsData] =
+      const [documentsData, notesData, contextData, membersData, corpusData, eventsData, preferenceData, askData, claimsData] =
         await Promise.all(responses.map((response) => response.json())) as [
           { documents: DocumentRecord[] },
+          { notes: ResearchNote[] },
           ContextPayload,
           { members: TeamMember[] },
           CorpusPayload,
@@ -585,6 +604,7 @@ export function ResearchWorkspace() {
           ClaimsPayload,
         ];
       setDocuments(documentsData.documents ?? []);
+      setNotes(notesData.notes ?? []);
       setContext(contextData);
       setMembers(membersData.members ?? []);
       setCorpus(corpusData);
@@ -913,11 +933,12 @@ export function ResearchWorkspace() {
     setError("");
     try {
       const form = new FormData(formElement);
+      const isNoteUpload = !editingDocument && captureKind === "note";
       if (editingDocument) {
         form.set("id", editingDocument.id);
         form.set("duplicateIds", JSON.stringify(editingDocument.duplicate_ids ?? [editingDocument.id]));
       }
-      const response = await authorizedFetch("/api/documents", {
+      const response = await authorizedFetch(isNoteUpload ? "/api/notes/upload" : "/api/documents", {
         method: editingDocument ? "PATCH" : "POST",
         body: form,
       });
@@ -925,8 +946,11 @@ export function ResearchWorkspace() {
       if (!response.ok) throw new Error(payload.error || "Capture failed.");
       formElement.reset();
       setComposer(false);
+      setSelectedAttachmentName("");
       setEditingDocument(null);
-      setToast(editingDocument
+      setToast(isNoteUpload
+        ? (language === "zh" ? "已上传到团队 Notes，正在排队解析" : "Shared Note uploaded and queued for extraction")
+        : editingDocument
         ? (language === "zh" ? "资料已更新" : "Material updated")
         : (language === "zh" ? "资料已保存" : "Material saved"));
       await load();
@@ -937,14 +961,33 @@ export function ResearchWorkspace() {
     }
   }
 
-  function openCapture() {
+  function openCapture(kind: "note" | "material" = "note") {
     setEditingDocument(null);
+    setCaptureKind(kind);
+    setSelectedAttachmentName("");
     setComposer(true);
   }
 
   function editMaterial(document: DocumentRecord) {
     setEditingDocument(document);
+    setCaptureKind("material");
     setComposer(true);
+  }
+
+  async function retryNote(note: ResearchNote) {
+    setSaving(true);
+    setError("");
+    try {
+      const response = await authorizedFetch(`/api/notes/${encodeURIComponent(note.document_id)}/retry`, { method: "POST" });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not retry extraction.");
+      setToast(language === "zh" ? "已重新加入解析队列" : "Note returned to the extraction queue");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not retry extraction.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deleteMaterial(document: DocumentRecord) {
@@ -1410,7 +1453,7 @@ export function ResearchWorkspace() {
             <button className={language === "zh" ? "active" : ""} onClick={() => void switchLanguage("zh")}>中</button>
           </div>
           {active !== "assistant" && (
-            <button className="upload-button" onClick={openCapture}>＋ {c.capture}</button>
+            <button className="upload-button" onClick={() => openCapture("note")}>＋ {language === "zh" ? "上传 Notes" : "Upload Notes"}</button>
           )}
         </header>
 
@@ -1438,9 +1481,24 @@ export function ResearchWorkspace() {
             <>
               <div className="metrics">
                 <article><span>{c.captured}</span><strong>{documents.length}</strong><small>{c.items}</small></article>
+                <article><span>{language === "zh" ? "共享 Notes" : "Shared Notes"}</span><strong>{notes.length}</strong><small>{notes.filter((note) => note.extraction_status === "queued" || note.extraction_status === "processing").length} {language === "zh" ? "正在处理" : "processing"}</small></article>
                 <article><span>{c.highSignal}</span><strong>{context?.counts.high_signals || 0}</strong><small>{language === "zh" ? "需要关注" : "need attention"}</small></article>
                 <article><span>{c.topics}</span><strong>{context?.topics.length || 0}</strong><small>{language === "zh" ? "活跃研究线" : "active research lines"}</small></article>
               </div>
+              <section className="state-card notes-upload-status" aria-label={language === "zh" ? "Notes 解析状态" : "Notes extraction status"}>
+                <div className="section-title"><div><h2>{language === "zh" ? "团队 Notes" : "Team Notes"}</h2><p>{language === "zh" ? "上传后立即对团队可见；解析在后台完成。" : "Visible to the team immediately; extraction completes in the background."}</p></div><button className="quiet-button" onClick={() => openCapture("note")}>＋ {language === "zh" ? "上传" : "Upload"}</button></div>
+                {!notes.length ? <p>{language === "zh" ? "还没有共享 Notes。上传会议纪要、PDF、Word 或 Tracker 开始。" : "No shared Notes yet. Upload meeting notes, PDFs, Word files, or trackers to begin."}</p> : (
+                  <div className="note-status-list">
+                    {notes.slice(0, 6).map((note) => (
+                      <div key={note.document_id} className={`note-status note-${note.extraction_status}`}>
+                        <div><strong>{note.title}</strong><small>{note.author_name} · {note.file_name || (language === "zh" ? "文本 Note" : "Text note")}</small></div>
+                        <span>{note.extraction_status}</span>
+                        {note.extraction_status === "failed" && (note.author_email === context?.user.email || isAdmin) && <button className="quiet-button" disabled={saving} onClick={() => void retryNote(note)}>{language === "zh" ? "重试" : "Retry"}</button>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
               <DocumentDesk
                 language={language}
                 loading={loading}
@@ -1454,7 +1512,7 @@ export function ResearchWorkspace() {
                 onDelete={(doc) => void deleteMaterial(doc)}
                 currentUserEmail={context?.user.email || ""}
                 isAdmin={isAdmin}
-                openCapture={openCapture}
+                openCapture={() => openCapture("note")}
               />
             </>
           )}
@@ -1938,9 +1996,8 @@ export function ResearchWorkspace() {
                 )}
               </article>
 
-              {isAdmin && (
-                <article className="settings-card team-settings">
-                  <div className="section-title"><div><p className="eyebrow">ADMIN</p><h2>{c.teamAccess}</h2></div><span>{members.filter((member) => member.status === "active").length} {c.activeMembers}</span></div>
+              <article className="settings-card team-settings">
+                  <div className="section-title"><div><p className="eyebrow">TEAM</p><h2>{c.teamAccess}</h2></div><span>{members.filter((member) => member.status === "active").length} {c.activeMembers}</span></div>
                   <div className="member-list">
                     {members.map((member) => (
                       <div className="member-row" key={member.email}>
@@ -1955,7 +2012,7 @@ export function ResearchWorkspace() {
                                 ? "Analyst"
                                 : member.role}
                         </span>
-                        {!member.protected_manager && (
+                        {isAdmin && !member.protected_manager && (
                           <span className="member-actions">
                             <button type="button" onClick={() => setEditingMember(member)}>{language === "zh" ? "编辑" : "Edit"}</button>
                             <button type="button" className="danger" onClick={() => void removeMember(member)}>{language === "zh" ? "删除" : "Remove"}</button>
@@ -1964,7 +2021,7 @@ export function ResearchWorkspace() {
                       </div>
                     ))}
                   </div>
-                  <form key={editingMember?.email || "new-member"} className="member-form" onSubmit={saveMember}>
+                  {isAdmin && <form key={editingMember?.email || "new-member"} className="member-form" onSubmit={saveMember}>
                     <label>{c.name}<input name="displayName" maxLength={120} defaultValue={editingMember?.display_name || ""} /></label>
                     <label>{c.email}<input name="email" type="email" required readOnly={Boolean(editingMember)} defaultValue={editingMember?.email || ""} /></label>
                     <label>
@@ -1977,9 +2034,8 @@ export function ResearchWorkspace() {
                     </label>
                     <button className="upload-button" disabled={saving}>{saving ? c.saving : editingMember ? (language === "zh" ? "保存修改" : "Save changes") : c.addUpdate}</button>
                     {editingMember && <button type="button" className="quiet-button" onClick={() => setEditingMember(null)}>{language === "zh" ? "取消" : "Cancel"}</button>}
-                  </form>
+                  </form>}
                 </article>
-              )}
             </section>
           )}
         </div>
@@ -1995,23 +2051,24 @@ export function ResearchWorkspace() {
           <form key={editingDocument?.id ?? "new-material"} className="composer" onSubmit={submitMaterial}>
             <div className="composer-head">
               <div>
-                <p className="eyebrow">{editingDocument ? "RESEARCH EDIT" : "RESEARCH CAPTURE"}</p>
+                <p className="eyebrow">{editingDocument ? "RESEARCH EDIT" : captureKind === "note" ? "SHARED NOTES" : "RESEARCH CAPTURE"}</p>
                 <h2>{editingDocument
                   ? (language === "zh" ? "编辑研究资料" : "Edit research material")
-                  : (language === "zh" ? "添加研究资料" : "Add research material")}</h2>
+                  : captureKind === "note" ? (language === "zh" ? "上传团队 Notes" : "Upload shared Notes") : (language === "zh" ? "添加研究资料" : "Add research material")}</h2>
               </div>
               <button type="button" onClick={() => {
                 setComposer(false);
                 setEditingDocument(null);
+                setSelectedAttachmentName("");
               }}>×</button>
             </div>
-            <label>{language === "zh" ? "标题" : "Title"}<input name="title" required maxLength={180} autoFocus defaultValue={editingDocument?.title ?? ""} /></label>
+            <label>{language === "zh" ? "标题" : "Title"}<input name="title" required={captureKind !== "note"} maxLength={180} autoFocus defaultValue={editingDocument?.title ?? ""} placeholder={captureKind === "note" ? (language === "zh" ? "留空则使用文件名" : "Optional — file name is used by default") : undefined} /></label>
             <label>{language === "zh" ? "笔记" : "Notes"}<textarea name="body" rows={4} defaultValue={editingDocument?.body ?? ""} /></label>
             <div className="form-grid">
               <label>{language === "zh" ? "主题 / 项目" : "Topic / project"}<input name="project" defaultValue={editingDocument?.project ?? ""} /></label>
               <label>
                 {language === "zh" ? "可见范围" : "Scope"}
-                <select name="contextScope" defaultValue={editingDocument?.context_scope ?? "personal"}>
+                <select name="contextScope" disabled={captureKind === "note"} defaultValue={captureKind === "note" ? "team" : editingDocument?.context_scope ?? "personal"}>
                   <option value="personal">{language === "zh" ? "个人" : "Personal"}</option>
                   <option value="team">{language === "zh" ? "团队" : "Team"}</option>
                   <option value="personal+team">{language === "zh" ? "个人 + 团队" : "Personal + Team"}</option>
@@ -2028,12 +2085,12 @@ export function ResearchWorkspace() {
             <input type="hidden" name="importance" value="normal" />
             {!editingDocument && (
               <>
-                <input ref={fileRef} name="file" type="file" className="file-input" />
-                <button className="file-drop" type="button" onClick={() => fileRef.current?.click()}>＋ {language === "zh" ? "附加 PDF、表格、图片或文档" : "Attach PDF, spreadsheet, image, or document"} <small>Up to 25 MB</small></button>
+                <input ref={fileRef} name="file" type="file" className="file-input" required={captureKind === "note"} onChange={(event) => setSelectedAttachmentName(event.currentTarget.files?.[0]?.name || "")} />
+                <button className="file-drop" type="button" onClick={() => fileRef.current?.click()}>＋ {selectedAttachmentName || (language === "zh" ? "选择 PDF、表格、图片或文档" : "Choose PDF, spreadsheet, image, or document")} <small>{captureKind === "note" ? (language === "zh" ? "团队共享 · 上传后后台解析 · 最大 25 MB" : "Team shared · background extraction · max 25 MB") : "Up to 25 MB"}</small></button>
               </>
             )}
             <div className="composer-foot">
-              <span>{language === "zh" ? "来源和范围会始终跟随资料" : "Source and scope stay attached"}</span>
+              <span>{captureKind === "note" ? (language === "zh" ? "上传完成后立即共享；解析不阻塞页面。" : "Visible immediately; extraction never blocks this page.") : (language === "zh" ? "来源和范围会始终跟随资料" : "Source and scope stay attached")}</span>
               <button className="upload-button" disabled={saving}>{saving ? c.saving : editingDocument ? (language === "zh" ? "保存修改" : "Save changes") : c.capture}</button>
             </div>
           </form>

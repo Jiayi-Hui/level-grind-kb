@@ -18,6 +18,8 @@ type ResearchMessage = {
     model: string;
     webCredits: number;
     thinkingEnabled?: boolean;
+    latencyMs?: number;
+    estimatedCostUsd?: number;
   };
   createdAt: string;
 };
@@ -57,6 +59,16 @@ type ContextEntry = {
   title: string;
   content: string;
 };
+type ModelCapability = { model: string; thinkingSupported: boolean };
+type ModelProvider = "default" | "openrouter";
+
+// Presentation-only preview choices. They never activate a provider or send a
+// request until the authenticated server capability list contains the exact id.
+const openRouterPreviewModels = [
+  { model: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet 4.6" },
+  { model: "openai/gpt-4.1", label: "GPT-4.1" },
+  { model: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+] as const;
 
 const storeKey = "level-grind.agentic-research.v1";
 const knowledgeKey = "level-grind.personal-knowledge.v1";
@@ -269,12 +281,18 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const [activeProjectId, setActiveProjectId] = useState("");
   const [activeChatId, setActiveChatId] = useState("");
   const [question, setQuestion] = useState("");
-  const [mode, setMode] = useState<EvidenceMode>("hybrid");
+  // A fast internal answer is the default; public web search is opt-in.
+  const [mode, setMode] = useState<EvidenceMode>("context");
   const [thinkingEnabled, setThinkingEnabled] = useState(() =>
-    readJson<boolean>(thinkingKey, true)
+    readJson<boolean>(thinkingKey, false)
   );
   const [thinkingSince, setThinkingSince] = useState<number | null>(null);
   const [thinkingSeconds, setThinkingSeconds] = useState(0);
+  const [streamStage, setStreamStage] = useState<"preparing" | "retrieving_web" | "starting_model" | "generating">("preparing");
+  const [modelProvider, setModelProvider] = useState<ModelProvider>("default");
+  const [openRouterModels, setOpenRouterModels] = useState<ModelCapability[]>([]);
+  const [selectedOpenRouterModel, setSelectedOpenRouterModel] = useState("");
+  const [defaultModel, setDefaultModel] = useState("deepseek-v4-flash");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -289,6 +307,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   );
   const activeProject = projects.find((project) => project.id === activeProjectId) || projects[0];
   const activeChat = chats.find((chat) => chat.id === activeChatId) || chats[0];
+  const lastMessageContent = activeChat?.messages[activeChat.messages.length - 1]?.content;
 
   useEffect(() => {
     if (!thinkingSince) return;
@@ -300,7 +319,41 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [activeChat?.messages.length, thinkingSince]);
+  }, [activeChat?.messages.length, lastMessageContent, thinkingSince]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const response = await fetch("/api/agent-chat", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (!response.ok) return;
+        const payload = await response.json() as { capabilities?: { defaultModel?: string; openRouter?: ModelCapability[] } };
+        if (cancelled || !payload.capabilities) return;
+        const models = payload.capabilities.openRouter || [];
+        setDefaultModel(payload.capabilities.defaultModel || "deepseek-v4-flash");
+        setOpenRouterModels(models);
+        setSelectedOpenRouterModel((current) => (
+          models.some((item) => item.model === current) || openRouterPreviewModels.some((item) => item.model === current)
+            ? current
+            : (models[0]?.model || "")
+        ));
+      } catch {
+        // The default DeepSeek path remains available even when the optional
+        // capabilities read cannot be reached.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getToken]);
+
+  const selectedOpenRouterCapability = openRouterModels.find((item) => item.model === selectedOpenRouterModel);
+  const openRouterModelAvailable = modelProvider === "openrouter" && Boolean(selectedOpenRouterCapability);
+  const openRouterUnavailable = modelProvider === "openrouter" && !openRouterModelAvailable;
+  const thinkingAvailable = modelProvider === "default" || Boolean(selectedOpenRouterCapability?.thinkingSupported);
+  const selectedModelLabel = modelProvider === "openrouter"
+    ? (selectedOpenRouterCapability?.model || openRouterPreviewModels.find((item) => item.model === selectedOpenRouterModel)?.label || "OpenRouter")
+    : defaultModel;
 
   const commitStore = (next: AgentStore) => {
     setStore(next);
@@ -381,11 +434,16 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     event.preventDefault();
     const prompt = question.trim();
     if (!prompt || thinkingSince || !activeProject) return;
+    if (openRouterUnavailable) {
+      setError("该 OpenRouter 模型仍是待配置预览，未发送请求。请切回 DeepSeek，或等待团队在服务端批准该模型。");
+      return;
+    }
     setQuestion("");
     setError("");
     setNotice("");
     setThinkingSince(Date.now());
     setThinkingSeconds(0);
+    setStreamStage("preparing");
     const now = new Date().toISOString();
     const currentChat: ResearchChat = activeChat || {
       id: uid("chat"),
@@ -428,22 +486,72 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           chatTitle: optimistic.title,
           contextEntries,
           thinkingEnabled,
+          modelProvider,
+          model: modelProvider === "openrouter" ? selectedOpenRouterModel : undefined,
+          stream: true,
           history: optimistic.messages.slice(-6).map((message) => ({ role: message.role, content: message.content })),
         }),
       });
-      const payload = await response.json() as {
-        answer?: string;
-        sources?: ResearchMessage["sources"];
-        usage?: ResearchMessage["usage"];
-        error?: string;
+      const responseContentType = String(response.headers.get("content-type") || "").toLowerCase();
+      if (responseContentType.includes("text/html")) {
+        throw new Error("AskAI 当前连接到了前端页面而非服务函数。本地请配置函数模拟器；线上请检查 EdgeOne Functions 路由。");
+      }
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(payload.error || "研究服务暂时不可用");
+      }
+      if (!response.body || !responseContentType.includes("text/event-stream")) {
+        const payload = await response.json() as { answer?: string; sources?: ResearchMessage["sources"]; usage?: ResearchMessage["usage"]; error?: string };
+        if (!payload.answer) throw new Error(payload.error || "研究服务暂时不可用");
+        const assistantMessage: ResearchMessage = { id: uid("message"), role: "assistant", content: payload.answer, sources: payload.sources || [], usage: payload.usage, createdAt: new Date().toISOString() };
+        const completed = { ...optimistic, messages: [...optimistic.messages, assistantMessage], updatedAt: assistantMessage.createdAt };
+        commitStore({ ...withUser, chats: [completed, ...withUser.chats.filter((item) => item.id !== completed.id)] });
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let answer = "";
+      let sources: ResearchMessage["sources"] = [];
+      let usage: ResearchMessage["usage"] | undefined;
+      const assistantId = uid("message");
+      const publishPartial = () => {
+        const partialMessage: ResearchMessage = { id: assistantId, role: "assistant", content: answer, sources, usage, createdAt: new Date().toISOString() };
+        const partial = { ...optimistic, messages: [...optimistic.messages, partialMessage], updatedAt: partialMessage.createdAt };
+        commitStore({ ...withUser, chats: [partial, ...withUser.chats.filter((item) => item.id !== partial.id)] });
       };
-      if (!response.ok || !payload.answer) throw new Error(payload.error || "研究服务暂时不可用");
+      for (;;) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done }).replace(/\r\n/g, "\n");
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() || "";
+        for (const frame of frames) {
+          const event = frame.split("\n").find((line) => line.startsWith("event:"))?.slice(6).trim();
+          const raw = frame.split("\n").find((line) => line.startsWith("data:"))?.slice(5).trim();
+          if (!event || !raw) continue;
+          let payload: { delta?: string; sources?: ResearchMessage["sources"]; usage?: ResearchMessage["usage"]; stage?: typeof streamStage; error?: string };
+          try {
+            payload = JSON.parse(raw) as typeof payload;
+          } catch {
+            // A proxy keep-alive must not turn an otherwise live SSE response
+            // into a failed research request.
+            continue;
+          }
+          if (event === "status" && payload.stage) setStreamStage(payload.stage);
+          if (event === "meta") sources = payload.sources || [];
+          if (event === "delta" && payload.delta) { answer += payload.delta; publishPartial(); }
+          if (event === "done") { sources = payload.sources || sources; usage = payload.usage; }
+          if (event === "error") throw new Error(payload.error || "研究服务暂时不可用");
+        }
+        if (done) break;
+      }
+      if (!answer) throw new Error("模型没有返回可用答案");
       const assistantMessage: ResearchMessage = {
-        id: uid("message"),
+        id: assistantId,
         role: "assistant",
-        content: payload.answer,
-        sources: payload.sources || [],
-        usage: payload.usage,
+        content: answer,
+        sources,
+        usage,
         createdAt: new Date().toISOString(),
       };
       const completed = {
@@ -459,6 +567,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
       setError(caught instanceof Error ? caught.message : "研究服务暂时不可用");
     } finally {
       setThinkingSince(null);
+      setStreamStage("preparing");
     }
   };
 
@@ -493,8 +602,8 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
       <header className="agentic-head">
         <div><p className="eyebrow">AGENTIC RESEARCH</p><h2>{scope === "events" ? "询问事件与价格" : "询问 AI Capex"}</h2></div>
         <div className="agentic-engine">
-          <strong>DeepSeek V4 Flash</strong>
-          <small>{thinkingEnabled ? "Thinking 开启" : "Thinking 关闭"} · Tavily</small>
+          <strong>{selectedModelLabel}</strong>
+          <small>{thinkingEnabled && thinkingAvailable ? "Thinking 开启" : "Thinking 关闭"} · {mode === "hybrid" ? "Tavily" : "当前库"}</small>
         </div>
       </header>
       <div className="agentic-layout">
@@ -542,25 +651,33 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
                       <button onClick={() => void actOnAnswer("save", message, index)}>保存</button>
                       <button onClick={() => void actOnAnswer("download", message, index)}>下载 .md</button>
                       <button onClick={() => void actOnAnswer("obsidian", message, index)}>导出 Obsidian</button>
-                      {message.usage && <small>{message.usage.model} · {message.usage.thinkingEnabled === false ? "Thinking 关闭" : "Thinking 开启"} · {(message.usage.inputTokens + message.usage.outputTokens).toLocaleString()} tokens · Tavily {message.usage.webCredits} credits</small>}
+                      {message.usage && <small>{message.usage.provider} · {message.usage.model} · {message.usage.thinkingEnabled === false ? "Thinking 关闭" : "Thinking 开启"} · {(message.usage.inputTokens + message.usage.outputTokens).toLocaleString()} tokens{typeof message.usage.estimatedCostUsd === "number" ? ` · $${message.usage.estimatedCostUsd.toFixed(4)}` : ""}{typeof message.usage.latencyMs === "number" ? ` · ${(message.usage.latencyMs / 1000).toFixed(1)}s` : ""}{message.usage.webCredits ? ` · Tavily ${message.usage.webCredits} credits` : ""}</small>}
                     </footer>
                   )}
                 </div>
               </article>
             ))}
-            {thinkingSince && <article className="agentic-message assistant"><span>AI</span><div className="agentic-thinking"><i />正在检索与分析 · {thinkingSeconds}s</div></article>}
+            {thinkingSince && <article className="agentic-message assistant"><span>AI</span><div className="agentic-thinking"><i />{streamStage === "retrieving_web" ? "正在联网检索" : streamStage === "generating" ? "正在生成回答" : "正在连接模型"} · {thinkingSeconds}s</div></article>}
           </div>
           <form className="agentic-composer" onSubmit={ask}>
             <div className="agentic-modes">
-              <button type="button" className={mode === "hybrid" ? "active" : ""} onClick={() => setMode("hybrid")}>混合</button>
-              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>内部数据</button>
-              <button type="button" className={mode === "web" ? "active" : ""} onClick={() => setMode("web")}>联网</button>
+              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>当前库</button>
+              <button type="button" className={mode === "hybrid" ? "active" : ""} onClick={() => setMode("hybrid")}>联网</button>
+              <label className="agentic-model-picker"><span>模型</span><select value={modelProvider === "openrouter" ? selectedOpenRouterModel : "__default"} onChange={(event) => {
+                if (event.target.value === "__default") { setModelProvider("default"); setError(""); }
+                else {
+                  const nextModel = event.target.value;
+                  setModelProvider("openrouter"); setSelectedOpenRouterModel(nextModel); setError("");
+                  if (!openRouterModels.find((item) => item.model === nextModel)?.thinkingSupported) selectThinking(false);
+                }
+              }}><option value="__default">DeepSeek · {defaultModel}</option>{openRouterModels.length > 0 && <optgroup label="OpenRouter · 已配置">{openRouterModels.map((item) => <option key={item.model} value={item.model}>OpenRouter · {item.model}</option>)}</optgroup>}<optgroup label="OpenRouter · 待配置预览">{openRouterPreviewModels.filter((item) => !openRouterModels.some((configured) => configured.model === item.model)).map((item) => <option key={item.model} value={item.model}>OpenRouter · {item.label}（待配置）</option>)}</optgroup></select></label>
+              {openRouterUnavailable && <small className="agentic-model-status">OpenRouter 待配置 · 不会发送请求</small>}
               <span className="agentic-mode-spacer" />
-              <button type="button" className={thinkingEnabled ? "active" : ""} onClick={() => selectThinking(true)}>Thinking 开</button>
+              <button type="button" disabled={!thinkingAvailable} className={thinkingEnabled && thinkingAvailable ? "active" : ""} onClick={() => selectThinking(true)}>Thinking 开</button>
               <button type="button" className={!thinkingEnabled ? "active" : ""} onClick={() => selectThinking(false)}>Thinking 关</button>
             </div>
             <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "events" ? "例如：哪些事件可以用 AI Capex 的园区和容量数据交叉验证？" : "例如：哪些事件库 Claim 能由 AI Capex 数据支持或反驳？"} />
-            <button type="submit" disabled={!question.trim() || !!thinkingSince}>{thinkingSince ? "分析中" : "发送"}</button>
+            <button type="submit" disabled={!question.trim() || !!thinkingSince || openRouterUnavailable}>{thinkingSince ? "分析中" : openRouterUnavailable ? "待配置" : "发送"}</button>
           </form>
           {(error || notice) && <p className={error ? "agentic-status error" : "agentic-status"}>{error || notice}</p>}
         </div>

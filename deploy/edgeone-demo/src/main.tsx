@@ -5,16 +5,26 @@ import { AgenticResearchPanel, PersonalKnowledgeView } from "../../../app/agenti
 import { AICapex } from "../../../app/ai-capex";
 import { AppClerkProvider, AuthGate } from "../../../app/auth-widgets";
 import { EventResearch } from "../../../app/event-research";
+import { IdeaBookView } from "./idea-book";
+import { SharedNotesView } from "./shared-notes";
 import "../../../app/globals.css";
 import "./mirror.css";
 
-type DemoView = "knowledge" | "events" | "aidc" | "ask" | "settings";
+type DemoView = "knowledge" | "notes" | "ideas" | "events" | "aidc" | "ask" | "settings";
 type AskScope = "events" | "aidc";
 
 const viewCopy = {
   knowledge: {
     eyebrow: "PERSONAL KNOWLEDGE",
     title: "个人知识库",
+  },
+  notes: {
+    eyebrow: "TEAM RESEARCH",
+    title: "Notes",
+  },
+  ideas: {
+    eyebrow: "IDEA TRACKING",
+    title: "Idea Book",
   },
   events: {
     eyebrow: "CLAIM LEDGER",
@@ -81,6 +91,20 @@ function ContinuityApp() {
             <span className="nav-symbol">▤</span>
             <span>报告库</span>
             <small>待上线</small>
+          </button>
+          <button
+            className={`nav-item ${view === "notes" ? "active" : ""}`}
+            onClick={() => selectView("notes")}
+          >
+            <span className="nav-symbol">▧</span>
+            <span>Notes</span>
+          </button>
+          <button
+            className={`nav-item ${view === "ideas" ? "active" : ""}`}
+            onClick={() => selectView("ideas")}
+          >
+            <span className="nav-symbol">◫</span>
+            <span>Idea Book</span>
           </button>
           <button
             className={`nav-item ${view === "events" ? "active" : ""}`}
@@ -154,6 +178,10 @@ function ContinuityApp() {
 
           {view === "knowledge" ? (
             <PersonalKnowledgeView />
+          ) : view === "notes" ? (
+            <SharedNotesView />
+          ) : view === "ideas" ? (
+            <IdeaBookView />
           ) : view === "events" ? (
             <EventResearch
               liveClaims={[]}
@@ -175,6 +203,7 @@ function ContinuityApp() {
 
 function InviteSettings() {
   const { getToken } = useAuth();
+  const [canManage, setCanManage] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Analyst");
@@ -211,10 +240,12 @@ function InviteSettings() {
         throw new Error("成员服务仅在已部署环境可用");
       }
       const payload = await response.json() as {
+        canManage?: boolean;
         members?: Array<{ id: string; email: string; name: string; role: string; status: "active" | "pending" | "revoked"; protectedManager?: boolean }>;
         error?: string;
       };
       if (!response.ok) throw new Error(payload.error || "无法读取成员");
+      setCanManage(Boolean(payload.canManage));
       setMembers(payload.members || []);
     } catch (caught) {
       setMemberStatus(caught instanceof Error ? caught.message : "无法读取成员");
@@ -301,23 +332,25 @@ function InviteSettings() {
   return (
     <section className="settings-workspace">
       <div className="settings-grid">
-        <article className="settings-card">
-          <p className="eyebrow">TEAM ACCESS</p>
-          <h2>{editingMember ? "编辑团队成员" : "邀请团队成员"}</h2>
-          <form onSubmit={saveMember}>
-            {editingMember && <label><span>姓名</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} /></label>}
-            <label><span>公司邮箱</span><input type="email" required readOnly={Boolean(editingMember)} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@dymonasia.com" /></label>
-            <label><span>角色</span><select value={role} onChange={(event) => setRole(event.target.value)}><option>Analyst</option><option>PM</option><option>GEM PM</option></select></label>
-            <button type="submit" disabled={sending}>{sending ? "保存中…" : editingMember ? "保存修改" : "发送邀请"}</button>
-            {editingMember && <button type="button" className="quiet-button" onClick={() => {
-              setEditingMember(null);
-              setName("");
-              setEmail("");
-              setRole("Analyst");
-            }}>取消</button>}
-          </form>
-          {status && <p className="settings-status">{status}</p>}
-        </article>
+        {canManage && (
+          <article className="settings-card">
+            <p className="eyebrow">TEAM ACCESS</p>
+            <h2>{editingMember ? "编辑团队成员" : "邀请团队成员"}</h2>
+            <form onSubmit={saveMember}>
+              {editingMember && <label><span>姓名</span><input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} /></label>}
+              <label><span>公司邮箱</span><input type="email" required readOnly={Boolean(editingMember)} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@dymonasia.com" /></label>
+              <label><span>角色</span><select value={role} onChange={(event) => setRole(event.target.value)}><option>Analyst</option><option>PM</option><option>GEM PM</option></select></label>
+              <button type="submit" disabled={sending}>{sending ? "保存中…" : editingMember ? "保存修改" : "发送邀请"}</button>
+              {editingMember && <button type="button" className="quiet-button" onClick={() => {
+                setEditingMember(null);
+                setName("");
+                setEmail("");
+                setRole("Analyst");
+              }}>取消</button>}
+            </form>
+            {status && <p className="settings-status">{status}</p>}
+          </article>
+        )}
         <article className="settings-card">
           <p className="eyebrow">RESEARCH PROFILE</p>
           <h2>研究偏好</h2>
@@ -338,7 +371,7 @@ function InviteSettings() {
               <div><strong>{member.name || member.email.split("@")[0]}</strong><small>{member.email}</small></div>
               <span>{member.role}</span>
               <span className={`member-state ${member.status}`}>{member.status === "active" ? "已加入" : member.status === "pending" ? "待接受" : "已撤销"}</span>
-              {!member.protectedManager && (
+              {canManage && !member.protectedManager && (
                 <span className="settings-member-actions">
                   <button type="button" onClick={() => editMember(member)}>编辑</button>
                   <button type="button" className="danger" onClick={() => void removeMember(member)}>删除</button>

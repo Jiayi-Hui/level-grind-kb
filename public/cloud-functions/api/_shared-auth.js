@@ -4,6 +4,23 @@ const decodeBase64Url = (value) => {
   return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
 };
 
+const defaultAuthorizedParties = [
+  "https://www.level-grind.com",
+  "https://level-grind.com",
+];
+
+// Production stays locked to the two public Level Grind origins unless an
+// operator explicitly supplies an allowlist. The local function harness uses
+// this only through ignored `.dev.vars`, so a browser session can be tested
+// without weakening the deployed default.
+function authorizedParties(env) {
+  const configured = String(env.CLERK_AUTHORIZED_PARTIES || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  return configured.length ? configured : defaultAuthorizedParties;
+}
+
 export async function clerkIdentity(request, env) {
   if (!env.CLERK_SECRET_KEY) throw new Error("AUTH_NOT_CONFIGURED");
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
@@ -33,10 +50,7 @@ export async function clerkIdentity(request, env) {
     new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
   );
   const now = Math.floor(Date.now() / 1000);
-  if (!valid || payload.exp < now || payload.nbf > now || ![
-    "https://www.level-grind.com",
-    "https://level-grind.com",
-  ].includes(payload.azp)) {
+  if (!valid || payload.exp < now || payload.nbf > now || !authorizedParties(env).includes(payload.azp)) {
     throw new Error("AUTH_INVALID");
   }
 

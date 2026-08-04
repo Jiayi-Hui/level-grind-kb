@@ -29,6 +29,14 @@ export function AppClerkProvider({
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
+      localization={{
+        signUp: {
+          continue: {
+            title: "Create your password",
+            subtitle: "First-time sign-in: create a password to activate your invited account.",
+          },
+        },
+      }}
     >
       {children}
     </ClerkProvider>

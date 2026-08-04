@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: level_grind
+      POSTGRES_USER: level_grind
+      POSTGRES_PASSWORD: level_grind_local_only
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U level_grind -d level_grind"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - level-grind-postgres:/var/lib/postgresql/data
+volumes:
+  level-grind-postgres:

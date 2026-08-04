@@ -124,6 +124,20 @@ button { color: inherit; }
 .upload-button:hover { background: #bc5732; }
 .upload-button:disabled { opacity: .55; cursor: wait; }
 
+.notes-upload-status { margin: 18px 0; }
+.notes-upload-status .section-title { align-items: start; gap: 16px; }
+.notes-upload-status .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.note-status-list { display: grid; gap: 8px; margin-top: 12px; }
+.note-status { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.note-status > div { min-width: 0; display: grid; gap: 3px; }
+.note-status strong, .note-status small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.note-status small { color: var(--muted); }
+.note-status > span { border-radius: 99px; padding: 4px 8px; background: var(--soft); color: var(--muted); font: 700 10px/1 system-ui, sans-serif; text-transform: uppercase; }
+.note-ready > span { background: #dcefe4; color: #17603d; }
+.note-failed > span { background: #f8e0dc; color: #9e3e27; }
+.note-processing > span, .note-queued > span { background: #f5ead0; color: #795d16; }
+@media (max-width: 700px) { .note-status { grid-template-columns: minmax(0, 1fr) auto; } .note-status > button { grid-column: 2; } }
+
 .content { padding: 38px 38px 64px; max-width: 1500px; margin: auto; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .eyebrow { color: var(--accent)!important; font-size: 9px!important; font-weight: 800; letter-spacing: 1.5px; margin: 0 0 8px!important; }
@@ -1433,6 +1447,10 @@ button { color: inherit; }
   cursor: pointer;
 }
 .agentic-modes button.active { border-color: #769080; background: #e8f0ea; color: var(--green); }
+.agentic-modes button:disabled { cursor: not-allowed; opacity: .42; }
+.agentic-model-picker { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+.agentic-model-picker select { max-width: 250px; min-width: 168px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font-size: 10px; }
+.agentic-model-status { align-self: center; color: #996231; font-size: 10px; line-height: 1.2; }
 .agentic-composer textarea {
   min-height: 96px;
   max-height: 210px;
@@ -1533,6 +1551,7 @@ button { color: inherit; }
   .agentic-engine { justify-items: start; text-align: left; }
   .agentic-mode-spacer { flex-basis: 100%; height: 0; }
   .agentic-modes { flex-wrap: wrap; }
+  .agentic-model-picker select { max-width: min(76vw, 260px); }
   .agentic-layout { grid-template-columns: 1fr; height: auto; }
   .agentic-sidebar { height: 330px; border-right: 0; border-bottom: 1px solid var(--line); }
   .agentic-chat { height: 690px; }

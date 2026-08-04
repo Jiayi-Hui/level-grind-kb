@@ -64,7 +64,7 @@ function memberManagerEmails(env) {
   ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
 }
 
-async function requireMemberManager(request, env) {
+async function requireSignedInUser(request, env) {
   if (!env.CLERK_SECRET_KEY) throw new Error("邀请服务尚未配置 Clerk Secret Key");
   const token = await verifyClerkToken(request, env.CLERK_SECRET_KEY);
   const userResponse = await clerkRequest(`/users/${token.sub}`, env.CLERK_SECRET_KEY);
@@ -73,13 +73,18 @@ async function requireMemberManager(request, env) {
   const emails = new Map((user.email_addresses || []).map((item) => [item.id, item.email_address]));
   const currentEmail = emails.get(user.primary_email_address_id);
   const normalizedEmail = String(currentEmail || "").trim().toLowerCase();
-  if (!memberManagerEmails(env).has(normalizedEmail)) throw new Error("成员管理权限不足");
   return { user, currentEmail: normalizedEmail };
+}
+
+async function requireMemberManager(request, env) {
+  const currentUser = await requireSignedInUser(request, env);
+  if (!memberManagerEmails(env).has(currentUser.currentEmail)) throw new Error("成员管理权限不足");
+  return currentUser;
 }
 
 export async function onRequestGet({ request, env }) {
   try {
-    await requireMemberManager(request, env);
+    const currentUser = await requireSignedInUser(request, env);
     const [usersResponse, invitationsResponse] = await Promise.all([
       clerkRequest("/users?limit=100&order_by=-created_at", env.CLERK_SECRET_KEY),
       clerkRequest("/invitations?limit=100", env.CLERK_SECRET_KEY),
@@ -116,7 +121,10 @@ export async function onRequestGet({ request, env }) {
         status: invitation.status === "revoked" ? "revoked" : "pending",
         protectedManager: managers.has(String(invitation.email_address || "").toLowerCase()),
       }));
-    return json({ members: [...activeMembers, ...pendingMembers] });
+    return json({
+      canManage: managers.has(currentUser.currentEmail),
+      members: [...activeMembers, ...pendingMembers],
+    });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "邀请服务不可用" }, 401);
   }
