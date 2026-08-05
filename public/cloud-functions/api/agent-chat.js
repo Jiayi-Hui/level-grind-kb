@@ -4,6 +4,7 @@ import {
   supabaseRequest,
 } from "./_shared-auth.js";
 import { privateTeamResearchContext } from "./_edgeone-research-store.js";
+import { providerStreamReader } from "./_provider-stream.js";
 import { getStore } from "@edgeone/pages-blob";
 
 const telemetryStore = getStore({ name: "level-grind-telemetry", consistency: "strong" });
@@ -330,7 +331,12 @@ async function deepSeekAnswer(input, webResults, env, onDelta, lifecycle = {}) {
       ],
     }),
   }, boundedMs(env.MODEL_CONNECT_TIMEOUT_MS, 45_000, 10_000, 60_000), "模型连接");
-  lifecycle.onConnected?.({ provider, model });
+  lifecycle.onConnected?.({
+    provider,
+    model,
+    contentType: response.headers.get("content-type") || "",
+    bodyUsed: response.bodyUsed,
+  });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     const providerMessage = payload.error?.message || payload.message || "";
@@ -345,8 +351,7 @@ async function deepSeekAnswer(input, webResults, env, onDelta, lifecycle = {}) {
   let inputTokens = 0;
   let outputTokens = 0;
   if (onDelta) {
-    if (!response.body) throw new Error("模型未返回流式响应");
-    const reader = response.body.getReader();
+    const reader = providerStreamReader(response);
     const decoder = new TextDecoder();
     let buffer = "";
     let done = false;
@@ -512,11 +517,27 @@ export async function onRequestPost({ request, env }) {
           if (includeWeb) mark("web_ready", { sourceCount: search.results.length });
           send("meta", { sources: search.results, webCredits: search.credits });
           mark("connecting_provider");
-          const answer = await deepSeekAnswer(resolvedAnswerInput, search.results, env, (delta) => send("delta", { delta }), {
-            onConnected: ({ provider, model }) => void mark("provider_connected", { provider, model }),
-            onFirstProviderEvent: ({ provider, model }) => void mark("provider_streaming", { provider, model }),
-            onFirstToken: ({ provider, model }) => void mark("first_token", { provider, model }),
-          });
+          let answer;
+          try {
+            answer = await deepSeekAnswer(resolvedAnswerInput, search.results, env, (delta) => send("delta", { delta }), {
+              onConnected: ({ provider, model }) => void mark("provider_connected", { provider, model }),
+              onFirstProviderEvent: ({ provider, model }) => void mark("provider_streaming", { provider, model }),
+              onFirstToken: ({ provider, model }) => void mark("first_token", { provider, model }),
+            });
+          } catch (error) {
+            if (error?.code !== "PROVIDER_STREAM_UNREADABLE") throw error;
+            // EdgeOne occasionally returns an already-locked outbound stream.
+            // Retry once without upstream streaming, while the browser keeps
+            // receiving status/ping SSE frames, then replay the completed
+            // answer through the same client protocol. This is a compatibility
+            // fallback, not the normal low-latency path.
+            mark("provider_compatibility_retry");
+            answer = await deepSeekAnswer(resolvedAnswerInput, search.results, env, undefined, {
+              onConnected: ({ provider, model }) => void mark("provider_connected", { provider, model }),
+            });
+            mark("first_token", { provider: answer.usage.provider, model: answer.usage.model, compatibilityMode: true });
+            for (const delta of answer.answer.match(/[\s\S]{1,96}/g) || []) send("delta", { delta });
+          }
           mark("complete", { provider: answer.usage.provider, model: answer.usage.model });
           const usage = {
             ...answer.usage,

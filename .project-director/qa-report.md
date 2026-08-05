@@ -354,3 +354,17 @@ the production AI Capex view remains integrated in the authenticated
   and authentication-required metadata.
 - Authenticated owner/co-manager cross-refresh remains the first company-device
   acceptance check; it is not represented as completed evidence.
+
+## V5.19 AskAI provider-stream hotfix candidate
+
+| Check | Result | Notes |
+|---|---|---|
+| Reported production failure | Reproduced by user | AskAI surfaced `Body is unusable: Body has already been read` before returning a model answer |
+| Provider response handling | Fixed in candidate | Successful provider responses have exactly one direct reader; no cloned branch can buffer the generation |
+| Compatibility fallback | Pass | If EdgeOne supplies an already-consumed or locked stream, AskAI retries once in non-streaming provider mode while SSE status/heartbeat remains live, then replays the answer through the client stream |
+| Failure semantics | Pass | An unreadable stream has a typed error code and cannot surface the raw runtime exception or fail silently |
+| Regression coverage | Pass | Behavioral tests cover fresh, consumed, and locked response bodies; the static contract rejects `response.clone()` |
+| Automated validation | Pass | ESLint, 51/51 tests, `git diff --check`, and the portable Tencent build pass |
+| Auth boundary | Pass | Anonymous Notes, Ideas, and AskAI-history probes remain fail-closed with HTTP 401 |
+| Authenticated production smoke | Pending | Must be completed in the controlled canonical-domain Clerk session after hotfix deployment |
+| Notes / Ideas read-back | Pending | Requires authenticated creation plus hard refresh; no production research record is created before that check |
