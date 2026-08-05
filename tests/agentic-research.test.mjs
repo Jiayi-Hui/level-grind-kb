@@ -63,6 +63,7 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /remoteWriteChain/);
   assert.match(source, /getTokenRef\.current\(\)/);
   assert.match(source, /must not restart hydration/);
+  assert.match(source, /chat\.projectId === activeProject\?\.id/);
 });
 
 test("AskAI history is private to a Clerk subject and protects one-time migration writes", async () => {

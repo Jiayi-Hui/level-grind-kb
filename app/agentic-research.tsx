@@ -318,11 +318,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     () => store.projects.filter((project) => project.scope === scope),
     [scope, store.projects],
   );
-  const chats = useMemo(
-    () => store.chats.filter((chat) => chat.scope === scope && chat.projectId === activeProjectId),
-    [activeProjectId, scope, store.chats],
-  );
   const activeProject = projects.find((project) => project.id === activeProjectId) || projects[0];
+  const chats = useMemo(
+    () => store.chats.filter((chat) => chat.scope === scope && chat.projectId === activeProject?.id),
+    [activeProject?.id, scope, store.chats],
+  );
   const activeChat = chats.find((chat) => chat.id === activeChatId) || chats[0];
   const lastMessageContent = activeChat?.messages[activeChat.messages.length - 1]?.content;
 

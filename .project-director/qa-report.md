@@ -375,4 +375,5 @@ the production AI Capex view remains integrated in the authenticated
 - Token-by-token SSE updates now remain local; only the completed answer is queued for private cross-device persistence.
 - Remote history writes are serialized to avoid version races between optimistic and completed snapshots.
 - Clerk token callback identity changes no longer restart history hydration after a chat has begun.
+- Chat visibility now follows the effective fallback project id; the initial default project no longer filters every newly-created chat out of the UI.
 - Verified with lint, 53/53 tests, portable EdgeOne build, and `git diff --check` under the bundled Node runtime.
