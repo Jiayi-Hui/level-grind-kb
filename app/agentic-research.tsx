@@ -309,6 +309,8 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const remoteHistoryVersion = useRef(0);
   const latestStore = useRef(store);
   const queuedHistoryWrite = useRef<number | null>(null);
+  const localStoreRevision = useRef(0);
+  const remoteWriteChain = useRef<Promise<void>>(Promise.resolve());
 
   const projects = useMemo(
     () => store.projects.filter((project) => project.scope === scope),
@@ -339,6 +341,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   // from another device. The server keys it by Clerk subject, not email.
   useEffect(() => {
     let cancelled = false;
+    const hydrationRevision = localStoreRevision.current;
     void (async () => {
       try {
         const token = await getToken();
@@ -352,6 +355,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         if (cancelled) return;
         if (payload.version > 0) {
           remoteHistoryVersion.current = payload.version;
+          if (localStoreRevision.current !== hydrationRevision) {
+            remoteHistoryReady.current = false;
+            setNotice("云端历史载入期间已开始新对话；本机内容已保留，稍后刷新可重新同步。");
+            return;
+          }
           remoteHistoryReady.current = true;
           setStore(payload.store);
           writeJson(storeKey, payload.store);
@@ -370,6 +378,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           return;
         }
         remoteHistoryVersion.current = migratedPayload.version;
+        if (localStoreRevision.current !== hydrationRevision) {
+          remoteHistoryReady.current = false;
+          setNotice("历史迁移期间已开始新对话；本机内容已保留，未被云端快照覆盖。");
+          return;
+        }
         remoteHistoryReady.current = true;
         setStore(migratedPayload.store);
         writeJson(storeKey, migratedPayload.store);
@@ -450,13 +463,21 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     if (queuedHistoryWrite.current !== null) window.clearTimeout(queuedHistoryWrite.current);
     queuedHistoryWrite.current = window.setTimeout(() => {
       queuedHistoryWrite.current = null;
-      void writeRemoteHistory(latestStore.current);
+      remoteWriteChain.current = remoteWriteChain.current
+        .catch(() => undefined)
+        .then(() => writeRemoteHistory(latestStore.current));
     }, 650);
   }, [writeRemoteHistory]);
 
-  const commitStore = (next: AgentStore) => {
+  const commitLocalStore = (next: AgentStore) => {
+    localStoreRevision.current += 1;
+    latestStore.current = next;
     setStore(next);
     writeJson(storeKey, next);
+  };
+
+  const commitStore = (next: AgentStore) => {
+    commitLocalStore(next);
     queueRemoteHistoryWrite(next);
   };
 
@@ -618,7 +639,10 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
       const publishPartial = () => {
         const partialMessage: ResearchMessage = { id: assistantId, role: "assistant", content: answer, sources, usage, createdAt: new Date().toISOString() };
         const partial = { ...optimistic, messages: [...optimistic.messages, partialMessage], updatedAt: partialMessage.createdAt };
-        commitStore({ ...withUser, chats: [partial, ...withUser.chats.filter((item) => item.id !== partial.id)] });
+        // Keep token-by-token rendering local. Persist only the completed
+        // answer remotely so a long response cannot create version conflicts
+        // or overwrite itself across devices.
+        commitLocalStore({ ...withUser, chats: [partial, ...withUser.chats.filter((item) => item.id !== partial.id)] });
       };
       for (;;) {
         const { value, done } = await reader.read();

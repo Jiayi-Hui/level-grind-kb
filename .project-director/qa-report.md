@@ -368,3 +368,10 @@ the production AI Capex view remains integrated in the authenticated
 | Auth boundary | Pass | Anonymous Notes, Ideas, and AskAI-history probes remain fail-closed with HTTP 401 |
 | Authenticated production smoke | Pending | Must be completed in the controlled canonical-domain Clerk session after hotfix deployment |
 | Notes / Ideas read-back | Pending | Requires authenticated creation plus hard refresh; no production research record is created before that check |
+## V5.20 — AskAI history hydration race (2026-08-05)
+
+- Reproduced on authenticated production: provider reached `complete`, but a late private-history response replaced the optimistic chat and made the answer disappear.
+- Added a local revision guard so history hydration/migration cannot overwrite a conversation started after hydration began.
+- Token-by-token SSE updates now remain local; only the completed answer is queued for private cross-device persistence.
+- Remote history writes are serialized to avoid version races between optimistic and completed snapshots.
+- Verified with lint, 53/53 tests, portable EdgeOne build, and `git diff --check` under the bundled Node runtime.

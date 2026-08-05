@@ -56,6 +56,11 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /migrate-local-v1/);
   assert.match(source, /另一台设备已更新 AskAI 历史/);
   assert.match(source, /historyMigrationKey/);
+  assert.match(source, /localStoreRevision/);
+  assert.match(source, /localStoreRevision\.current !== hydrationRevision/);
+  assert.match(source, /commitLocalStore/);
+  assert.match(source, /Keep token-by-token rendering local/);
+  assert.match(source, /remoteWriteChain/);
 });
 
 test("AskAI history is private to a Clerk subject and protects one-time migration writes", async () => {
