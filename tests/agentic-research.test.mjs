@@ -93,6 +93,9 @@ test("agent chat function authenticates and calls configured search and model pr
   assert.match(source, /AI_BASE_URL/);
   assert.match(source, /deepseek-v4-flash/);
   assert.match(source, /thinking: \{ type: effectiveThinkingEnabled \? "enabled" : "disabled" \}/);
+  assert.match(source, /AI_THINKING_MAX_OUTPUT_TOKENS/);
+  assert.match(source, /reasoning_effort: "high"/);
+  assert.match(source, /effectiveThinkingEnabled \? thinkingMaxTokens : regularMaxTokens/);
   assert.match(source, /\/chat\/completions/);
   assert.match(source, /text\/event-stream/);
   assert.match(source, /ReadableStream/);

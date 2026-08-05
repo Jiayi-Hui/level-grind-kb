@@ -275,6 +275,8 @@ async function deepSeekAnswer(input, webResults, env, onDelta, lifecycle = {}) {
   if (!modelConfigValue.apiKey) throw new Error("团队默认模型尚未配置");
   const { provider, model, baseUrl, apiKey, openRouter, thinkingSupported } = modelConfigValue;
   const effectiveThinkingEnabled = Boolean(input.thinkingEnabled && thinkingSupported);
+  const regularMaxTokens = Math.min(3600, Math.max(500, Number(env.AI_MAX_OUTPUT_TOKENS || 1800)));
+  const thinkingMaxTokens = Math.min(8000, Math.max(4096, Number(env.AI_THINKING_MAX_OUTPUT_TOKENS || 6000)));
   const context = input.contextEntries.map((entry, index) =>
     `[C${index + 1}] ${entry.title}\n${entry.content}`
   ).join("\n\n");
@@ -293,9 +295,9 @@ async function deepSeekAnswer(input, webResults, env, onDelta, lifecycle = {}) {
       model,
       ...(!openRouter ? { thinking: { type: effectiveThinkingEnabled ? "enabled" : "disabled" } } : {}),
       ...(openRouter && thinkingSupported ? { reasoning: { enabled: effectiveThinkingEnabled } } : {}),
+      ...(effectiveThinkingEnabled ? { reasoning_effort: "high" } : { temperature: 0.1 }),
       ...(onDelta ? { stream: true, stream_options: { include_usage: true } } : {}),
-      temperature: 0.1,
-      max_tokens: Math.min(3600, Math.max(500, Number(env.AI_MAX_OUTPUT_TOKENS || 1800))),
+      max_tokens: effectiveThinkingEnabled ? thinkingMaxTokens : regularMaxTokens,
       messages: [
         {
           role: "system",

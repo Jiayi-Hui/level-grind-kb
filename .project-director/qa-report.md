@@ -376,4 +376,5 @@ the production AI Capex view remains integrated in the authenticated
 - Remote history writes are serialized to avoid version races between optimistic and completed snapshots.
 - Clerk token callback identity changes no longer restart history hydration after a chat has begun.
 - Chat visibility now follows the effective fallback project id; the initial default project no longer filters every newly-created chat out of the UI.
+- Production Thinking-mode smoke testing exposed reasoning-token exhaustion before a final answer. Thinking requests now omit unsupported sampling temperature, set `reasoning_effort=high`, and reserve a separate 4,096–8,000 token completion budget.
 - Verified with lint, 53/53 tests, portable EdgeOne build, and `git diff --check` under the bundled Node runtime.
