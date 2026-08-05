@@ -374,4 +374,5 @@ the production AI Capex view remains integrated in the authenticated
 - Added a local revision guard so history hydration/migration cannot overwrite a conversation started after hydration began.
 - Token-by-token SSE updates now remain local; only the completed answer is queued for private cross-device persistence.
 - Remote history writes are serialized to avoid version races between optimistic and completed snapshots.
+- Clerk token callback identity changes no longer restart history hydration after a chat has begun.
 - Verified with lint, 53/53 tests, portable EdgeOne build, and `git diff --check` under the bundled Node runtime.

@@ -311,6 +311,8 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const queuedHistoryWrite = useRef<number | null>(null);
   const localStoreRevision = useRef(0);
   const remoteWriteChain = useRef<Promise<void>>(Promise.resolve());
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
 
   const projects = useMemo(
     () => store.projects.filter((project) => project.scope === scope),
@@ -344,7 +346,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     const hydrationRevision = localStoreRevision.current;
     void (async () => {
       try {
-        const token = await getToken();
+        const token = await getTokenRef.current();
         if (!token) return;
         const response = await fetch("/api/askai-history", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         const payload = await response.json().catch(() => ({})) as HistoryResponse;
@@ -393,7 +395,10 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [getToken]);
+  // Hydrate once per mounted workspace. Clerk may return a new getToken
+  // function identity during auth refreshes; that must not restart hydration
+  // and replace a conversation the user has already begun.
+  }, []);
 
   useEffect(() => () => {
     if (queuedHistoryWrite.current !== null) window.clearTimeout(queuedHistoryWrite.current);
