@@ -500,3 +500,93 @@ client-side authentication protects static JSON assets.
 - Work-computer takeover is allowed only after cross-user visibility,
   cross-device private-state recovery, deployment survival, and conflict
   handling are verified against the live service.
+
+## V5.16 — Governed research intake, observable AskAI, and contributor views
+
+- FR-59: A private Tiff intake batch is stored as encrypted, authenticated
+  Notes/Ideas records. Raw attachments are stored once and referenced from
+  derived objects; no private body or file is committed to Git or published as
+  static JSON.
+- FR-60: Analysts may edit or delete only records they own. Configured member
+  managers may review and manage all team records. Every mutation produces an
+  append-only audit record.
+- FR-61: Analysts can see their own contribution history, attachment history,
+  Note-to-Idea links, and Idea review state. PM/member-manager views expose the
+  review queue and contribution provenance without enabling bulk download.
+- FR-62: AskAI streams user-visible stage events for authentication, knowledge
+  retrieval, optional web verification, provider connection, first token, and
+  completion/error. It never exposes hidden chain-of-thought.
+- FR-63: AskAI persists metadata-only request diagnostics keyed by request ID so
+  operators can distinguish auth, retrieval, provider-connect, first-token,
+  completion, and error latency without storing prompts or private evidence.
+- FR-64: EdgeOne Cloud Functions use the platform maximum 120-second duration.
+  Provider and retrieval calls have explicit configurable deadlines and return
+  typed SSE errors before the platform deadline where possible.
+
+### Acceptance
+
+- AC-32: Private Tiff content is absent from Git-tracked static Event/AIDC JSON.
+- AC-33: Five supplied PDFs and the 0803/0804 text batch have an import manifest
+  mapping them to Notes or Ideas with Confidential defaults.
+- AC-34: A non-owner analyst cannot mutate another analyst's record; the owner
+  and configured Tiff co-manager can.
+- AC-35: AskAI emits stage events and a structured timeout/provider error rather
+  than ending as a silent 30-second request.
+- AC-36: No deployment, push, or production data write occurs before the release
+  gate and authenticated import review.
+
+## V5.17 — Current research objects and continuous validation
+
+- FR-65: The previously published WeChat seed ledger remains recoverable as an
+  internal archive but is excluded from the active/public Event view.
+- FR-66: New Events and Ideas that identify a listed company store an explicit
+  ticker/Yahoo symbol and expose a real hourly-refreshed market path.
+- FR-67: Market validation shows the inception baseline, latest observation,
+  observed upside, and observed downside without treating price action as
+  fundamental proof.
+- FR-68: Fundamental validation has a separate analyst-editable status,
+  evidence note, and next-check field protected by existing ownership,
+  manager, version, encryption, and audit rules.
+- FR-69: Existing Clerk identities, invitations, roles, sessions, and stored
+  research records remain compatible.
+
+### Acceptance
+
+- AC-37: The portable Event ledger contains no legacy WeChat seed rows.
+- AC-38: A supported Yahoo symbol renders hourly prices with provider and
+  refresh timestamps; missing symbols render no invented return.
+- AC-39: Price verification cannot silently alter fundamental validation.
+
+## V5.18 — Private research vault and responsive AskAI
+
+- FR-70: A Notes/Ideas list or detail request returns raw content only when the
+  signed-in Clerk subject owns the record. Ordinary team and manager views may
+  expose review metadata, but not another contributor's raw body or attachment.
+- FR-71: AskAI performs bounded server-side retrieval across governed team
+  Notes, Ideas, Events, and AI Capex without returning the underlying private
+  records to the requesting browser.
+- FR-72: Gray-box answers must not reveal another contributor's file name,
+  author identity, full text, or downloadable source. They synthesize the
+  minimum evidence needed to answer and retain server-side audit metadata.
+- FR-73: AskAI projects, chats, messages, and saved personal answers are keyed
+  by Clerk subject and remain available on another device signed into the same
+  account; no other subject can read them.
+- FR-74: When OpenRouter is configured, the UI exposes only a reviewed built-in
+  allowlist or an explicit server allowlist. DeepSeek and OpenRouter requests
+  emit an SSE frame immediately and record provider-connect and first-token
+  latency separately.
+- FR-75: Existing browser-local AskAI history is imported once into the private
+  account store without deleting or duplicating newer server records.
+
+### Acceptance
+
+- AC-40: User B cannot list, open, or download User A's Notes/Ideas, while a
+  server-side AskAI query may use a bounded excerpt without exposing the source.
+- AC-41: A project/chat created on device A reappears for the same Clerk account
+  on device B and is absent for a different account.
+- AC-42: OpenRouter is not labelled “待配置” when the server key and reviewed
+  allowlist are available.
+- AC-43: A provider failure or timeout produces a visible typed SSE error;
+  successful requests expose time-to-provider and time-to-first-token evidence.
+- AC-44: The prepared Tiff intake batch is production-written only after the
+  release gate and authenticated import check.

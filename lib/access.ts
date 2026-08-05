@@ -36,8 +36,9 @@ export function invitedEmails() {
 export function memberManagerEmails() {
   const configuredManagers = runtimeEnv("LEVEL_GRIND_MEMBER_MANAGER_EMAILS") ?? "";
   const ownerEmail = runtimeEnv("LEVEL_GRIND_OWNER_EMAIL") ?? "";
+  const primaryPmEmail = runtimeEnv("LEVEL_GRIND_PRIMARY_PM_EMAIL") ?? "";
   return new Set(
-    `${ownerEmail},${configuredManagers}`
+    `${ownerEmail},${primaryPmEmail},${configuredManagers}`
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),

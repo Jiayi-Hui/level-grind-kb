@@ -60,6 +60,7 @@ async function clerkRequest(path, secretKey, init = {}) {
 function memberManagerEmails(env) {
   return new Set([
     env.LEVEL_GRIND_OWNER_EMAIL,
+    env.LEVEL_GRIND_PRIMARY_PM_EMAIL,
     ...(env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(","),
   ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
 }

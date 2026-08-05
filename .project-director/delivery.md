@@ -365,3 +365,54 @@ and explicit Report/Web/Hybrid evidence modes.
   `30621461864`. The canonical site and both new function boundaries passed
   post-deploy probes; the two-real-user visibility check is handed to the first
   company-computer session.
+
+## V5.16 Governed intake and observable AskAI candidate
+
+- Branch: `codex/secure-research-intake-observability`.
+- Prepares seven private Notes/Ideas and five original PDFs through a repeatable,
+  gitignored intake manifest; no research body or attachment is committed.
+- Adds contributor benefit views, PM follow-up/validation/tracking fields,
+  owner-or-manager governance, and metadata-only audit evidence.
+- Gives the configured primary PM the same member-management authorization as
+  the owner without changing Clerk users, sessions, or invitations.
+- Streams AskAI operational stages and tokens over SSE, surfaces request IDs and
+  typed timeout errors, and stores metadata-only stage diagnostics.
+- Configures the EdgeOne Cloud Function ceiling to 120 seconds. Work exceeding
+  that ceiling must move to an asynchronous job rather than an unbounded HTTP
+  request.
+- Lint, 49 tests, Tencent build, desktop QA, and mobile QA pass.
+- Release gate: set `LEVEL_GRIND_PRIMARY_PM_EMAIL` to Tiff's existing Clerk
+  email, deploy the integrated candidate once, sign in to the canonical site,
+  then import and verify seven records plus five attachments.
+
+## V5.17 Current Event/Idea validation candidate
+
+- Removes the old WeChat-derived Claim seed from the active Event publication
+  without destroying its 45-row internal archive.
+- Adds listed-company ticker mapping and real hourly Yahoo Finance validation
+  to newly created Events and Ideas.
+- Separates observable market reaction from analyst-owned fundamental
+  validation, with editable status, evidence, next check, upside, and downside
+  assumptions.
+- Encrypts fundamental narrative fields at rest and preserves existing Clerk,
+  manager, optimistic-version, soft-delete, and audit contracts.
+- Lint, 50 tests, both production builds, live Yahoo runtime probe, and desktop
+  plus mobile browser QA pass.
+- Release gate: preview and approve this integrated candidate before any push
+  or Tencent production deployment.
+
+## V5.18 Private research and responsive AskAI candidate
+
+- Repairs the AskAI response path by making observability non-blocking and
+  emitting SSE readiness/status before retrieval or provider work.
+- Supplies a reviewed OpenRouter fallback allowlist when the production secret
+  exists but an operator list has not been configured.
+- Makes raw Notes/Ideas contributor-only while allowing bounded server-side
+  gray-box synthesis across team research.
+- Persists AskAI Projects, Chats, and Messages privately per Clerk subject so a
+  user sees the same history on desktop and mobile.
+- Re-prepares the seven Tiff records and five original attachments under the
+  new privacy policy; import is intentionally deferred until after deployment.
+- Lint, 51 tests, the application build, and the Tencent portable build pass.
+- Remaining gate: canonical-domain authenticated provider smoke test, then one
+  reviewed deployment and idempotent Tiff batch import.

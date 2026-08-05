@@ -1,0 +1,6 @@
+{
+  "$schema": "https://edgeone.ai/schemas/edgeone.json",
+  "cloudFunctions": {
+    "maxDuration": 120
+  }
+}

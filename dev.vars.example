@@ -14,6 +14,7 @@ CLERK_AFTER_SIGN_UP_URL=/
 CLERK_AUTHORIZED_PARTIES=https://www.level-grind.com,https://level-grind.com
 
 LEVEL_GRIND_OWNER_EMAIL=you@example.com
+LEVEL_GRIND_PRIMARY_PM_EMAIL=primary-pm@example.com
 LEVEL_GRIND_MEMBER_MANAGER_EMAILS=co-manager@example.com
 LEVEL_GRIND_INVITED_EMAILS=you@example.com
 
@@ -30,11 +31,17 @@ AI_OUTPUT_USD_PER_MTOK=0.28
 
 WEB_SEARCH_PROVIDER=tavily
 TAVILY_API_KEY=replace_me
+TAVILY_TIMEOUT_MS=30000
+MODEL_CONNECT_TIMEOUT_MS=45000
+MODEL_TOTAL_TIMEOUT_MS=105000
 
 # Optional OpenRouter pilot. Keep this server-side and leave it disabled for
 # internal Notes/Ideas unless the deployment owner explicitly approves it.
 OPENROUTER_API_KEY=replace_me
 OPENROUTER_DEFAULT_MODEL=
+# A non-empty value replaces the built-in reviewed model IDs. If this stays
+# empty while OPENROUTER_API_KEY is configured, AskAI uses its small server-side
+# fallback list; callers still cannot supply arbitrary model IDs.
 OPENROUTER_ALLOWED_MODELS=
 # Only models listed here may receive an OpenRouter `reasoning` parameter.
 OPENROUTER_THINKING_MODELS=

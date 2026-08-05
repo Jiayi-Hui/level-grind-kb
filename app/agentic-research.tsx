@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { MarkdownAnswer } from "./markdown-answer";
 
@@ -54,6 +54,7 @@ type AgentStore = {
   projects: ResearchProject[];
   chats: ResearchChat[];
 };
+type HistoryResponse = { store: AgentStore; version: number; migrated?: boolean; alreadyExists?: boolean; currentVersion?: number; error?: string };
 type ContextEntry = {
   id: string;
   title: string;
@@ -80,6 +81,7 @@ const storeKey = "level-grind.agentic-research.v1";
 const knowledgeKey = "level-grind.personal-knowledge.v1";
 const vaultKey = "lg-obsidian-vault";
 const thinkingKey = "level-grind.askai-thinking.v1";
+const historyMigrationKey = "level-grind.agentic-research.remote-migrated.v1";
 
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -294,7 +296,8 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   );
   const [thinkingSince, setThinkingSince] = useState<number | null>(null);
   const [thinkingSeconds, setThinkingSeconds] = useState(0);
-  const [streamStage, setStreamStage] = useState<"preparing" | "retrieving_web" | "starting_model" | "generating">("preparing");
+  type StreamStage = "preparing" | "authenticated" | "retrieving_context" | "context_ready" | "retrieving_web" | "web_ready" | "connecting_provider" | "provider_connected" | "provider_streaming" | "first_token" | "complete" | "error";
+  const [streamStage, setStreamStage] = useState<StreamStage>("preparing");
   const [modelProvider, setModelProvider] = useState<ModelProvider>("default");
   const [openRouterModels, setOpenRouterModels] = useState<ModelCapability[]>([]);
   const [selectedOpenRouterModel, setSelectedOpenRouterModel] = useState("");
@@ -302,6 +305,10 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const remoteHistoryReady = useRef(false);
+  const remoteHistoryVersion = useRef(0);
+  const latestStore = useRef(store);
+  const queuedHistoryWrite = useRef<number | null>(null);
 
   const projects = useMemo(
     () => store.projects.filter((project) => project.scope === scope),
@@ -326,6 +333,58 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [activeChat?.messages.length, lastMessageContent, thinkingSince]);
+
+  // Existing browsers used localStorage. On the first authenticated visit this
+  // imports that snapshot once, but never overwrites a history already written
+  // from another device. The server keys it by Clerk subject, not email.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const response = await fetch("/api/askai-history", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        const payload = await response.json().catch(() => ({})) as HistoryResponse;
+        if (!response.ok) {
+          if (!cancelled) setNotice(payload.error || "AskAI 私有历史服务暂时不可用；当前继续使用本机历史。");
+          return;
+        }
+        if (cancelled) return;
+        if (payload.version > 0) {
+          remoteHistoryVersion.current = payload.version;
+          remoteHistoryReady.current = true;
+          setStore(payload.store);
+          writeJson(storeKey, payload.store);
+          if (payload.migrated) window.localStorage.setItem(historyMigrationKey, "done");
+          return;
+        }
+        const local = latestStore.current;
+        const migrated = await fetch("/api/askai-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: "migrate-local-v1", store: local }),
+        });
+        const migratedPayload = await migrated.json().catch(() => ({})) as HistoryResponse;
+        if (!migrated.ok || cancelled) {
+          if (!cancelled) setNotice(migratedPayload.error || "AskAI 本机历史尚未迁移；不会删除本机记录。");
+          return;
+        }
+        remoteHistoryVersion.current = migratedPayload.version;
+        remoteHistoryReady.current = true;
+        setStore(migratedPayload.store);
+        writeJson(storeKey, migratedPayload.store);
+        window.localStorage.setItem(historyMigrationKey, "done");
+        setNotice(migratedPayload.alreadyExists ? "已载入另一台设备上的 AskAI 私有历史" : "已将本机 AskAI 历史安全迁移到你的跨设备私有空间");
+      } catch {
+        if (!cancelled) setNotice("AskAI 私有历史服务暂时不可用；当前继续使用本机历史。");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getToken]);
+
+  useEffect(() => () => {
+    if (queuedHistoryWrite.current !== null) window.clearTimeout(queuedHistoryWrite.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -361,9 +420,44 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     ? (selectedOpenRouterCapability?.model || openRouterPreviewModels.find((item) => item.model === selectedOpenRouterModel)?.label || "OpenRouter")
     : defaultModel;
 
+  useEffect(() => { latestStore.current = store; }, [store]);
+
+  const writeRemoteHistory = useCallback(async (next: AgentStore) => {
+    if (!remoteHistoryReady.current) return;
+    const token = await getToken();
+    if (!token) return;
+    const response = await fetch("/api/askai-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: "replace", expectedVersion: remoteHistoryVersion.current, store: next }),
+    });
+    const payload = await response.json().catch(() => ({})) as HistoryResponse;
+    if (response.status === 409) {
+      remoteHistoryReady.current = false;
+      setNotice("另一台设备已更新 AskAI 历史；本机内容仍在此设备，刷新页面后可查看最新云端历史。");
+      return;
+    }
+    if (!response.ok) {
+      setNotice(payload.error || "AskAI 私有历史暂时未同步；本机仍保留当前记录。");
+      return;
+    }
+    remoteHistoryVersion.current = payload.version;
+  }, [getToken]);
+
+  const queueRemoteHistoryWrite = useCallback((next: AgentStore) => {
+    if (!remoteHistoryReady.current) return;
+    latestStore.current = next;
+    if (queuedHistoryWrite.current !== null) window.clearTimeout(queuedHistoryWrite.current);
+    queuedHistoryWrite.current = window.setTimeout(() => {
+      queuedHistoryWrite.current = null;
+      void writeRemoteHistory(latestStore.current);
+    }, 650);
+  }, [writeRemoteHistory]);
+
   const commitStore = (next: AgentStore) => {
     setStore(next);
     writeJson(storeKey, next);
+    queueRemoteHistoryWrite(next);
   };
 
   const selectThinking = (enabled: boolean) => {
@@ -535,7 +629,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           const event = frame.split("\n").find((line) => line.startsWith("event:"))?.slice(6).trim();
           const raw = frame.split("\n").find((line) => line.startsWith("data:"))?.slice(5).trim();
           if (!event || !raw) continue;
-          let payload: { delta?: string; sources?: ResearchMessage["sources"]; usage?: ResearchMessage["usage"]; stage?: typeof streamStage; error?: string };
+          let payload: { delta?: string; sources?: ResearchMessage["sources"]; usage?: ResearchMessage["usage"]; stage?: StreamStage; error?: string; requestId?: string };
           try {
             payload = JSON.parse(raw) as typeof payload;
           } catch {
@@ -547,7 +641,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           if (event === "meta") sources = payload.sources || [];
           if (event === "delta" && payload.delta) { answer += payload.delta; publishPartial(); }
           if (event === "done") { sources = payload.sources || sources; usage = payload.usage; }
-          if (event === "error") throw new Error(payload.error || "研究服务暂时不可用");
+          if (event === "error") throw new Error(`${payload.error || "研究服务暂时不可用"}${payload.requestId ? `（请求 ${payload.requestId.slice(0, 8)}）` : ""}`);
         }
         if (done) break;
       }
@@ -663,7 +757,20 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
                 </div>
               </article>
             ))}
-            {thinkingSince && <article className="agentic-message assistant"><span>AI</span><div className="agentic-thinking"><i />{streamStage === "retrieving_web" ? "正在联网检索" : streamStage === "generating" ? "正在生成回答" : "正在连接模型"} · {thinkingSeconds}s</div></article>}
+            {thinkingSince && <article className="agentic-message assistant"><span>AI</span><div className="agentic-thinking"><i />{{
+              preparing: "正在准备研究任务",
+              authenticated: "身份验证完成",
+              retrieving_context: "正在查询团队知识库",
+              context_ready: "知识库证据已整理",
+              retrieving_web: "正在联网验证",
+              web_ready: "公开来源已返回",
+              connecting_provider: "正在连接所选模型",
+              provider_connected: "模型已连接，等待首个回答片段",
+              provider_streaming: "模型已开始响应",
+              first_token: "正在生成回答",
+              complete: "分析完成",
+              error: "分析中断",
+            }[streamStage]} · {thinkingSeconds}s</div></article>}
           </div>
           <form className="agentic-composer" onSubmit={ask}>
             <div className="agentic-modes">

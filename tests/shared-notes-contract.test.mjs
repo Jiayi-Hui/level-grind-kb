@@ -32,6 +32,12 @@ test("shared Notes is a Clerk-authenticated TencentDB contract, not browser stor
   assert.match(service, /viewAllowed/);
   assert.match(service, /externalAiAllowed/);
   assert.match(service, /redactionRequired/);
+  assert.match(service, /canReadRaw\(actor, row\)/);
+  assert.match(service, /owner_user_id=\$2/);
+  assert.match(service, /\/v1\/internal\/askai\/private-research/);
+  assert.match(service, /NOTES_RETRIEVAL_SERVICE_TOKEN/);
+  assert.match(service, /externalUse: "forbidden"/);
+  assert.doesNotMatch(service, /agent-chat\.js/);
   assert.match(service, /IDEA_NOTE_NOT_FOUND/);
   assert.match(migration, /ticker text NOT NULL/);
   assert.match(migration, /pending_review/);

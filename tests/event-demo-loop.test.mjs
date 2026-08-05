@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("ships the real Claim ledger with separate content and price evidence", async () => {
+test("archives the legacy WeChat Claim ledger while keeping new shared Event controls", async () => {
   const [component, snapshot, source, sync] = await Promise.all([
     readFile(new URL("../app/event-research.tsx", import.meta.url), "utf8"),
     readFile(new URL("../data/events/claim-ledger-dashboard.json", import.meta.url), "utf8"),
@@ -12,19 +12,14 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   const data = JSON.parse(snapshot);
   const claims = JSON.parse(source);
   assert.equal(data.schemaVersion, "claim-ledger.v1");
-  assert.equal(data.recordCounts.claims, 45);
-  assert.equal(data.recordCounts.claimSecurityMappings, 88);
-  assert.equal(data.recordCounts.securitiesWithPublicPrices, 48);
+  assert.equal(data.recordCounts.claims, 0);
+  assert.equal(data.recordCounts.claimSecurityMappings, 0);
+  assert.equal(data.recordCounts.securitiesWithPublicPrices, 0);
+  assert.equal(data.recordCounts.archivedLegacyClaims, 45);
   assert.equal(claims.claims.length, 45);
-  assert.ok(data.claims.some((claim) => claim.speaker === "Allen" && claim.claimTimeHkt));
-  assert.ok(["CLM-SEED-EVT-0001", "CLM-SEED-EVT-0002", "CLM-SEED-EVT-0003", "CLM-SEED-EVT-0004"]
-    .every((id) => data.claims.find((claim) => claim.claimId === id)?.speaker === "BossX"));
-  assert.ok(data.claims.every((claim) => claim.speaker !== "Xu Lei"));
-  assert.ok(data.claims.some((claim) => claim.verificationEvidence.length > 0));
-  assert.ok(data.claims.every((claim) => claim.contentStatus && claim.priceStatus));
-  assert.ok(data.claims.every((claim) => claim.mappings.every((mapping) => Object.values(mapping.returns).every((horizon) => (
-    horizon.date && horizon.close !== null ? horizon.return !== null : horizon.return === null
-  )))));
+  assert.deepEqual(data.claims, []);
+  assert.deepEqual(data.securities, []);
+  assert.deepEqual(data.sourceSnapshots, []);
   assert.match(component, /语义搜索 Claim、公司、行业、主题或股票代码/);
   assert.match(component, /T\+0/);
   assert.match(component, /T\+1/);
@@ -36,15 +31,19 @@ test("ships the real Claim ledger with separate content and price evidence", asy
   assert.match(component, /编辑/);
   assert.match(component, /删除/);
   assert.match(component, /添加 Claim/);
+  assert.match(component, /Ticker \/ Yahoo Symbol/);
+  assert.match(component, /基本面证据 \/ 反向证据/);
   assert.match(component, /按最深回撤/);
   assert.match(component, /全部公司/);
   assert.match(component, /全部行业 \/ 主题/);
   assert.match(data.methodology.contentBoundary, /价格已核验不等于 Claim 内容已核验/);
+  assert.match(data.methodology.archiveBoundary, /excluded from the active Event view/);
   assert.doesNotMatch(component, /investmentReadThrough|投资含义|相似度|需求判断/);
   assert.match(sync, /event_study_bbg_baseline/);
   assert.match(sync, /comparison_rows/);
   assert.match(sync, /hasObservedPrice/);
   assert.match(sync, /publicSpeakerAlias/);
+  assert.match(sync, /PUBLISH_LEGACY_WECHAT_CLAIMS/);
 });
 
 test("refreshes event price paths through a bounded Yahoo Finance proxy", async () => {
@@ -60,6 +59,8 @@ test("refreshes event price paths through a bounded Yahoo Finance proxy", async 
   assert.match(marketRoute, /query1\.finance\.yahoo\.com\/v8\/finance\/spark/);
   assert.match(marketRoute, /fetchYahooSparkSeries/);
   assert.match(marketRoute, /symbols\.length > 10/);
+  assert.match(marketRoute, /interval === "1h"/);
+  assert.match(marketRoute, /range=\$\{hourly \? "1mo" : "3mo"\}/);
   assert.match(marketRoute, /s-maxage=3600/);
   assert.doesNotMatch(marketRoute, /API_KEY|SECRET/);
 });

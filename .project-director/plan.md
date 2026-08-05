@@ -275,3 +275,49 @@
 - [x] Ask the model for concise, consistently structured Markdown.
 - [x] Run targeted tests, lint, and the Tencent production build.
 - [ ] Publish after explicit release approval.
+
+## V5.16 — Governed intake, observable AskAI, and contributor views
+
+- [x] Audit current Notes/Ideas storage, AskAI stream, member policy, and static
+  data confidentiality boundary.
+- [x] Define the source-to-Note/Idea/Claim mapping and Confidential defaults.
+- [x] Build a gitignored, repeatable intake manifest for the supplied text/PDFs.
+- [x] Enforce owner/manager mutation rules and append-only audit records.
+- [x] Add analyst contribution and PM review views.
+- [x] Add structured AskAI stages, operation deadlines, and metadata-only stage
+  diagnostics.
+- [x] Set EdgeOne Cloud Function duration to 120 seconds.
+- [x] Run targeted tests, lint, build, and desktop/mobile browser QA.
+- [x] Prepare and validate the authenticated import batch without exposing
+  source files or bodies to Git.
+- [ ] Sign in to the canonical site and execute the authenticated import after
+  release-candidate approval.
+- [ ] Wait for explicit release approval before push or deployment.
+
+## V5.17 — Current Event/Idea validation
+
+- [x] Define the legacy WeChat-seed archival boundary.
+- [x] Exclude legacy WeChat seed Claims from the active/public Event view.
+- [x] Extend Event and Idea records with explicit ticker and fundamental
+  validation fields.
+- [x] Add reusable Yahoo Finance hourly price verification with one-hour cache.
+- [x] Show baseline, latest, observed upside and observed downside for Events
+  and Ideas.
+- [x] Keep fundamental verification editable by the contributor or PM and
+  distinct from market-price verification.
+- [x] Add regression tests and run lint/build/browser QA.
+- [ ] Wait for explicit release approval before push or deployment.
+
+## V5.18 — Private research and responsive AskAI
+
+- [x] Reproduce the local AskAI disconnect and inspect production configuration.
+- [x] Enable a reviewed OpenRouter allowlist and verify provider request shape.
+- [x] Verify DeepSeek model ID, streaming contract, and first-token handling.
+- [x] Enforce owner-only raw Notes/Ideas reads and remove misleading UI policy
+  controls.
+- [x] Add server-side bounded gray-box retrieval for team research.
+- [x] Persist AskAI projects/chats/messages/saved answers by Clerk subject.
+- [x] Add a one-time non-destructive local-history migration.
+- [x] Run targeted auth, privacy, streaming, persistence, lint, and build checks.
+- [ ] Perform desktop/mobile preview QA before requesting release approval.
+- [ ] Import the prepared Tiff batch only after an authenticated release gate.

@@ -9,6 +9,7 @@ const findingsPath = resolve(projectRoot, "data/events/verification-findings-202
 const siblingRoot = resolve(projectRoot, "../event-db/data/claim-ledger-alpha-2026-07-28");
 const trackedOutput = resolve(projectRoot, "data/events/claim-ledger-dashboard.json");
 const publicOutput = resolve(projectRoot, "public/data/claim-ledger-dashboard.json");
+const publishLegacyWechatClaims = process.env.PUBLISH_LEGACY_WECHAT_CLAIMS === "true";
 
 const exists = async (path) => fs.access(path).then(() => true, () => false);
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
@@ -33,9 +34,31 @@ if (!siblingAvailable) {
   if (!(await exists(trackedOutput))) {
     throw new Error(`Claim ledger sources unavailable at ${siblingRoot} and no tracked fallback exists.`);
   }
+  const archived = JSON.parse(await fs.readFile(trackedOutput, "utf8"));
+  const portable = publishLegacyWechatClaims ? archived : {
+    ...archived,
+    generatedAt: new Date().toISOString(),
+    sourceSnapshots: [],
+    claims: [],
+    securities: [],
+    recordCounts: {
+      ...archived.recordCounts,
+      archivedLegacyClaims: archived.recordCounts?.archivedLegacyClaims ?? archived.claims?.length ?? 0,
+      claims: 0,
+      exactTimestampClaims: 0,
+      mappedClaims: 0,
+      claimSecurityMappings: 0,
+      securitiesWithPublicPrices: 0,
+    },
+    methodology: {
+      ...archived.methodology,
+      archiveBoundary: "Legacy WeChat seed Claims are retained in the source archive and excluded from the active Event view.",
+    },
+  };
+  await fs.writeFile(trackedOutput, `${JSON.stringify(portable)}\n`, "utf8");
   await fs.mkdir(dirname(publicOutput), { recursive: true });
-  await fs.copyFile(trackedOutput, publicOutput);
-  console.log("Claim ledger source repo unavailable; copied the tracked dashboard snapshot.");
+  await fs.writeFile(publicOutput, `${JSON.stringify(portable)}\n`, "utf8");
+  console.log(`Claim ledger source repo unavailable; published ${portable.claims.length} active Claims from the tracked snapshot.`);
   process.exit(0);
 }
 
@@ -159,11 +182,20 @@ const securities = [...priceByTicker.entries()].map(([ticker, prices]) => ({
   prices: prices.sort((a, b) => a.date.localeCompare(b.date)),
 }));
 
+// The old WeChat ledger remains recoverable in its source files but is no
+// longer part of the active product. Set the explicit environment escape hatch
+// only for an authorized archive build, never for normal production.
+const activeClaims = publishLegacyWechatClaims ? claims : [];
+const activeTickerSet = new Set(activeClaims.flatMap((claim) => claim.mappings.map((mapping) => mapping.ticker)));
+const activeSecurities = publishLegacyWechatClaims
+  ? securities.filter((series) => activeTickerSet.has(series.ticker))
+  : [];
+
 const payload = {
   schemaVersion: "claim-ledger.v1",
   generatedAt: new Date().toISOString(),
   dataCutoff,
-  sourceSnapshots: [
+  sourceSnapshots: publishLegacyWechatClaims ? [
     {
       id: "wechat-claim-ledger",
       title: sourceClaims.sourceWorkbook,
@@ -182,23 +214,25 @@ const payload = {
       kind: "AKShare/yfinance cross-check",
       sha256: sha256(comparisonRaw),
     },
-  ],
+  ] : [],
   recordCounts: {
-    claims: claims.length,
-    exactTimestampClaims: claims.filter((claim) => claim.dateEvidenceType === "原始群聊时间戳").length,
-    mappedClaims: claims.filter((claim) => claim.mappings.length > 0).length,
-    claimSecurityMappings: bbgRows.length,
-    securitiesWithPublicPrices: securities.length,
+    archivedLegacyClaims: claims.length,
+    claims: activeClaims.length,
+    exactTimestampClaims: activeClaims.filter((claim) => claim.dateEvidenceType === "原始群聊时间戳").length,
+    mappedClaims: activeClaims.filter((claim) => claim.mappings.length > 0).length,
+    claimSecurityMappings: activeClaims.reduce((sum, claim) => sum + claim.mappings.length, 0),
+    securitiesWithPublicPrices: activeSecurities.length,
     verificationFindings: findings.findings.length,
   },
   methodology: {
     contentBoundary: "群聊 Claim 与核验状态分开保存；价格已核验不等于 Claim 内容已核验。",
+    archiveBoundary: "Legacy WeChat seed Claims are retained in the source archive and excluded from the active Event view.",
     bbgBoundary: "事件窗价格来自 Bloomberg Desktop 衍生输出，不包含可再分发的 Bloomberg 原始日频表。",
     publicBoundary: "公开价格用于复核和日常分诊；韩国股票、TOPIX 代理及公司行动仍需人工升级。",
     horizons: ["T+0", "T+1", "T+3", "T+5"],
   },
-  claims,
-  securities,
+  claims: activeClaims,
+  securities: activeSecurities,
   publicRerunSummary: summary,
 };
 

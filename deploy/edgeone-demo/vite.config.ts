@@ -7,7 +7,7 @@ const unavailableAgentChatMiddleware = {
   name: "level-grind-local-agent-chat-diagnostic",
   configureServer(server: { middlewares: { use: (path: string, handler: (request: { method?: string }, response: { statusCode: number; setHeader: (name: string, value: string) => void; end: (body: string) => void }) => void) => void } }) {
     if (agentChatProxyTarget) return;
-    server.middlewares.use("/api/agent-chat", (request, response) => {
+    const unavailable = (request: { method?: string }, response: { statusCode: number; setHeader: (name: string, value: string) => void; end: (body: string) => void }) => {
       response.statusCode = 503;
       response.setHeader("Content-Type", "application/json; charset=utf-8");
       response.setHeader("Cache-Control", "no-store");
@@ -17,7 +17,9 @@ const unavailableAgentChatMiddleware = {
         error: "本地 AskAI 未连接服务函数。请以 EdgeOne 预览验证，或设置 VITE_AGENT_CHAT_PROXY_URL 指向本地函数模拟器。",
         method: request.method || "GET",
       }));
-    });
+    };
+    server.middlewares.use("/api/agent-chat", unavailable);
+    server.middlewares.use("/api/askai-history", unavailable);
   },
 };
 
@@ -34,6 +36,10 @@ export default defineConfig({
       },
       ...(agentChatProxyTarget ? {
         "/api/agent-chat": {
+          target: agentChatProxyTarget,
+          changeOrigin: true,
+        },
+        "/api/askai-history": {
           target: agentChatProxyTarget,
           changeOrigin: true,
         },

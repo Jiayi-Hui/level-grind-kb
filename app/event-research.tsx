@@ -17,6 +17,7 @@ import {
   searchClaimsByVector,
   type ClaimVectorSearchResult,
 } from "../lib/local-claim-vector-search";
+import { MarketValidation } from "./market-validation";
 
 type Horizon = { date: string | null; close: number | null; return: number | null; abnormal: number | null };
 type ClaimMapping = {
@@ -43,6 +44,10 @@ type LedgerClaim = {
   title: string;
   originalClaim: string;
   verificationStatus: string | null;
+  ticker?: string;
+  fundamentalValidationStatus?: string;
+  fundamentalValidationNotes?: string;
+  validationNextCheck?: string;
   mappings: ClaimMapping[];
 };
 type SecuritySeries = {
@@ -71,8 +76,12 @@ type Draft = {
   claimTimeHkt: string;
   speaker: string;
   entity: string;
+  ticker: string;
   title: string;
   originalClaim: string;
+  fundamentalValidationStatus: string;
+  fundamentalValidationNotes: string;
+  validationNextCheck: string;
 };
 type SharedClaimOverlay = {
   sourceClaimId: string;
@@ -96,8 +105,12 @@ const emptyDraft: Draft = {
   claimTimeHkt: "",
   speaker: "",
   entity: "",
+  ticker: "",
   title: "",
   originalClaim: "",
+  fundamentalValidationStatus: "unreviewed",
+  fundamentalValidationNotes: "",
+  validationNextCheck: "",
 };
 
 function loadLocalEdits() {
@@ -132,7 +145,7 @@ function claimDimensions(claim: LedgerClaim) {
   const hasDirectMapping = claim.mappings.some((mapping) => mapping.mappingType.startsWith("Direct"));
   const hasProxyMapping = claim.mappings.some((mapping) => mapping.mappingType === "Proxy basket");
   return {
-    company: hasDirectMapping && !hasProxyMapping ? claim.entity : null,
+    company: (hasDirectMapping && !hasProxyMapping) || claim.ticker ? claim.entity : null,
     industry: hasProxyMapping ? claim.entity : null,
   };
 }
@@ -196,8 +209,12 @@ function toDraft(claim: LedgerClaim): Draft {
     claimTimeHkt: claim.claimTimeHkt || "",
     speaker: claim.speaker || "",
     entity: claim.entity || "",
+    ticker: claim.ticker || claim.mappings[0]?.ticker || "",
     title: claim.title,
     originalClaim: claim.originalClaim,
+    fundamentalValidationStatus: claim.fundamentalValidationStatus || "unreviewed",
+    fundamentalValidationNotes: claim.fundamentalValidationNotes || "",
+    validationNextCheck: claim.validationNextCheck || "",
   };
 }
 
@@ -261,9 +278,13 @@ export function EventResearch({
           eventId: overlay.sourceClaimId.replace(/^CLM/, "EVT"),
           speaker: overlay.payload.speaker || null,
           entity: overlay.payload.entity || null,
+          ticker: overlay.payload.ticker || "",
           title: overlay.payload.title || overlay.payload.originalClaim.slice(0, 42),
           originalClaim: overlay.payload.originalClaim,
           verificationStatus: "待核验",
+          fundamentalValidationStatus: overlay.payload.fundamentalValidationStatus || "unreviewed",
+          fundamentalValidationNotes: overlay.payload.fundamentalValidationNotes || "",
+          validationNextCheck: overlay.payload.validationNextCheck || "",
           mappings: [],
         });
       }
@@ -473,6 +494,7 @@ export function EventResearch({
       eventId: claim.id,
       speaker: claim.speaker || null,
       entity: claim.company || claim.ticker || null,
+      ticker: claim.ticker || "",
       title: claim.claim_text,
       originalClaim: claim.claim_text,
       verificationStatus: claim.verification_status,
@@ -490,7 +512,7 @@ export function EventResearch({
     speakers: [...new Set(claims.map((claim) => claim.speaker).filter(Boolean) as string[])].sort(),
     companies: [...new Set(claims.map((claim) => claimDimensions(claim).company).filter(Boolean) as string[])].sort(),
     industries: [...new Set(claims.map((claim) => claimDimensions(claim).industry).filter(Boolean) as string[])].sort(),
-    tickers: [...new Set(claims.flatMap((claim) => claim.mappings.map((mapping) => mapping.ticker)))].sort(),
+    tickers: [...new Set(claims.flatMap((claim) => [claim.ticker, ...claim.mappings.map((mapping) => mapping.ticker)]).filter(Boolean) as string[])].sort(),
   }), [claims]);
 
   const searchDocuments = useMemo(() => claims.map((claim) => {
@@ -507,6 +529,7 @@ export function EventResearch({
         claim.originalClaim,
         claim.title,
         claim.entity,
+        claim.ticker,
         dimensions.company,
         dimensions.industry,
         claim.speaker,
@@ -515,6 +538,7 @@ export function EventResearch({
       ].filter(Boolean).join("；"),
       exact: [
         claim.entity,
+        claim.ticker,
         dimensions.company,
         dimensions.industry,
         claim.speaker,
@@ -571,13 +595,14 @@ export function EventResearch({
         dimensions.company,
         dimensions.industry,
         ...claim.mappings.flatMap((item) => [item.ticker, item.security]),
+        claim.ticker,
       ].filter(Boolean).join(" ").toLowerCase().includes(needle);
       return (
         (literalMatch || Boolean(semanticIds?.has(claim.claimId)))
         && (speaker === "all" || claim.speaker === speaker)
         && (company === "all" || dimensions.company === company)
         && (industry === "all" || dimensions.industry === industry)
-        && (ticker === "all" || claim.mappings.some((mapping) => mapping.ticker === ticker))
+        && (ticker === "all" || claim.ticker === ticker || claim.mappings.some((mapping) => mapping.ticker === ticker))
       );
     }).sort((left, right) => {
       if (needle && searchResults) {
@@ -635,9 +660,13 @@ export function EventResearch({
         eventId: `EVT-LOCAL-${Date.now()}`,
         speaker: draft.speaker || null,
         entity: draft.entity || null,
+        ticker: draft.ticker,
         title: draft.title || draft.originalClaim.slice(0, 42),
         originalClaim: draft.originalClaim,
         verificationStatus: "待核验",
+        fundamentalValidationStatus: draft.fundamentalValidationStatus,
+        fundamentalValidationNotes: draft.fundamentalValidationNotes,
+        validationNextCheck: draft.validationNextCheck,
         mappings: [],
       };
       const nextAdded = [nextClaim, ...added];
@@ -708,7 +737,7 @@ export function EventResearch({
               <td>{claimDimensions(claim).company || "—"}</td>
               <td>{claimDimensions(claim).industry || "—"}</td>
               <td>{claim.speaker || "待定位"}</td>
-              <td>{claim.mappings[0]?.ticker || "—"}{claim.mappings.length > 1 && <small> +{claim.mappings.length - 1}</small>}</td>
+              <td>{claim.ticker || claim.mappings[0]?.ticker || "—"}{claim.mappings.length > 1 && <small> +{claim.mappings.length - 1}</small>}</td>
               {horizons.map((item) => {
                 const value = medianReturn(claim, item);
                 return <td key={item} className={`claim-return ${tone(value)}`}>{pct(value)}</td>;
@@ -732,10 +761,16 @@ export function EventResearch({
               <label><span>日期</span><input type="date" required value={draft.claimDateStart} onChange={(event) => setDraft({ ...draft, claimDateStart: event.target.value })} /></label>
               <label><span>时间</span><input value={draft.claimTimeHkt} onChange={(event) => setDraft({ ...draft, claimTimeHkt: event.target.value })} placeholder="HH:mm / 晚间" /></label>
               <label><span>公司</span><input value={draft.entity} onChange={(event) => setDraft({ ...draft, entity: event.target.value })} /></label>
+              <label><span>Ticker / Yahoo Symbol</span><input value={draft.ticker} onChange={(event) => setDraft({ ...draft, ticker: event.target.value })} placeholder="AMZN / 9988 HK / 300308 CH" /></label>
               <label><span>发言人 / 负责人</span><input value={draft.speaker} onChange={(event) => setDraft({ ...draft, speaker: event.target.value })} /></label>
             </div>
             <label><span>短标题</span><input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
             <label><span>Claim</span><textarea required value={draft.originalClaim} onChange={(event) => setDraft({ ...draft, originalClaim: event.target.value })} rows={5} /></label>
+            <div className="claim-editor-grid">
+              <label><span>基本面验证</span><select value={draft.fundamentalValidationStatus} onChange={(event) => setDraft({ ...draft, fundamentalValidationStatus: event.target.value })}><option value="unreviewed">未验证</option><option value="supporting">基本面支持</option><option value="mixed">证据分化</option><option value="challenged">基本面反向</option></select></label>
+              <label><span>下一观察点</span><input value={draft.validationNextCheck} onChange={(event) => setDraft({ ...draft, validationNextCheck: event.target.value })} placeholder="下一次财报 / 数据点 / 日期" /></label>
+            </div>
+            <label><span>基本面证据 / 反向证据</span><textarea value={draft.fundamentalValidationNotes} onChange={(event) => setDraft({ ...draft, fundamentalValidationNotes: event.target.value })} rows={4} placeholder="由 analyst 后续补充；价格变化不会自动修改这一状态。" /></label>
             <footer><button type="button" onClick={() => setEditing(null)}>取消</button><button type="submit">保存</button></footer>
           </form>
         </div>
@@ -787,6 +822,16 @@ function ClaimPriceDetail({ claim, securities }: { claim: LedgerClaim; securitie
           </div>
         </>
       ) : <div className="claim-no-price">这条 Claim 暂无可发布的真实价格序列。</div>}
+      <MarketValidation
+        ticker={claim.ticker || mapping?.ticker || ""}
+        startedAt={`${claim.claimDateStart}T${/^\d{2}:\d{2}$/.test(claim.claimTimeHkt || "") ? claim.claimTimeHkt : "12:00"}:00+08:00`}
+        label="Event 小时价格验证"
+      />
+      <section className="fundamental-validation-card read-only">
+        <header><div><p className="eyebrow">FUNDAMENTAL VALIDATION</p><h4>基本面验证</h4></div><span>{claim.fundamentalValidationStatus === "supporting" ? "基本面支持" : claim.fundamentalValidationStatus === "mixed" ? "证据分化" : claim.fundamentalValidationStatus === "challenged" ? "基本面反向" : "未验证"}</span></header>
+        <p>{claim.fundamentalValidationNotes || "尚未补充基本面证据。可通过编辑 Claim 持续更新。"}</p>
+        <footer>下一观察点：{claim.validationNextCheck || "尚未设置"}</footer>
+      </section>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
+import { ContributionStrip } from "./contribution-strip";
 
 type Note = {
   id: string;
@@ -332,6 +333,7 @@ export function SharedNotesView() {
   };
 
   return <section className="shared-notes-workspace">
+    <ContributionStrip />
     <header className="shared-notes-header shared-notes-toolbar" aria-label="Notes库操作">
       <div className="shared-notes-actions">
         <span className={demoMode ? "demo-pill" : "coming-pill"}>{demoMode ? "本地演示模式 · 不会上传或写入团队" : !realReadEnabled ? "团队 Notes API 未启用" : !sharedWriteEnabled ? "团队写入开关未启用" : "团队写入待确认"}</span>
@@ -357,7 +359,6 @@ export function SharedNotesView() {
           <label><span>来源类型</span><select value={sourceKind} onChange={(event) => setSourceKind(event.target.value)}><option value="manual_note">手动 Note</option><option value="meeting_note">会议纪要</option><option value="weekly_note">周度跟踪</option><option value="uploaded_pdf">PDF 文档</option><option value="uploaded_docx">DOCX 文档</option><option value="uploaded_text">上传文本</option></select></label>
           <label><span>数据分级</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Note["sensitivityLevel"])}><option value="public">Public · 公开</option><option value="internal">Internal · 内部</option><option value="confidential">Confidential · 机密</option><option value="restricted">Restricted · 严格受限</option></select></label>
         </div>
-        <fieldset className="shared-notes-flags"><legend>访问与处理权限</legend><label><input type="checkbox" checked={viewAllowed} onChange={(event) => setViewAllowed(event.target.checked)} />允许团队用户查看</label><label><input type="checkbox" checked={downloadAllowed} onChange={(event) => setDownloadAllowed(event.target.checked)} />允许下载</label><label><input type="checkbox" checked={aiProcessingAllowed} onChange={(event) => setAiProcessingAllowed(event.target.checked)} />允许内部 AI</label><label><input type="checkbox" checked={externalAiAllowed} onChange={(event) => setExternalAiAllowed(event.target.checked)} />允许外部 AI</label><label><input type="checkbox" checked={externalSearchAllowed} onChange={(event) => setExternalSearchAllowed(event.target.checked)} />允许 Web Search</label><label><input type="checkbox" checked={redactionRequired} onChange={(event) => setRedactionRequired(event.target.checked)} />发送外部前需脱敏</label></fieldset>
         <div className="editor-metadata-grid notes-metadata-grid"><label><span>Executive Summary</span><textarea value={templateFields.executiveSummary || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, executiveSummary: event.target.value }))} placeholder="3–5 sentences: key takeaway, what changed, and conviction impact." /></label><label><span>Key Takeaway</span><textarea value={templateFields.keyTakeaway || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, keyTakeaway: event.target.value }))} /></label><label><span>Change vs. Previous View</span><textarea value={templateFields.changeVsPreviousView || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, changeVsPreviousView: event.target.value }))} /></label><label><span>Potential Expectation Gap</span><textarea value={templateFields.expectationGap || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, expectationGap: event.target.value }))} /></label><label><span>Attendees & Context</span><textarea value={templateFields.attendeesContext || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, attendeesContext: event.target.value }))} /></label><label><span>Q&amp;A Highlights</span><textarea value={templateFields.qandaHighlights || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, qandaHighlights: event.target.value }))} /></label><label><span>Follow-ups / Action Items</span><textarea value={templateFields.followUps || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, followUps: event.target.value }))} /></label></div>
         <input ref={fileInput} type="file" accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden onChange={(event) => void importDocument(event)} />
         <div className="notes-content-grid">

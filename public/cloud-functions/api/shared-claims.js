@@ -24,8 +24,12 @@ function cleanPayload(value) {
     claimTimeHkt: cleanText(payload.claimTimeHkt, 40),
     speaker: cleanText(payload.speaker, 120),
     entity: cleanText(payload.entity, 200),
+    ticker: cleanText(payload.ticker, 120),
     title: cleanText(payload.title, 500),
     originalClaim: cleanText(payload.originalClaim, 8000),
+    fundamentalValidationStatus: ["unreviewed", "supporting", "mixed", "challenged"].includes(payload.fundamentalValidationStatus) ? payload.fundamentalValidationStatus : "unreviewed",
+    fundamentalValidationNotes: cleanText(payload.fundamentalValidationNotes, 20_000),
+    validationNextCheck: cleanText(payload.validationNextCheck, 1_000),
   };
 }
 

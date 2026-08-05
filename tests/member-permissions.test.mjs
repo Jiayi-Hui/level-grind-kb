@@ -11,6 +11,7 @@ test("lets every signed-in member read the directory while reserving mutations f
 
   assert.match(api, /const currentUser = await requireSignedInUser\(request, env\)/);
   assert.match(api, /canManage: managers\.has\(currentUser\.currentEmail\)/);
+  assert.match(api, /LEVEL_GRIND_PRIMARY_PM_EMAIL/);
   assert.equal((api.match(/await requireMemberManager\(request, env\)/g) || []).length, 3);
 
   assert.match(edgeUi, /setCanManage\(Boolean\(payload\.canManage\)\)/);

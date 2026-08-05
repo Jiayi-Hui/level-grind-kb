@@ -26,12 +26,14 @@ test("EdgeOne ships first-class Notes库 and Ideas库 navigation with fail-close
   assert.match(notes, /团队 Notes API 未启用/);
   assert.match(notes, /Executive Summary/);
   assert.match(notes, /Potential Expectation Gap/);
-  assert.match(notes, /发送外部前需脱敏/);
+  assert.doesNotMatch(notes, /允许团队用户查看/);
+  assert.doesNotMatch(notes, /允许下载/);
   assert.match(ideas, /公开\/合成演示数据 · 不会保存/);
   assert.match(ideas, /尚未开放上传/);
   assert.match(ideas, /Business & Industry Overview/);
   assert.match(ideas, /Our Case vs\. Consensus Expectations/);
-  assert.match(ideas, /发送外部前需脱敏/);
+  assert.doesNotMatch(ideas, /允许团队用户查看/);
+  assert.doesNotMatch(ideas, /允许下载/);
 });
 
 test("Notes uses the authenticated direct-COS attachment contract without browser parsing", async () => {

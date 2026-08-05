@@ -350,3 +350,59 @@
   health, and unauthenticated access-control probes.
 - [ ] Owner/co-manager cross-user mutation remains a physical-session check on
   the company computer.
+
+## V5.16 Governed intake and observable AskAI
+
+- [x] Tiff 0803 and 0804 source text is mapped to two Confidential Notes in the
+  authenticated import batch.
+- [x] The two investment memos are mapped to Confidential Ideas with their
+  original PDFs.
+- [x] The weekly and two expert-meeting PDFs are mapped to Confidential Notes
+  with original
+  attachments.
+- [x] No private source text or attachment is present in Git or public JSON.
+- [x] Analysts can mutate only their own Notes/Ideas; member managers can review
+  all records; all mutations create audit evidence.
+- [x] Analyst contribution view shows own records, attachments, Note citations,
+  linked Ideas, and review status.
+- [x] PM view shows pending reviews and analyst attribution.
+- [x] AskAI emits authentication, retrieval, optional web verification,
+  provider-connected, first-token, and complete/error states.
+- [x] A provider/retrieval timeout returns a visible typed SSE error.
+- [x] Server diagnostics store stage timestamps but no prompt, context, or answer.
+- [x] EdgeOne function duration is 120 seconds and the release build includes
+  `edgeone.json`.
+- [x] Existing Clerk users, sessions, invitations, and manager access remain
+  unchanged.
+- [ ] The release candidate is deployed and the seven prepared records plus five
+  original attachments are imported through the authenticated production API.
+
+## V5.17 Current Event/Idea validation
+
+- [x] Active Event publication contains no legacy WeChat seed Claim rows.
+- [x] Archived source data remains recoverable and is not destructively erased.
+- [x] A new Event/Idea with a supported Yahoo symbol renders hourly prices.
+- [x] Market validation shows baseline, latest, maximum upside, maximum
+  downside, provider, and last refresh time.
+- [x] Unsupported or missing symbols never produce invented returns.
+- [x] Fundamental status, analyst evidence, and next-check fields can be edited
+  after creation with existing version and permission controls.
+- [x] Price verification cannot silently change fundamental validation status.
+- [x] Existing Clerk sessions, users, invitations, roles, and stored research
+  records remain compatible.
+
+## V5.18 Private research and AskAI responsiveness
+
+- [ ] Notes/Ideas raw list, detail, and attachment access are owner-only.
+- [ ] Analyst UI does not expose team-view or download permission toggles.
+- [ ] AskAI retrieves bounded team evidence only on the server and never sends
+  raw records or attachment URLs back to another contributor.
+- [ ] AskAI projects, chats, messages, and saved answers persist by Clerk
+  subject across devices.
+- [ ] Existing local history migrates once without duplicate or destructive
+  overwrite.
+- [ ] Reviewed OpenRouter models become selectable when the key is configured.
+- [ ] DeepSeek/OpenRouter SSE emits immediate status, provider-connected,
+  first-token, completion, or typed error evidence.
+- [ ] Tiff's prepared seven-record/five-attachment batch remains pending until
+  authenticated production import approval.

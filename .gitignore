@@ -45,5 +45,6 @@ next-env.d.ts
 /work/
 /data/cninfo/
 /data/private/
+/.private-intake/
 /deploy/edgeone-demo/dist/
 /deploy/edgeone-demo/*.zip

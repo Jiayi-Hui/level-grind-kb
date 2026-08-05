@@ -358,3 +358,78 @@ contain fabricated defaults.
 The basemap remains a browser-rendered `world-atlas` asset. OpenStreetMap is
 only a fourth/fifth-tier geocoder and map link, not the source of Epoch's
 research geometry.
+
+## V5.16 Governed intake and observable research execution
+
+```text
+private source text / PDF
+  -> local intake manifest (gitignored; no external model)
+  -> authenticated Notes / Ideas control API
+  -> AES-256-GCM encrypted body in EdgeOne Blob
+  -> original file bytes in a separate Blob namespace
+  -> derived Claim draft / Idea link references source record IDs
+```
+
+Static Event JSON remains a sanitized public snapshot and is not an acceptable
+destination for private PM material. Private Claim drafts stay behind the
+authenticated research API until the Event DB has an equivalent server-side
+authorization boundary.
+
+AskAI uses SSE (Server-Sent Events): one authenticated HTTP response remains
+open while the server sends small one-way events. The event vocabulary is
+`status`, `delta`, `done`, `error`, and `ping`. Status events disclose workflow
+state, not model reasoning. A metadata-only telemetry record stores request ID,
+actor ID, stage timestamps, provider/model, completion state, and error code;
+it excludes the question, retrieved text, and answer.
+
+EdgeOne Cloud Functions have a hard platform maximum of 120 seconds. The
+release sets `cloudFunctions.maxDuration` to 120 seconds and uses shorter
+configurable operation deadlines so a typed SSE error can normally arrive
+before the platform terminates the function. Workflows that must exceed two
+minutes require an asynchronous job/Agent/SCF architecture rather than an
+unbounded HTTP request.
+
+## V5.17 Market and fundamental validation
+
+```text
+Event / Idea company + ticker
+  -> authenticated shared record
+  -> /api/market-prices?interval=1h
+  -> Yahoo Finance hourly chart
+  -> EdgeOne one-hour shared cache
+  -> baseline / latest / max-upside / max-downside UI
+
+Analyst / PM
+  -> editable fundamental status + evidence note + next check
+  -> encrypted record + existing audit/version controls
+```
+
+The hourly route is a market-observation surface, not a thesis engine. Legacy
+WeChat seed inputs remain archived at source and are removed only from the
+published active ledger; new shared Event overlays remain available.
+
+## V5.18 Private raw records and gray-box retrieval
+
+```text
+Clerk subject
+  -> private Notes / Ideas list and detail APIs
+  -> only owner raw body + attachments
+
+AskAI request
+  -> server verifies Clerk subject
+  -> server ranks bounded encrypted team records
+  -> decrypts only selected excerpts inside the function
+  -> model receives minimal evidence under non-disclosure instructions
+  -> browser receives synthesized answer + non-sensitive citation handles
+
+Clerk subject
+  -> private research-session API
+  -> projects / chats / messages / saved answers
+  -> same-account cross-device read-back
+```
+
+The browser is never trusted to supply private team context. Private source
+retrieval, decryption, ranking, and provider submission happen server-side.
+The ordinary Notes/Ideas API does not grant raw manager visibility; review
+dashboards use metadata-only records. A one-time client migration can upsert
+existing local history, after which the server is authoritative.

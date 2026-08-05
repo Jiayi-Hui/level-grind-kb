@@ -22,6 +22,7 @@ CLERK_AFTER_SIGN_IN_URL=/
 CLERK_AFTER_SIGN_UP_URL=/
 LEVEL_GRIND_INVITED_EMAILS=you@example.com,analyst@example.com
 LEVEL_GRIND_OWNER_EMAIL=you@example.com
+LEVEL_GRIND_PRIMARY_PM_EMAIL=primary-pm@example.com
 LEVEL_GRIND_MEMBER_MANAGER_EMAILS=co-manager@example.com
 ```
 
@@ -37,6 +38,11 @@ member managers. These accounts receive the same member-list, invitation, edit,
 and removal capabilities as the owner while retaining their research persona
 role in the member list. Configure this as a server-side environment variable;
 do not hardcode colleague emails in the repository.
+
+`LEVEL_GRIND_PRIMARY_PM_EMAIL` is the fail-closed primary-PM manager slot. Set
+it to Tiff's existing Clerk account email in every production environment. It
+grants the same member-list, invitation, edit, and removal capabilities as the
+owner without changing Clerk identity or requiring a new invitation.
 
 ## 2. Cloudflare D1 and R2
 

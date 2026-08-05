@@ -16,10 +16,13 @@ const cryptoContext = loadCryptoContext(); // fail closed before accepting traff
 const pool = new Pool({ connectionString: databaseUrl, max: Number(process.env.PG_POOL_MAX || 8), ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" } });
 const clerk = createClerkClient({ secretKey: clerkSecretKey });
 const authorizedParties = (process.env.CLERK_AUTHORIZED_PARTIES || "https://www.level-grind.com,https://level-grind.com").split(",").map((x) => x.trim()).filter(Boolean);
-const managers = new Set([process.env.LEVEL_GRIND_OWNER_EMAIL, ...(process.env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(",")].map((x) => String(x || "").trim().toLowerCase()).filter(Boolean));
+const managers = new Set([process.env.LEVEL_GRIND_OWNER_EMAIL, process.env.LEVEL_GRIND_PRIMARY_PM_EMAIL, ...(process.env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(",")].map((x) => String(x || "").trim().toLowerCase()).filter(Boolean));
 const invited = new Set([...managers, ...(process.env.LEVEL_GRIND_INVITED_EMAILS || "").split(",")].map((x) => String(x || "").trim().toLowerCase()).filter(Boolean));
 const managersRoles = new Set(["Owner", "Admin", "PM", "GEM PM"]);
 const ingestionFrozen = process.env.NOTES_INGESTION_ENABLED !== "true";
+// This is deliberately separate from Clerk. It is only for the future AskAI
+// server worker, never a browser token and never passed through EdgeOne.
+const retrievalServiceToken = process.env.NOTES_RETRIEVAL_SERVICE_TOKEN || "";
 const localParserBypass = process.env.NODE_ENV !== "production" && process.env.NOTES_PARSER_LOCAL_DEV_BYPASS === "true";
 function requestObjectStore(req) {
   // SCF custom-image functions inject execution-role credentials per request.
@@ -43,6 +46,12 @@ function encrypted(prefix, value, type, id) { const e = encryptText(value, crypt
 function decrypted(prefix, row, type) { return decryptText({ ciphertext_b64: row[`${prefix}_ciphertext_b64`], nonce_b64: row[`${prefix}_nonce_b64`], auth_tag_b64: row[`${prefix}_auth_tag_b64`], wrapped_data_key_b64: row[`${prefix}_wrapped_data_key_b64`], key_wrap_nonce_b64: row[`${prefix}_key_wrap_nonce_b64`], key_wrap_auth_tag_b64: row[`${prefix}_key_wrap_auth_tag_b64`], key_version: row[`${prefix}_key_version`] }, cryptoContext, binding(type, row.id)); }
 function roleCanReview(actor) { return managersRoles.has(actor.role); }
 function roleCanEdit(actor, row) { return roleCanReview(actor) || row.owner_user_id === actor.id; }
+function canReadRaw(actor, row) { return roleCanReview(actor) || row.owner_user_id === actor.id; }
+function serviceTokenMatches(value) {
+  if (!retrievalServiceToken || !value) return false;
+  const actual = Buffer.from(String(value)); const expected = Buffer.from(retrievalServiceToken);
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
 
 function parseMultipartFile(request, payload) {
   const header = String(request.headers["content-type"] || ""); const boundary = header.match(/boundary=(?:"([^"]+)"|([^;\s]+))/i)?.[1] || header.match(/boundary=(?:"[^"]+"|[^;\s]+)/i)?.[0]?.replace(/^boundary=/i, "").replace(/^"|"$/g, "");
@@ -85,7 +94,7 @@ async function attachmentTarget(client, type, id, actor, lock = false, requireEd
   const table = type === "note" ? "research_notes" : "research_ideas";
   const target = (await client.query(`SELECT * FROM ${table} WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL${lock ? " FOR UPDATE" : ""}`, [id, TEAM])).rows[0];
   if (!target) throw err(`${type.toUpperCase()}_NOT_FOUND`, 404);
-  if (!requireEdit && target.view_allowed === false && !roleCanEdit(actor, target)) throw err("VIEW_FORBIDDEN", 403);
+  if (!requireEdit && !canReadRaw(actor, target)) throw err("VIEW_FORBIDDEN", 403);
   if (requireEdit && !roleCanEdit(actor, target)) throw err("EDIT_FORBIDDEN", 403);
   return target;
 }
@@ -193,7 +202,7 @@ async function listEntity(type, actor) {
     try { await client.query("BEGIN"); for (const row of result.rows) await audit(client, actor, type, row.id, "view", row.version, row.version, { surface: "list_metadata" }); await client.query("COMMIT"); }
     catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
   }
-  return result.rows.filter((row) => row.view_allowed !== false || roleCanEdit(actor, row)).map(type === "note" ? noteMeta : ideaMeta);
+  return result.rows.filter((row) => canReadRaw(actor, row)).map(type === "note" ? noteMeta : ideaMeta);
 }
 function templateFields(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -209,7 +218,9 @@ function normal(type, raw, operation) {
   const title = clean(raw.title); const text = String(raw[type === "note" ? "body" : "thesis"] || "").replace(/\u0000/g, ""); const expectedVersion = Number(raw.expectedVersion);
   if (operation !== "delete" && (!title || !text)) throw err("TITLE_AND_CONTENT_REQUIRED"); if (text.length > 500_000) throw err("CONTENT_TOO_LARGE", 413);
   if (!Number.isInteger(expectedVersion) || expectedVersion < 0 || (operation === "create" && expectedVersion !== 0)) throw err("INVALID_VERSION");
-  const policy = { sensitivityLevel: ["public","internal","confidential","restricted"].includes(raw.sensitivityLevel) ? raw.sensitivityLevel : "internal", viewAllowed: raw.viewAllowed !== false, internalAiAllowed: raw.internalAiAllowed === true || raw.aiProcessingAllowed === true, externalAiAllowed: raw.externalAiAllowed === true, webSearchAllowed: raw.webSearchAllowed === true || raw.externalSearchAllowed === true, downloadAllowed: raw.downloadAllowed === true, redactionRequired: raw.redactionRequired === true };
+  // Raw analyst uploads are private by default. Sharing, downloading and any
+  // external processing must happen through a future manager-reviewed flow.
+  const policy = { sensitivityLevel: ["public","internal","confidential","restricted"].includes(raw.sensitivityLevel) ? raw.sensitivityLevel : "internal", viewAllowed: false, internalAiAllowed: raw.internalAiAllowed === true || raw.aiProcessingAllowed === true, externalAiAllowed: false, webSearchAllowed: false, downloadAllowed: false, redactionRequired: raw.redactionRequired !== false };
   if (type === "note") return { id, title, text, expectedVersion, sourceKind: clean(raw.sourceKind || "manual_note", 80).replace(/[^a-z0-9_-]/gi, "_") || "manual_note", templateFields: templateFields(raw.templateFields), ...policy };
   const noteIds = Array.isArray(raw.noteIds) ? [...new Set(raw.noteIds.map((noteId) => clean(noteId, 36)))].filter(validId) : [];
   if (Array.isArray(raw.noteIds) && noteIds.length !== raw.noteIds.length) throw err("INVALID_NOTE_IDS");
@@ -230,14 +241,35 @@ async function createEntity(type, actor, input) {
     const e=encrypted("thesis",input.text,type,input.id); const r=(await client.query(`INSERT INTO research_ideas (id,team_id,owner_user_id,title,ticker,direction,status,thesis_ciphertext_b64,thesis_nonce_b64,thesis_auth_tag_b64,thesis_wrapped_data_key_b64,thesis_key_wrap_nonce_b64,thesis_key_wrap_auth_tag_b64,thesis_key_version,template_fields,sensitivity_level,view_allowed,internal_ai_allowed,external_ai_allowed,web_search_allowed,download_allowed,redaction_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16,$17,$18,$19,$20,$21,$22) RETURNING *`, [input.id,TEAM,actor.id,input.title,input.ticker,input.direction,input.status,e.thesis_ciphertext_b64,e.thesis_nonce_b64,e.thesis_auth_tag_b64,e.thesis_wrapped_data_key_b64,e.thesis_key_wrap_nonce_b64,e.thesis_key_wrap_auth_tag_b64,e.thesis_key_version,JSON.stringify(input.templateFields),input.sensitivityLevel,input.viewAllowed,input.internalAiAllowed,input.externalAiAllowed,input.webSearchAllowed,input.downloadAllowed,input.redactionRequired])).rows[0]; await reconcileIdeaNotes(client,r.id,input.noteIds,actor); await audit(client,actor,type,r.id,"create",null,1,{ticker:input.ticker,direction:input.direction,status:input.status,noteCount:input.noteIds.length,sensitivityLevel:input.sensitivityLevel}); await client.query("COMMIT"); return ideaMeta({...r,owner_name:actor.name,owner_email:actor.email,note_ids:input.noteIds,note_titles:[]});
   } catch(e){await client.query("ROLLBACK");throw e;} finally{client.release();}
 }
-async function getEntity(type,id,actor) { const client=await pool.connect(); try { await client.query("BEGIN"); const table=type === "note" ? "research_notes":"research_ideas"; const ideaLinks=type === "idea" ? `, COALESCE((SELECT array_agg(l.note_id ORDER BY l.created_at) FROM research_idea_note_links l JOIN research_notes n ON n.id=l.note_id WHERE l.idea_id=x.id AND l.deleted_at IS NULL AND n.deleted_at IS NULL), ARRAY[]::uuid[]) AS note_ids, COALESCE((SELECT array_agg(n.title ORDER BY l.created_at) FROM research_idea_note_links l JOIN research_notes n ON n.id=l.note_id WHERE l.idea_id=x.id AND l.deleted_at IS NULL AND n.deleted_at IS NULL), ARRAY[]::text[]) AS note_titles` : ""; const row=(await client.query(`SELECT x.*,u.display_name owner_name,u.email owner_email ${ideaLinks} FROM ${table} x JOIN research_users u ON u.id=x.owner_user_id WHERE x.id=$1 AND x.team_id=$2 AND x.deleted_at IS NULL FOR UPDATE`,[id,TEAM])).rows[0]; if(!row) throw err(`${type.toUpperCase()}_NOT_FOUND`,404); if(row.view_allowed === false && !roleCanEdit(actor,row)) throw err("VIEW_FORBIDDEN",403); await audit(client,actor,type,id,"view",row.version,row.version,{surface:"detail"}); await client.query("COMMIT"); return {...(type === "note" ? noteMeta(row):ideaMeta(row)), [type === "note" ? "body":"thesis"]:decrypted(type === "note" ? "body":"thesis",row,type)}; } catch(e){await client.query("ROLLBACK");throw e;} finally{client.release();} }
+async function getEntity(type,id,actor) { const client=await pool.connect(); try { await client.query("BEGIN"); const table=type === "note" ? "research_notes":"research_ideas"; const ideaLinks=type === "idea" ? `, COALESCE((SELECT array_agg(l.note_id ORDER BY l.created_at) FROM research_idea_note_links l JOIN research_notes n ON n.id=l.note_id WHERE l.idea_id=x.id AND l.deleted_at IS NULL AND n.deleted_at IS NULL), ARRAY[]::uuid[]) AS note_ids, COALESCE((SELECT array_agg(n.title ORDER BY l.created_at) FROM research_idea_note_links l JOIN research_notes n ON n.id=l.note_id WHERE l.idea_id=x.id AND l.deleted_at IS NULL AND n.deleted_at IS NULL), ARRAY[]::text[]) AS note_titles` : ""; const row=(await client.query(`SELECT x.*,u.display_name owner_name,u.email owner_email ${ideaLinks} FROM ${table} x JOIN research_users u ON u.id=x.owner_user_id WHERE x.id=$1 AND x.team_id=$2 AND x.deleted_at IS NULL FOR UPDATE`,[id,TEAM])).rows[0]; if(!row) throw err(`${type.toUpperCase()}_NOT_FOUND`,404); if(!canReadRaw(actor,row)) throw err("VIEW_FORBIDDEN",403); await audit(client,actor,type,id,"view",row.version,row.version,{surface:"detail"}); await client.query("COMMIT"); return {...(type === "note" ? noteMeta(row):ideaMeta(row)), [type === "note" ? "body":"thesis"]:decrypted(type === "note" ? "body":"thesis",row,type)}; } catch(e){await client.query("ROLLBACK");throw e;} finally{client.release();} }
 async function mutateEntity(type,actor,input,operation) { const client=await pool.connect(); try { await client.query("BEGIN"); const table=type === "note"?"research_notes":"research_ideas"; const row=(await client.query(`SELECT * FROM ${table} WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL FOR UPDATE`,[input.id,TEAM])).rows[0]; if(!row)throw err(`${type.toUpperCase()}_NOT_FOUND`,404); if(row.version!==input.expectedVersion)throw err("VERSION_CONFLICT",409,{currentVersion:row.version}); if(!roleCanEdit(actor,row))throw err("EDIT_FORBIDDEN",403); let next;
     if(operation === "delete") next=(await client.query(`UPDATE ${table} SET deleted_at=now(),deleted_by_user_id=$2,version=version+1,updated_at=now() WHERE id=$1 RETURNING *`,[input.id,actor.id])).rows[0];
     else if(type === "note") {const e=encrypted("body",input.text,type,input.id); next=(await client.query(`UPDATE research_notes SET title=$2,body_ciphertext_b64=$3,body_nonce_b64=$4,body_auth_tag_b64=$5,body_wrapped_data_key_b64=$6,body_key_wrap_nonce_b64=$7,body_key_wrap_auth_tag_b64=$8,body_key_version=$9,source_kind=$10,sensitivity_level=$11,template_fields=$12::jsonb,view_allowed=$13,ai_processing_allowed=$14,external_ai_allowed=$15,external_search_allowed=$16,download_allowed=$17,redaction_required=$18,version=version+1,updated_at=now() WHERE id=$1 RETURNING *`,[input.id,input.title,e.body_ciphertext_b64,e.body_nonce_b64,e.body_auth_tag_b64,e.body_wrapped_data_key_b64,e.body_key_wrap_nonce_b64,e.body_key_wrap_auth_tag_b64,e.body_key_version,input.sourceKind,input.sensitivityLevel,JSON.stringify(input.templateFields),input.viewAllowed,input.internalAiAllowed,input.externalAiAllowed,input.webSearchAllowed,input.downloadAllowed,input.redactionRequired])).rows[0];}
     else {if(input.status !== row.status && !["draft", "pending_review"].includes(input.status) && !roleCanReview(actor)) throw err("IDEA_REVIEW_FORBIDDEN",403); const e=encrypted("thesis",input.text,type,input.id); next=(await client.query(`UPDATE research_ideas SET title=$2,ticker=$3,direction=$4,status=$5,thesis_ciphertext_b64=$6,thesis_nonce_b64=$7,thesis_auth_tag_b64=$8,thesis_wrapped_data_key_b64=$9,thesis_key_wrap_nonce_b64=$10,thesis_key_wrap_auth_tag_b64=$11,thesis_key_version=$12,template_fields=$13::jsonb,sensitivity_level=$14,view_allowed=$15,internal_ai_allowed=$16,external_ai_allowed=$17,web_search_allowed=$18,download_allowed=$19,redaction_required=$20,version=version+1,updated_at=now() WHERE id=$1 RETURNING *`,[input.id,input.title,input.ticker,input.direction,input.status,e.thesis_ciphertext_b64,e.thesis_nonce_b64,e.thesis_auth_tag_b64,e.thesis_wrapped_data_key_b64,e.thesis_key_wrap_nonce_b64,e.thesis_key_wrap_auth_tag_b64,e.thesis_key_version,JSON.stringify(input.templateFields),input.sensitivityLevel,input.viewAllowed,input.internalAiAllowed,input.externalAiAllowed,input.webSearchAllowed,input.downloadAllowed,input.redactionRequired])).rows[0]; await reconcileIdeaNotes(client,input.id,input.noteIds,actor);}
     await audit(client,actor,type,input.id,operation === "delete" ? "soft_delete":"update",row.version,next.version,{...(type === "idea" && operation !== "delete" ? {ticker:input.ticker,noteCount:input.noteIds.length}: {})}); await client.query("COMMIT"); return type === "note" ? noteMeta({...next,owner_name:"",owner_email:""}):ideaMeta({...next,owner_name:"",owner_email:"",note_ids:operation === "delete" ? []:input.noteIds,note_titles:[]});
   }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();} }
-async function recordAccess(type,id,actor,input){const table=type === "note"?"research_notes":"research_ideas"; const r=(await pool.query(`SELECT * FROM ${table} WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL`,[id,TEAM])).rows[0];if(!r)throw err(`${type.toUpperCase()}_NOT_FOUND`,404); if(r.view_allowed === false&&!roleCanEdit(actor,r))throw err("VIEW_FORBIDDEN",403);const internalAiAllowed=type==="note"?r.ai_processing_allowed:r.internal_ai_allowed;const webSearchAllowed=type==="note"?r.external_search_allowed:r.web_search_allowed;if(input.action==="download"&&!r.download_allowed)throw err("DOWNLOAD_FORBIDDEN",403);if(input.action==="ai_use"&&!internalAiAllowed)throw err("INTERNAL_AI_FORBIDDEN",403);if(input.externalAi===true&&!r.external_ai_allowed)throw err("EXTERNAL_AI_FORBIDDEN",403);if(input.externalSearch===true&&!webSearchAllowed)throw err("WEB_SEARCH_FORBIDDEN",403);const c=await pool.connect();try{await c.query("BEGIN");await audit(c,actor,type,id,input.action,r.version,r.version,{externalAi:input.externalAi===true,externalSearch:input.externalSearch===true,redactionRequired:r.redaction_required===true});await c.query("COMMIT");}catch(e){await c.query("ROLLBACK");throw e;}finally{c.release();}}
+async function recordAccess(type,id,actor,input){const table=type === "note"?"research_notes":"research_ideas"; const r=(await pool.query(`SELECT * FROM ${table} WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL`,[id,TEAM])).rows[0];if(!r)throw err(`${type.toUpperCase()}_NOT_FOUND`,404); if(!canReadRaw(actor,r))throw err("VIEW_FORBIDDEN",403);const internalAiAllowed=type==="note"?r.ai_processing_allowed:r.internal_ai_allowed;const webSearchAllowed=type==="note"?r.external_search_allowed:r.web_search_allowed;if(input.action==="download"&&!r.download_allowed)throw err("DOWNLOAD_FORBIDDEN",403);if(input.action==="ai_use"&&!internalAiAllowed)throw err("INTERNAL_AI_FORBIDDEN",403);if(input.externalAi===true&&!r.external_ai_allowed)throw err("EXTERNAL_AI_FORBIDDEN",403);if(input.externalSearch===true&&!webSearchAllowed)throw err("WEB_SEARCH_FORBIDDEN",403);const c=await pool.connect();try{await c.query("BEGIN");await audit(c,actor,type,id,input.action,r.version,r.version,{externalAi:input.externalAi===true,externalSearch:input.externalSearch===true,redactionRequired:r.redaction_required===true});await c.query("COMMIT");}catch(e){await c.query("ROLLBACK");throw e;}finally{c.release();}}
+
+// AskAI gray-box retrieval contract.  It intentionally has no browser route:
+// a backend worker supplies its server-only token and the requesting Clerk user
+// id.  The worker receives only that user's private records which explicitly
+// permit internal AI use; it must never use this route for external AI/search.
+async function retrievePrivateResearchForAskAi(clerkUserId, limit = 24) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 24, 50));
+  const user = (await pool.query(`SELECT id FROM research_users WHERE clerk_user_id=$1 AND status='active'`, [clean(clerkUserId, 128)])).rows[0];
+  if (!user) return { records: [], ownerFound: false };
+  const results = [];
+  for (const [type, table, contentColumn, internalAiColumn] of [
+    ["note", "research_notes", "body", "ai_processing_allowed"],
+    ["idea", "research_ideas", "thesis", "internal_ai_allowed"],
+  ]) {
+    const rows = (await pool.query(`SELECT * FROM ${table} WHERE team_id=$1 AND owner_user_id=$2 AND deleted_at IS NULL AND ${internalAiColumn}=true ORDER BY updated_at DESC LIMIT $3`, [TEAM, user.id, safeLimit])).rows;
+    for (const row of rows) {
+      results.push({ type, id: row.id, title: row.title, ticker: row.ticker || undefined, sensitivityLevel: row.sensitivity_level || "internal", redactionRequired: row.redaction_required !== false, templateFields: row.template_fields || {}, content: decrypted(contentColumn, row, type), updatedAt: row.updated_at });
+    }
+  }
+  return { records: results.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, safeLimit), ownerFound: true };
+}
 async function linkNote(ideaId,noteId,actor,remove=false){if(!validId(noteId))throw err("INVALID_NOTE_ID");const c=await pool.connect();try{await c.query("BEGIN");const idea=(await c.query(`SELECT * FROM research_ideas WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL FOR UPDATE`,[ideaId,TEAM])).rows[0];if(!idea)throw err("IDEA_NOT_FOUND",404);if(!roleCanEdit(actor,idea))throw err("EDIT_FORBIDDEN",403);if(remove)await c.query(`UPDATE research_idea_note_links SET deleted_at=now() WHERE idea_id=$1 AND note_id=$2`,[ideaId,noteId]);else await reconcileIdeaNotes(c,ideaId,[...(await c.query(`SELECT note_id FROM research_idea_note_links WHERE idea_id=$1 AND deleted_at IS NULL`,[ideaId])).rows.map((row)=>row.note_id),noteId],actor);await audit(c,actor,"idea",ideaId,remove?"unlink":"link",idea.version,idea.version,{linkedEntity:"note"});await c.query("COMMIT");}catch(e){await c.query("ROLLBACK");throw e;}finally{c.release();}}
 
 function isFrozenMutation(method, id, sub) {
@@ -249,6 +281,17 @@ function isFrozenMutation(method, id, sub) {
 }
 
 async function handler(req,res){const url=new URL(req.url||"/",`http://${req.headers.host||"localhost"}`); if(url.pathname==="/health")return send(res,200,{ok:true,service:"notes",ingestionFrozen}); if(url.pathname==="/ready"){try{await pool.query("SELECT 1");return send(res,200,{ok:true,database:"ready",encryption:"ready",ingestionFrozen});}catch{return send(res,503,{ok:false,database:"unavailable"});}}
+  if (url.pathname === "/v1/internal/askai/private-research") {
+    try {
+      if (req.method !== "POST") return send(res, 405, { error: "METHOD_NOT_ALLOWED" });
+      if (!serviceTokenMatches(req.headers["x-level-grind-retrieval-token"])) throw err("RETRIEVAL_SERVICE_AUTH_REQUIRED", 401);
+      const input = await readBody(req);
+      if (!clean(input.clerkUserId, 128)) throw err("CLERK_USER_ID_REQUIRED");
+      // Contract: this is internal-only. Neither external model nor web-search
+      // flags can elevate a record into this result set.
+      return send(res, 200, { scope: "private_owner_internal_ai", externalUse: "forbidden", ...await retrievePrivateResearchForAskAi(input.clerkUserId, input.limit) });
+    } catch (e) { return send(res, Number(e?.status || 500), { error: Number(e?.status || 500) >= 500 ? "RETRIEVAL_SERVICE_ERROR" : e.message }); }
+  }
   const attachmentTargetMatch = url.pathname.match(/^\/v1\/(notes|ideas)\/([0-9a-f-]{36})\/attachments$/i);
   const attachmentMatch = url.pathname.match(/^\/v1\/attachments\/([0-9a-f-]{36})(?:\/(complete|status|retry))?$/i);
   if (attachmentTargetMatch || attachmentMatch) { const objectStore = requestObjectStore(req); try {
