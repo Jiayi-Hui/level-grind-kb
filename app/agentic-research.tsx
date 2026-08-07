@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { useAuth } from "@clerk/react";
 import { MarkdownAnswer } from "./markdown-answer";
 
-export type ResearchScope = "events" | "aidc";
+export type ResearchScope = "all" | "notes" | "ideas" | "events" | "aidc";
 type EvidenceMode = "hybrid" | "web" | "context";
 type ResearchMessage = {
   id: string;
@@ -85,6 +85,21 @@ const knowledgeKey = "level-grind.personal-knowledge.v1";
 const vaultKey = "lg-obsidian-vault";
 const thinkingKey = "level-grind.askai-thinking.v1";
 const historyMigrationKey = "level-grind.agentic-research.remote-migrated.v1";
+const researchScopes: ResearchScope[] = ["all", "notes", "ideas", "events", "aidc"];
+const scopeLabels: Record<ResearchScope, string> = {
+  all: "跨库研究",
+  notes: "Notes库",
+  ideas: "Ideas库",
+  events: "事件库",
+  aidc: "AI Capex",
+};
+const scopeProjectTitles: Record<ResearchScope, string> = {
+  all: "跨库研究",
+  notes: "Notes 研究",
+  ideas: "Ideas 研究",
+  events: "事件与价格研究",
+  aidc: "AI Capex 研究",
+};
 
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -120,7 +135,7 @@ function markdownForAnswer(
   return [
     "---",
     `title: "${safeTitle(question || chatTitle).replace(/"/g, '\\"')}"`,
-    `source: Level Grind ${scope === "events" ? "Event DB" : "AI Capex"}`,
+    `source: Level Grind ${scopeLabels[scope]}`,
     `project: "${projectTitle.replace(/"/g, '\\"')}"`,
     `created: ${message.createdAt}`,
     "---",
@@ -145,7 +160,7 @@ function markdownForChat(chat: ResearchChat, project: ResearchProject) {
   return [
     "---",
     `title: "${safeTitle(chat.title).replace(/"/g, '\\"')}"`,
-    `source: Level Grind ${chat.scope === "events" ? "Event DB" : "AI Capex"} AskAI`,
+    `source: Level Grind ${scopeLabels[chat.scope]} AskAI`,
     `project: "${project.title.replace(/"/g, '\\"')}"`,
     `created: ${chat.createdAt}`,
     `updated: ${chat.updatedAt}`,
@@ -209,7 +224,7 @@ function defaultProject(scope: ResearchScope): ResearchProject {
   return {
     id: uid(`project-${scope}`),
     scope,
-    title: scope === "events" ? "事件与价格研究" : "AI Capex 研究",
+    title: scopeProjectTitles[scope],
     createdAt: now,
     updatedAt: now,
   };
@@ -308,8 +323,8 @@ async function aidcContext(question: string): Promise<ContextEntry[]> {
 
 async function scopeContext(scope: ResearchScope, question: string): Promise<ContextEntry[]> {
   const [events, aidc] = await Promise.all([eventContext(question), aidcContext(question)]);
-  const primary = scope === "events" ? events : aidc;
-  const secondary = scope === "events" ? aidc : events;
+  const primary = scope === "aidc" ? aidc : events;
+  const secondary = scope === "aidc" ? events : aidc;
   return [...primary.slice(0, 6), ...secondary.slice(0, 6)];
 }
 
@@ -317,7 +332,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const { getToken } = useAuth();
   const [store, setStore] = useState<AgentStore>(() => {
     const current = readJson<AgentStore>(storeKey, { projects: [], chats: [] });
-    const missingScopes = (["events", "aidc"] as ResearchScope[])
+    const missingScopes = researchScopes
       .filter((candidate) => !current.projects.some((project) => project.scope === candidate));
     if (!missingScopes.length) return current;
     const next = {
@@ -587,7 +602,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   };
 
   const newProject = () => {
-    const title = safeTitle(window.prompt("项目名称", scope === "events" ? "新的事件研究" : "新的 AI Capex 研究") || "");
+    const title = safeTitle(window.prompt("项目名称", `新的${scopeLabels[scope]}`) || "");
     if (!title) return;
     const now = new Date().toISOString();
     const project = { id: uid("project"), scope, title, createdAt: now, updatedAt: now };
@@ -908,7 +923,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
             </div>
           )}
           <div className="agentic-messages" ref={scrollRef}>
-            {!activeChat?.messages.length && <div className="agentic-chat-empty">输入问题后，系统会联动事件库与 AI Capex，再按所选模式检索公开网络。</div>}
+            {!activeChat?.messages.length && <div className="agentic-chat-empty">输入问题后，系统会在 Notes、Ideas、事件库与 AI Capex 间跨库检索，再按所选模式验证公开网络。</div>}
             {activeChat?.messages.map((message, index) => (
               <article key={message.id} className={`agentic-message ${message.role}`}>
                 <span>{message.role === "user" ? "You" : "AI"}</span>
@@ -947,7 +962,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           </div>
           <form className="agentic-composer" onSubmit={ask}>
             <div className="agentic-modes">
-              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>当前库</button>
+              <button type="button" className={mode === "context" ? "active" : ""} onClick={() => setMode("context")}>跨库</button>
               <button type="button" className={mode === "hybrid" ? "active" : ""} onClick={() => setMode("hybrid")}>联网</button>
               <label className="agentic-model-picker"><span>模型</span><select value={modelProvider === "openrouter" ? selectedOpenRouterModel : "__default"} onChange={(event) => {
                 if (event.target.value === "__default") { setModelProvider("default"); setError(""); }
@@ -962,7 +977,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
               <button type="button" disabled={!thinkingAvailable} className={thinkingEnabled && thinkingAvailable ? "active" : ""} onClick={() => selectThinking(true)}>Thinking 开</button>
               <button type="button" className={!thinkingEnabled ? "active" : ""} onClick={() => selectThinking(false)}>Thinking 关</button>
             </div>
-            <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "events" ? "例如：哪些事件可以用 AI Capex 的园区和容量数据交叉验证？" : "例如：哪些事件库 Claim 能由 AI Capex 数据支持或反驳？"} />
+            <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={scope === "notes" ? "例如：这些 Notes 中有哪些判断可由事件或 AI Capex 数据验证？" : scope === "ideas" ? "例如：哪些 Notes、事件或 AI Capex 数据支持或反驳这些 Ideas？" : "例如：跨 Notes、Ideas、事件库与 AI Capex，哪些证据能够互相验证？"} />
             <button type="submit" disabled={!question.trim() || !!thinkingSince || openRouterUnavailable}>{thinkingSince ? "分析中" : openRouterUnavailable ? "待配置" : "发送"}</button>
           </form>
           {(error || notice) && <p className={error ? "agentic-status error" : "agentic-status"}>{error || notice}</p>}
@@ -1052,7 +1067,7 @@ export function PersonalKnowledgeView() {
           </div>
           {selected && (
             <article className="personal-knowledge-detail">
-              <header><div><span>{selected.scope === "events" ? "事件库" : "AI Capex"}</span><h3>{selected.title}</h3></div><button onClick={() => void remove(selected)}>删除</button></header>
+              <header><div><span>{scopeLabels[selected.scope]}</span><h3>{selected.title}</h3></div><button onClick={() => void remove(selected)}>删除</button></header>
               <pre>{selected.body}</pre>
               <footer>
                 <button onClick={() => downloadMarkdown(selected.body, selected.title)}>下载 .md</button>

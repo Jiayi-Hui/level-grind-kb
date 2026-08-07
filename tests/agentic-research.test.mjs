@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 test("agentic research UI supports scoped chats, favorites, and whole-chat exports", async () => {
   const source = await read("app/agentic-research.tsx");
 
-  assert.match(source, /ResearchScope = "events" \| "aidc"/);
+  assert.match(source, /ResearchScope = "all" \| "notes" \| "ideas" \| "events" \| "aidc"/);
   assert.match(source, /level-grind\.agentic-research\.v1/);
   assert.match(source, /level-grind\.personal-knowledge\.v1/);
   assert.match(source, /renameProject/);
@@ -36,8 +36,8 @@ test("agentic research UI supports scoped chats, favorites, and whole-chat expor
   assert.match(source, /\[\.\.\.primary\.slice\(0, 6\), \.\.\.secondary\.slice\(0, 6\)\]/);
   assert.match(source, /\[Event DB\]/);
   assert.match(source, /\[AI Capex\]/);
-  assert.match(source, /系统会联动事件库与 AI Capex/);
-  assert.match(source, />当前库</);
+  assert.match(source, /Notes、Ideas、事件库与 AI Capex 间跨库检索/);
+  assert.match(source, />跨库</);
   assert.match(source, /\/api\/agent-chat/);
   assert.match(source, /<MarkdownAnswer value=\{message\.content\}/);
   assert.match(source, /deepseek-v4-flash/);
@@ -151,7 +151,8 @@ test("Tencent shell exposes live knowledge and one contextual AskAI workspace wh
 
   assert.match(source, /<PersonalKnowledgeView \/>/);
   assert.match(source, /type DemoView = "knowledge" \| "notes" \| "ideas" \| "graph" \| "events" \| "aidc" \| "ask" \| "settings"/);
-  assert.match(source, /✦ 询问此数据库/);
+  assert.match(source, /✦ AskAI/);
+  assert.match(source, /openAsk\("all"\)/);
   assert.match(source, /<AgenticResearchPanel scope=\{askScope\} \/>/);
   assert.match(source, /MEMBER MANAGEMENT/);
   assert.match(source, /编辑团队成员/);

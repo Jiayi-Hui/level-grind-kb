@@ -12,7 +12,7 @@ import "../../../app/globals.css";
 import "./mirror.css";
 
 type DemoView = "knowledge" | "notes" | "ideas" | "graph" | "events" | "aidc" | "ask" | "settings";
-type AskScope = "events" | "aidc";
+type AskScope = "all" | "notes" | "ideas" | "events" | "aidc";
 
 const viewCopy = {
   knowledge: {
@@ -62,7 +62,7 @@ const clerkPublishableKey =
 
 function ContinuityApp() {
   const [view, setView] = useState<DemoView>("graph");
-  const [askScope, setAskScope] = useState<AskScope>("events");
+  const [askScope, setAskScope] = useState<AskScope>("all");
   const [mobileNav, setMobileNav] = useState(false);
   const heading = viewCopy[view];
 
@@ -87,7 +87,7 @@ function ContinuityApp() {
         <nav aria-label="Workspace navigation">
           <button
             className={`nav-item ${view === "ask" ? "active" : ""}`}
-            onClick={() => selectView("ask")}
+            onClick={() => openAsk("all")}
           >
             <span className="nav-symbol">✦</span>
             <span>AskAI</span>
@@ -173,15 +173,17 @@ function ContinuityApp() {
               <p className="eyebrow">{heading.eyebrow}</p>
               <h1>{view === "ask" ? `${heading.title} · ${askScope === "events" ? "事件库" : "AI Capex"}` : heading.title}</h1>
             </div>
-            {(view === "events" || view === "aidc") && (
-              <button className="page-ask-button" onClick={() => openAsk(view)}>
-                ✦ 询问此数据库
-              </button>
-            )}
-            {view === "ideas" && (
-              <button className="page-ask-button secondary" onClick={() => selectView("graph")}>
-                ↗ 打开 Idea Graph
-              </button>
+            {(view === "notes" || view === "ideas" || view === "events" || view === "aidc") && (
+              <div className="page-heading-actions">
+                <button className="page-ask-button" onClick={() => openAsk(view)}>
+                  ✦ AskAI
+                </button>
+                {view === "ideas" && (
+                  <button className="page-ask-button secondary" onClick={() => selectView("graph")}>
+                    ↗ 打开 Idea Graph
+                  </button>
+                )}
+              </div>
             )}
           </header>}
 

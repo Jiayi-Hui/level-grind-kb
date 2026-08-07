@@ -18,6 +18,7 @@ export function emptyFavorites() {
 
 export function normalizeFavorites(value, now = new Date().toISOString()) {
   const raw = value && typeof value === "object" ? value : {};
+  const normalizeScope = (value) => ["all", "notes", "ideas", "events", "aidc"].includes(value) ? value : "all";
   const normalize = (entry, kind) => {
     const id = asText(entry?.id, 220);
     const sourceChatId = asText(entry?.sourceChatId, 160);
@@ -28,7 +29,7 @@ export function normalizeFavorites(value, now = new Date().toISOString()) {
       kind,
       title: asText(entry?.title, 180) || (kind === "answer" ? "已收藏回答" : "已收藏 Chat"),
       body: asText(entry?.body, kind === "answer" ? 100_000 : 400_000),
-      scope: entry?.scope === "aidc" ? "aidc" : "events",
+      scope: normalizeScope(entry?.scope),
       projectTitle: asText(entry?.projectTitle, 180) || "未命名研究项目",
       chatTitle: asText(entry?.chatTitle, 180) || "新研究对话",
       sourceCount: sourceCount(entry?.sources) || Math.max(0, Math.min(300, Number(entry?.sourceCount) || 0)),

@@ -61,15 +61,16 @@ function normalizeUsage(value) {
 function normalizeStore(value) {
   const now = new Date().toISOString();
   const raw = value && typeof value === "object" ? value : {};
+  const normalizeScope = (value) => ["all", "notes", "ideas", "events", "aidc"].includes(value) ? value : "all";
   const projects = (Array.isArray(raw.projects) ? raw.projects : []).slice(0, MAX_PROJECTS).map((project) => ({
-    id: clean(project?.id, 160), scope: project?.scope === "aidc" ? "aidc" : "events",
+    id: clean(project?.id, 160), scope: normalizeScope(project?.scope),
     title: clean(project?.title, 120) || "未命名研究项目",
     createdAt: iso(project?.createdAt, now), updatedAt: iso(project?.updatedAt, now),
   })).filter((project) => project.id);
   const projectIds = new Set(projects.map((project) => project.id));
   const chats = (Array.isArray(raw.chats) ? raw.chats : []).slice(0, MAX_CHATS).map((chat) => ({
     id: clean(chat?.id, 160), projectId: clean(chat?.projectId, 160),
-    scope: chat?.scope === "aidc" ? "aidc" : "events",
+    scope: normalizeScope(chat?.scope),
     title: clean(chat?.title, 120) || "新研究对话",
     mode: ["context", "web", "hybrid"].includes(chat?.mode) ? chat.mode : "context",
     createdAt: iso(chat?.createdAt, now), updatedAt: iso(chat?.updatedAt, now),

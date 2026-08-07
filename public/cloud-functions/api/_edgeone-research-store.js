@@ -137,7 +137,7 @@ function researchScore(record, terms) {
 // Server-only gray-box retrieval. This helper is imported by agent-chat and is
 // not exposed as a browser route. It strips owner identity, original titles,
 // attachment names and object keys before model context is assembled.
-export async function privateTeamResearchContext(question, env, limit = 6, clerkUserId = "") {
+export async function privateTeamResearchContext(question, env, limit = 6, clerkUserId = "", scope = "all") {
   const notesServiceBaseUrl = String(env.NOTES_SERVICE_BASE_URL || "").replace(/\/+$/, "");
   const retrievalToken = String(env.NOTES_RETRIEVAL_SERVICE_TOKEN || "");
   if (notesServiceBaseUrl && retrievalToken && clerkUserId) {
@@ -147,7 +147,7 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
         "Content-Type": "application/json",
         "X-Level-Grind-Retrieval-Token": retrievalToken,
       },
-      body: JSON.stringify({ question, clerkUserId, limit }),
+      body: JSON.stringify({ question, clerkUserId, limit, scope }),
       signal: AbortSignal.timeout(8_000),
     });
     if (!response.ok) throw new Error(`NOTES_RETRIEVAL_${response.status}`);
@@ -173,7 +173,11 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
       || (item.externalAiAllowed === true && item.redactionRequired !== true)));
   const decrypted = await Promise.all(stored.map((item) => clientRecord(item, env)));
   const ranked = decrypted
-    .map((record) => ({ record, score: researchScore(record, terms) }))
+    .map((record) => ({
+      record,
+      score: researchScore(record, terms)
+        + (scope === record.resource ? 1_000 : 0),
+    }))
     .sort((a, b) => b.score - a.score || String(b.record.updatedAt).localeCompare(String(a.record.updatedAt)))
     .slice(0, Math.max(1, Math.min(Number(limit) || 6, 10)));
   return ranked.map(({ record }, index) => ({

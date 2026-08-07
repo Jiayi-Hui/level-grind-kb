@@ -117,7 +117,7 @@ function cleanText(value, maxLength) {
 function normalizeBody(body) {
   const question = cleanText(body.question, 2400);
   if (question.length < 3) throw new Error("请输入更具体的问题");
-  const scope = body.scope === "aidc" ? "aidc" : "events";
+  const scope = ["all", "notes", "ideas", "events", "aidc"].includes(body.scope) ? body.scope : "all";
   // Internal evidence is deliberately the default. Public web retrieval is an
   // explicit user choice because it adds latency, cost, and an external-data boundary.
   const mode = ["hybrid", "web", "context"].includes(body.mode) ? body.mode : "context";
@@ -317,14 +317,14 @@ async function deepSeekAnswer(input, webResults, env, onDelta, lifecycle = {}) {
         {
           role: "user",
           content: [
-            `Workspace: ${input.scope === "events" ? "Event DB" : "AI Capex"}`,
+            `Workspace: ${{ all: "Cross-library research", notes: "Notes", ideas: "Ideas", events: "Event DB", aidc: "AI Capex" }[input.scope] || "Cross-library research"}`,
             `Project: ${input.projectTitle || "Untitled"}`,
             `Chat: ${input.chatTitle || "Untitled"}`,
             `Evidence mode: ${input.mode}`,
             "",
             `Question:\n${input.question}`,
             "",
-            `Level Grind evidence (Event DB + AI Capex):\n${context || "(not included in this mode)"}`,
+            `Level Grind evidence (Notes + Ideas + Event DB + AI Capex):\n${context || "(not included in this mode)"}`,
             "",
             `Public-web evidence:\n${web || "(not included in this mode)"}`,
           ].join("\n"),
@@ -475,7 +475,7 @@ export async function onRequestPost({ request, env }) {
     const retrieveGovernedContext = async () => {
       if (!includeContext) return [];
       try {
-        return await privateTeamResearchContext(input.question, env, 6, identity.subject);
+        return await privateTeamResearchContext(input.question, env, 6, identity.subject, input.scope);
       } catch {
         // A missing/rotating encryption key or an unavailable research store
         // must not take down Event DB / AI Capex answers. The ordinary scoped
