@@ -406,3 +406,42 @@
   first-token, completion, or typed error evidence.
 - [ ] Tiff's prepared seven-record/five-attachment batch remains pending until
   authenticated production import approval.
+
+## V5.19 Chat-level capture and two-tier raw visibility
+
+- [x] Fable 5 is removed from the model picker and built-in server allowlist.
+- [x] Each answer exposes Favorite/Unfavorite and no per-answer export actions.
+- [x] Each Chat exposes Favorite, full-history Markdown, and full-history Obsidian.
+- [x] Favorite answers/Chats appear in Personal Knowledge.
+- [x] Favorites share the Clerk-subject AskAI envelope and optimistic version.
+- [x] Configured managers can read team raw Notes/Ideas; ordinary members remain
+  restricted to their own records.
+- [x] Gray-box AskAI retrieval excludes records without internal-AI permission.
+- [ ] Two-account production validation proves manager/member list differences.
+- [ ] Same-account two-device validation proves Personal Knowledge sync.
+- [ ] Notes/Ideas attachment upload is not called live until the production
+  object-storage path and parsing status are explicitly verified.
+
+## V5.25 Upload-first intake, Idea Graph, and AIDC daily refresh
+
+- [x] Empty libraries show `上传你的第一个 Note/Idea`.
+- [x] First confirmed server creation has a celebration state.
+- [x] Notes/Ideas toolbars no longer overlap PM Review cards.
+- [x] One parsed attachment may yield multiple review candidates without creating Ideas.
+- [x] Source contributor attribution preserves the real uploader and audit history.
+- [x] AskAI is first in navigation and the redundant research header is removed.
+- [x] Idea Graph is a separate full-width view with filters and an inspector.
+- [x] Ideas list shows date, proposer, company, ticker, direction, and percentage.
+- [x] Official Epoch refresh publishes 77 campuses with 77 located records.
+- [x] Lint, 64 tests, portable production build, and desktop/mobile browser QA pass.
+- [ ] Production migrations, deployment, and Tiff batch import require explicit approval.
+
+## V5.26 Investment Graph fidelity and provider acceptance
+
+- [x] Graph uses the original atlas control/canvas/inspector structure.
+- [x] Industry and market filters support simultaneous multi-selection.
+- [x] Daily evolution supports both manual date selection and timed playback.
+- [x] Search, zoom, fit, relayout, hover focus and node connections remain interactive.
+- [x] The build is portable and does not import the sibling repository at runtime.
+- [ ] Authenticated production DeepSeek and every configured OpenRouter option return
+  a visible first token and complete/error event after deployment.

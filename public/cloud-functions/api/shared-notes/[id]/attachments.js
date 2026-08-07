@@ -1,14 +1,14 @@
-import { forwardResearchControlRequest, sharedGatewayError } from "../../shared-notes.js";
+import { forwardResearchControlRequest, routeParam, sharedGatewayError } from "../../shared-notes.js";
 
-function noteId(params) {
-  const id = String(params?.id || "");
+function noteId(request, params) {
+  const id = routeParam(request, params, "id", "shared-notes");
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("INVALID_NOTE_ID");
   return id;
 }
 
 export async function onRequest({ request, env, params }) {
   try {
-    const id = noteId(params);
+    const id = noteId(request, params);
     return await forwardResearchControlRequest(request, env, {
       resource: "notes",
       suffix: `/${encodeURIComponent(id)}/attachments`,

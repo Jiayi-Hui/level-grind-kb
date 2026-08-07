@@ -49,12 +49,16 @@ export type PersonalKnowledgeNote = {
   chatTitle: string;
   sourceCount: number;
   createdAt: string;
+  kind?: "answer" | "chat";
+  sourceChatId?: string;
+  sourceMessageId?: string;
 };
 type AgentStore = {
   projects: ResearchProject[];
   chats: ResearchChat[];
 };
-type HistoryResponse = { store: AgentStore; version: number; migrated?: boolean; alreadyExists?: boolean; currentVersion?: number; error?: string };
+type FavoriteEnvelope = { answers: PersonalKnowledgeNote[]; chats: PersonalKnowledgeNote[] };
+type HistoryResponse = { store: AgentStore; favorites?: FavoriteEnvelope; entries?: PersonalKnowledgeNote[]; version: number; migrated?: boolean; alreadyExists?: boolean; currentVersion?: number; error?: string };
 type ContextEntry = {
   id: string;
   title: string;
@@ -72,7 +76,6 @@ const openRouterPreviewModels = [
   { model: "openai/gpt-5.6-luna", label: "GPT-5.6 Luna" },
   { model: "openai/gpt-5.5", label: "GPT-5.5" },
   { model: "anthropic/claude-opus-4.8", label: "Claude Opus 4.8" },
-  { model: "anthropic/claude-fable-5", label: "Claude Fable 5" },
   { model: "z-ai/glm-5.2", label: "GLM-5.2" },
   { model: "moonshotai/kimi-k3", label: "Kimi K3" },
 ] as const;
@@ -129,6 +132,31 @@ function markdownForAnswer(
   ].filter(Boolean).join("\n");
 }
 
+function markdownForChat(chat: ResearchChat, project: ResearchProject) {
+  const content = chat.messages.map((message) => {
+    const sources = (message.sources || []).map((source) => `[${source.index}] [${source.title}](${source.url})`).join("\n");
+    return [
+      `## ${message.role === "user" ? "Question" : "Answer"}`,
+      "",
+      message.content,
+      sources ? `\n### Sources\n\n${sources}` : "",
+    ].filter(Boolean).join("\n");
+  }).join("\n\n---\n\n");
+  return [
+    "---",
+    `title: "${safeTitle(chat.title).replace(/"/g, '\\"')}"`,
+    `source: Level Grind ${chat.scope === "events" ? "Event DB" : "AI Capex"} AskAI`,
+    `project: "${project.title.replace(/"/g, '\\"')}"`,
+    `created: ${chat.createdAt}`,
+    `updated: ${chat.updatedAt}`,
+    "---",
+    "",
+    `# ${chat.title}`,
+    "",
+    content || "_No messages yet._",
+  ].join("\n");
+}
+
 export function downloadMarkdown(markdown: string, title: string) {
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -156,11 +184,24 @@ export function loadPersonalKnowledge() {
   return readJson<PersonalKnowledgeNote[]>(knowledgeKey, []);
 }
 
+function favoriteEntries(value?: FavoriteEnvelope) {
+  return [...(value?.answers || []), ...(value?.chats || [])]
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+function persistPersonalKnowledge(notes: PersonalKnowledgeNote[]) {
+  writeJson(knowledgeKey, notes);
+  window.dispatchEvent(new CustomEvent("level-grind:knowledge-updated"));
+}
+
 function savePersonalKnowledge(note: PersonalKnowledgeNote) {
   const notes = loadPersonalKnowledge();
   const next = [note, ...notes.filter((item) => item.id !== note.id)];
-  writeJson(knowledgeKey, next);
-  window.dispatchEvent(new CustomEvent("level-grind:knowledge-updated"));
+  persistPersonalKnowledge(next);
+}
+
+function removePersonalKnowledge(id: string) {
+  persistPersonalKnowledge(loadPersonalKnowledge().filter((item) => item.id !== id));
 }
 
 function defaultProject(scope: ResearchScope): ResearchProject {
@@ -304,6 +345,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const [defaultModel, setDefaultModel] = useState("deepseek-v4-flash");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [favorites, setFavorites] = useState<PersonalKnowledgeNote[]>(() => loadPersonalKnowledge());
   const scrollRef = useRef<HTMLDivElement>(null);
   const remoteHistoryReady = useRef(false);
   const remoteHistoryVersion = useRef(0);
@@ -365,6 +407,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
           remoteHistoryReady.current = true;
           setStore(payload.store);
           writeJson(storeKey, payload.store);
+          const remoteFavorites = favoriteEntries(payload.favorites);
+          if (remoteFavorites.length || !loadPersonalKnowledge().length) {
+            persistPersonalKnowledge(remoteFavorites);
+            setFavorites(remoteFavorites);
+          }
           if (payload.migrated) window.localStorage.setItem(historyMigrationKey, "done");
           return;
         }
@@ -388,6 +435,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         remoteHistoryReady.current = true;
         setStore(migratedPayload.store);
         writeJson(storeKey, migratedPayload.store);
+        const remoteFavorites = favoriteEntries(migratedPayload.favorites);
+        if (remoteFavorites.length || !loadPersonalKnowledge().length) {
+          persistPersonalKnowledge(remoteFavorites);
+          setFavorites(remoteFavorites);
+        }
         window.localStorage.setItem(historyMigrationKey, "done");
         setNotice(migratedPayload.alreadyExists ? "已载入另一台设备上的 AskAI 私有历史" : "已将本机 AskAI 历史安全迁移到你的跨设备私有空间");
       } catch {
@@ -414,7 +466,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         if (!response.ok) return;
         const payload = await response.json() as { capabilities?: { defaultModel?: string; openRouter?: ModelCapability[] } };
         if (cancelled || !payload.capabilities) return;
-        const models = payload.capabilities.openRouter || [];
+        const models = (payload.capabilities.openRouter || []).filter((item) => item.model !== "anthropic/claude-fable-5");
         setDefaultModel(payload.capabilities.defaultModel || "deepseek-v4-flash");
         setOpenRouterModels(models);
         setSelectedOpenRouterModel((current) => (
@@ -434,11 +486,17 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
   const openRouterModelAvailable = modelProvider === "openrouter" && Boolean(selectedOpenRouterCapability);
   const openRouterUnavailable = modelProvider === "openrouter" && !openRouterModelAvailable;
   const thinkingAvailable = modelProvider === "default" || Boolean(selectedOpenRouterCapability?.thinkingSupported);
-  const selectedModelLabel = modelProvider === "openrouter"
-    ? (selectedOpenRouterCapability?.model || openRouterPreviewModels.find((item) => item.model === selectedOpenRouterModel)?.label || "OpenRouter")
-    : defaultModel;
-
   useEffect(() => { latestStore.current = store; }, [store]);
+
+  useEffect(() => {
+    const refresh = () => setFavorites(loadPersonalKnowledge());
+    window.addEventListener("level-grind:knowledge-updated", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("level-grind:knowledge-updated", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
 
   const writeRemoteHistory = useCallback(async (next: AgentStore) => {
     if (!remoteHistoryReady.current) return;
@@ -473,6 +531,43 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         .then(() => writeRemoteHistory(latestStore.current));
     }, 650);
   }, [writeRemoteHistory]);
+
+  const writeRemoteFavorite = useCallback(async (action: "favorite-answer" | "favorite-chat" | "unfavorite", note: PersonalKnowledgeNote) => {
+    if (!remoteHistoryReady.current) return;
+    const token = await getToken();
+    if (!token) return;
+    const response = await fetch("/api/askai-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        action,
+        kind: note.kind === "chat" ? "chat" : "answer",
+        id: note.id,
+        favorite: action === "unfavorite" ? undefined : note,
+        expectedVersion: remoteHistoryVersion.current,
+      }),
+    });
+    const payload = await response.json().catch(() => ({})) as HistoryResponse;
+    if (response.status === 409) {
+      remoteHistoryReady.current = false;
+      setNotice("另一台设备刚更新了收藏；本机操作已保留，刷新后可重新同步。");
+      return;
+    }
+    if (!response.ok) {
+      setNotice(payload.error || "收藏暂时只保存在本机；云端同步稍后重试。");
+      return;
+    }
+    remoteHistoryVersion.current = payload.version;
+    const entries = favoriteEntries(payload.favorites);
+    persistPersonalKnowledge(entries);
+    setFavorites(entries);
+  }, [getToken]);
+
+  const queueRemoteFavorite = useCallback((action: "favorite-answer" | "favorite-chat" | "unfavorite", note: PersonalKnowledgeNote) => {
+    remoteWriteChain.current = remoteWriteChain.current
+      .catch(() => undefined)
+      .then(() => writeRemoteFavorite(action, note));
+  }, [writeRemoteFavorite]);
 
   const commitLocalStore = (next: AgentStore) => {
     localStoreRevision.current += 1;
@@ -700,14 +795,24 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
     }
   };
 
-  const actOnAnswer = async (action: "save" | "download" | "obsidian", message: ResearchMessage, index: number) => {
+  const answerFavoriteId = (message: ResearchMessage) => activeChat ? `askai-answer:${activeChat.id}:${message.id}` : "";
+  const chatFavoriteId = () => activeChat ? `askai-chat:${activeChat.id}` : "";
+  const isFavorite = (id: string) => favorites.some((item) => item.id === id);
+
+  const toggleAnswerFavorite = (message: ResearchMessage, index: number) => {
     if (!activeProject || !activeChat) return;
     const questionMessage = [...activeChat.messages.slice(0, index)].reverse().find((item) => item.role === "user");
     const title = questionMessage?.content || activeChat.title;
     const markdown = markdownForAnswer(message, title, activeProject.title, activeChat.title, scope);
-    if (action === "save") {
-      savePersonalKnowledge({
-        id: uid("knowledge"),
+    const id = answerFavoriteId(message);
+    if (isFavorite(id)) {
+      const existing = favorites.find((item) => item.id === id);
+      removePersonalKnowledge(id);
+      if (existing) queueRemoteFavorite("unfavorite", existing);
+      setNotice("已取消收藏回答");
+    } else {
+      const favorite: PersonalKnowledgeNote = {
+        id,
         title: safeTitle(title),
         body: markdown,
         scope,
@@ -715,26 +820,57 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         chatTitle: activeChat.title,
         sourceCount: message.sources?.length || 0,
         createdAt: new Date().toISOString(),
-      });
-      setNotice("已保存到个人知识库");
-    } else if (action === "download") {
-      downloadMarkdown(markdown, title);
-      setNotice("Markdown 已下载");
-    } else {
-      await sendMarkdownToObsidian(markdown, title);
-      setNotice("已发送到 Obsidian");
+        kind: "answer",
+        sourceChatId: activeChat.id,
+        sourceMessageId: message.id,
+      };
+      savePersonalKnowledge(favorite);
+      queueRemoteFavorite("favorite-answer", favorite);
+      setNotice("已收藏回答，并加入个人知识库");
     }
+  };
+
+  const toggleChatFavorite = () => {
+    if (!activeProject || !activeChat) return;
+    const id = chatFavoriteId();
+    if (isFavorite(id)) {
+      const existing = favorites.find((item) => item.id === id);
+      removePersonalKnowledge(id);
+      if (existing) queueRemoteFavorite("unfavorite", existing);
+      setNotice("已取消收藏 Chat");
+      return;
+    }
+    const favorite: PersonalKnowledgeNote = {
+      id,
+      title: safeTitle(activeChat.title),
+      body: markdownForChat(activeChat, activeProject),
+      scope,
+      projectTitle: activeProject.title,
+      chatTitle: activeChat.title,
+      sourceCount: activeChat.messages.reduce((total, message) => total + (message.sources?.length || 0), 0),
+      createdAt: new Date().toISOString(),
+      kind: "chat",
+      sourceChatId: activeChat.id,
+    };
+    savePersonalKnowledge(favorite);
+    queueRemoteFavorite("favorite-chat", favorite);
+    setNotice("已收藏整个 Chat，并加入个人知识库");
+  };
+
+  const downloadChatHistory = () => {
+    if (!activeProject || !activeChat) return;
+    downloadMarkdown(markdownForChat(activeChat, activeProject), activeChat.title);
+    setNotice("已下载完整 Chat history");
+  };
+
+  const exportChatToObsidian = async () => {
+    if (!activeProject || !activeChat) return;
+    await sendMarkdownToObsidian(markdownForChat(activeChat, activeProject), activeChat.title);
+    setNotice("已导出完整 Chat history 到 Obsidian");
   };
 
   return (
     <section className="agentic-layer">
-      <header className="agentic-head">
-        <div><p className="eyebrow">AGENTIC RESEARCH</p><h2>{scope === "events" ? "询问事件与价格" : "询问 AI Capex"}</h2></div>
-        <div className="agentic-engine">
-          <strong>{selectedModelLabel}</strong>
-          <small>{thinkingEnabled && thinkingAvailable ? "Thinking 开启" : "Thinking 关闭"} · {mode === "hybrid" ? "Tavily" : "当前库"}</small>
-        </div>
-      </header>
       <div className="agentic-layout">
         <aside className="agentic-sidebar">
           <div className="agentic-list-head"><strong>Projects</strong><button onClick={newProject}>＋</button></div>
@@ -761,6 +897,16 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
         </aside>
 
         <div className="agentic-chat">
+          {activeChat && (
+            <div className="agentic-chat-actions" aria-label="Chat actions">
+              <strong>{activeChat.title}</strong>
+              <div>
+                <button type="button" onClick={toggleChatFavorite}>{isFavorite(chatFavoriteId()) ? "取消收藏 Chat" : "收藏 Chat"}</button>
+                <button type="button" onClick={downloadChatHistory} disabled={!activeChat.messages.length}>下载整个 Chat history .md</button>
+                <button type="button" onClick={() => void exportChatToObsidian()} disabled={!activeChat.messages.length}>导出整个 Chat history 到 Obsidian</button>
+              </div>
+            </div>
+          )}
           <div className="agentic-messages" ref={scrollRef}>
             {!activeChat?.messages.length && <div className="agentic-chat-empty">输入问题后，系统会联动事件库与 AI Capex，再按所选模式检索公开网络。</div>}
             {activeChat?.messages.map((message, index) => (
@@ -777,9 +923,7 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
                   )}
                   {message.role === "assistant" && (
                     <footer>
-                      <button onClick={() => void actOnAnswer("save", message, index)}>保存</button>
-                      <button onClick={() => void actOnAnswer("download", message, index)}>下载 .md</button>
-                      <button onClick={() => void actOnAnswer("obsidian", message, index)}>导出 Obsidian</button>
+                      <button onClick={() => toggleAnswerFavorite(message, index)}>{isFavorite(answerFavoriteId(message)) ? "取消收藏" : "收藏"}</button>
                       {message.usage && <small>{message.usage.provider} · {message.usage.model} · {message.usage.thinkingEnabled === false ? "Thinking 关闭" : "Thinking 开启"} · {(message.usage.inputTokens + message.usage.outputTokens).toLocaleString()} tokens{typeof message.usage.estimatedCostUsd === "number" ? ` · $${message.usage.estimatedCostUsd.toFixed(4)}` : ""}{typeof message.usage.latencyMs === "number" ? ` · ${(message.usage.latencyMs / 1000).toFixed(1)}s` : ""}{message.usage.webCredits ? ` · Tavily ${message.usage.webCredits} credits` : ""}</small>}
                     </footer>
                   )}
@@ -829,8 +973,11 @@ export function AgenticResearchPanel({ scope }: { scope: ResearchScope }) {
 }
 
 export function PersonalKnowledgeView() {
+  const { getToken } = useAuth();
   const [notes, setNotes] = useState<PersonalKnowledgeNote[]>(() => loadPersonalKnowledge());
   const [selectedId, setSelectedId] = useState("");
+  const [syncState, setSyncState] = useState<"loading" | "account" | "local">("loading");
+  const remoteVersion = useRef(0);
 
   useEffect(() => {
     const refresh = () => setNotes(loadPersonalKnowledge());
@@ -842,32 +989,70 @@ export function PersonalKnowledgeView() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("AUTH_MISSING");
+        const response = await fetch("/api/askai-history?view=knowledge", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        const payload = await response.json().catch(() => ({})) as HistoryResponse;
+        if (!response.ok) throw new Error(payload.error || "KNOWLEDGE_UNAVAILABLE");
+        if (cancelled) return;
+        remoteVersion.current = payload.version;
+        const entries = payload.entries || [];
+        persistPersonalKnowledge(entries);
+        setNotes(entries);
+        setSyncState("account");
+      } catch {
+        if (!cancelled) setSyncState("local");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getToken]);
+
   const selected = notes.find((note) => note.id === selectedId) || notes[0];
-  const remove = (note: PersonalKnowledgeNote) => {
+  const remove = async (note: PersonalKnowledgeNote) => {
     if (!window.confirm(`删除“${note.title}”？`)) return;
-    const next = notes.filter((item) => item.id !== note.id);
-    writeJson(knowledgeKey, next);
-    setNotes(next);
+    removePersonalKnowledge(note.id);
     setSelectedId("");
+    if (syncState !== "account") return;
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("AUTH_MISSING");
+      const response = await fetch("/api/askai-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: "unfavorite", kind: note.kind === "chat" ? "chat" : "answer", id: note.id, expectedVersion: remoteVersion.current }),
+      });
+      const payload = await response.json().catch(() => ({})) as HistoryResponse;
+      if (!response.ok) throw new Error(payload.error || "KNOWLEDGE_DELETE_FAILED");
+      remoteVersion.current = payload.version;
+      const entries = favoriteEntries(payload.favorites);
+      persistPersonalKnowledge(entries);
+      setNotes(entries);
+    } catch {
+      setSyncState("local");
+    }
   };
 
   return (
     <section className="personal-knowledge-live">
-      <header><p className="eyebrow">PERSONAL KNOWLEDGE</p><h2>已保存的研究结果</h2><span>{notes.length} 条 · 当前设备</span></header>
+      <header><p className="eyebrow">PERSONAL KNOWLEDGE</p><h2>已收藏的研究结果</h2><span>{notes.length} 条 · {syncState === "account" ? "账户同步" : syncState === "loading" ? "正在同步" : "当前设备"}</span></header>
       {notes.length === 0 ? (
-        <div className="personal-knowledge-empty">在事件库或 AI Capex 的回答下点击“保存”，结果会显示在这里。</div>
+        <div className="personal-knowledge-empty">收藏一条 AskAI 回答或整个 Chat，它会显示在这里。</div>
       ) : (
         <div className="personal-knowledge-grid">
           <div className="personal-knowledge-list">
             {notes.map((note) => (
               <button key={note.id} className={note.id === selected?.id ? "active" : ""} onClick={() => setSelectedId(note.id)}>
-                <strong>{note.title}</strong><small>{note.projectTitle} · {new Date(note.createdAt).toLocaleString("zh-CN")}</small>
+                <strong>{note.title}</strong><small>{note.kind === "chat" ? "Chat 收藏" : "回答收藏"} · {note.projectTitle} · {new Date(note.createdAt).toLocaleString("zh-CN")}</small>
               </button>
             ))}
           </div>
           {selected && (
             <article className="personal-knowledge-detail">
-              <header><div><span>{selected.scope === "events" ? "事件库" : "AI Capex"}</span><h3>{selected.title}</h3></div><button onClick={() => remove(selected)}>删除</button></header>
+              <header><div><span>{selected.scope === "events" ? "事件库" : "AI Capex"}</span><h3>{selected.title}</h3></div><button onClick={() => void remove(selected)}>删除</button></header>
               <pre>{selected.body}</pre>
               <footer>
                 <button onClick={() => downloadMarkdown(selected.body, selected.title)}>下载 .md</button>

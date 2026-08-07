@@ -32,7 +32,14 @@ async function getRecord(resource, id) { return records.get(recordKey(resource, 
 async function clientRecord(record, env) {
   const secretField = record.resource === "notes" ? "bodySecret" : "thesisSecret";
   const plainField = record.resource === "notes" ? "body" : "thesis";
-  const result = { ...record, [plainField]: await open(record[secretField], env, `${record.resource}:${record.id}`) };
+  const owner = record.owner || {};
+  const result = {
+    ...record,
+    sourceContributor: record.sourceContributor || owner,
+    createdBy: record.createdBy || owner,
+    sensitivityLevel: record.sensitivityLevel === "restricted" ? "confidential" : record.sensitivityLevel,
+    [plainField]: await open(record[secretField], env, `${record.resource}:${record.id}`),
+  };
   if (record.resource === "ideas" && record.validationSecret) {
     const validation = JSON.parse(await open(record.validationSecret, env, `${record.resource}:${record.id}:validation`) || "{}");
     result.templateFields = { ...result.templateFields, ...validation };
@@ -42,21 +49,37 @@ async function clientRecord(record, env) {
 function managerEmails(env) {
   return new Set([
     env.LEVEL_GRIND_OWNER_EMAIL,
+    env.LEVEL_GRIND_MANAGER_EMAILS,
     env.LEVEL_GRIND_PRIMARY_PM_EMAIL,
     ...String(env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(","),
   ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
 }
-function canView(record, actor) {
-  // Raw research is private to its contributor. Managers receive aggregate
-  // review metadata through nativeContributionRequest, never another user's
-  // decrypted body or attachment list through the ordinary library routes.
-  return record.owner?.user_id === actor.subject;
+function canView(record, actor, env) {
+  // Contributors see their own raw research. Explicitly configured managers
+  // can review the team corpus; ordinary members never receive another
+  // contributor's decrypted record or attachment list.
+  return record.owner?.user_id === actor.subject
+    || String(record.sourceContributor?.email || record.owner?.email || "").toLowerCase() === String(actor.email || "").toLowerCase()
+    || isManager(actor, env);
 }
 function isManager(actor, env) {
   return managerEmails(env).has(String(actor.email || "").trim().toLowerCase());
 }
 function canEdit(record, actor, env) {
   return record.owner?.user_id === actor.subject || isManager(actor, env);
+}
+function memberEmails(env) {
+  return new Set([
+    ...managerEmails(env),
+    ...String(env.LEVEL_GRIND_INVITED_EMAILS || "").split(","),
+  ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));
+}
+function sourceContributor(value, actor, env) {
+  const requested = clean(value?.sourceContributorEmail, 320).toLowerCase();
+  if (!requested) return { user_id: actor.subject, email: actor.email, display_name: actor.name };
+  if (!isManager(actor, env)) throw new Error("SOURCE_CONTRIBUTOR_MANAGER_ONLY");
+  if (!memberEmails(env).has(requested)) throw new Error("SOURCE_CONTRIBUTOR_NOT_ACTIVE");
+  return { email: requested, display_name: requested.split("@")[0] };
 }
 async function audit(action, resource, targetId, actor, details = {}) {
   const now = new Date().toISOString();
@@ -76,7 +99,7 @@ function templateFields(value, resource) {
 }
 function policyPayload(value) {
   return {
-    sensitivityLevel: ["public", "internal", "confidential", "restricted"].includes(value.sensitivityLevel) ? value.sensitivityLevel : "internal",
+    sensitivityLevel: ["public", "internal", "confidential"].includes(value.sensitivityLevel) ? value.sensitivityLevel : "internal",
     viewAllowed: false,
     downloadAllowed: false,
     // This flag means the server-side gray-box retrieval layer may rank the
@@ -114,14 +137,40 @@ function researchScore(record, terms) {
 // Server-only gray-box retrieval. This helper is imported by agent-chat and is
 // not exposed as a browser route. It strips owner identity, original titles,
 // attachment names and object keys before model context is assembled.
-export async function privateTeamResearchContext(question, env, limit = 6) {
+export async function privateTeamResearchContext(question, env, limit = 6, clerkUserId = "") {
+  const notesServiceBaseUrl = String(env.NOTES_SERVICE_BASE_URL || "").replace(/\/+$/, "");
+  const retrievalToken = String(env.NOTES_RETRIEVAL_SERVICE_TOKEN || "");
+  if (notesServiceBaseUrl && retrievalToken && clerkUserId) {
+    const response = await fetch(`${notesServiceBaseUrl}/v1/internal/askai/private-research`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Level-Grind-Retrieval-Token": retrievalToken,
+      },
+      body: JSON.stringify({ question, clerkUserId, limit }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`NOTES_RETRIEVAL_${response.status}`);
+    const payload = await response.json();
+    return (Array.isArray(payload.records) ? payload.records : [])
+      .filter((record) => record.sensitivityLevel === "public"
+        || (record.externalAiAllowed === true && record.redactionRequired !== true))
+      .map((record, index) => ({
+      id: `private-team:${record.type || "research"}:${index + 1}`,
+      title: clean(record.title || `[Private team Research ${index + 1}]`, 160),
+      content: clean(record.content, 5000),
+      privateTeamEvidence: true,
+      })).filter((entry) => entry.content);
+  }
   const terms = researchTerms(question);
   const listings = await Promise.all(["notes", "ideas"].map((resource) => (
     records.list({ prefix: `${resource}/`, consistency: "strong", limit: 500 })
   )));
   const stored = (await Promise.all(listings.flatMap((listing) => listing.blobs.map(({ key }) => (
     records.get(key, { type: "json", consistency: "strong" })
-  ))))).filter((item) => item && !item.deletedAt);
+  ))))).filter((item) => item && !item.deletedAt && item.internalAiAllowed === true
+    && (item.sensitivityLevel === "public"
+      || (item.externalAiAllowed === true && item.redactionRequired !== true)));
   const decrypted = await Promise.all(stored.map((item) => clientRecord(item, env)));
   const ranked = decrypted
     .map((record) => ({ record, score: researchScore(record, terms) }))
@@ -149,15 +198,16 @@ async function createRecord(resource, value, actor, env) {
   const payload = resource === "notes" ? notePayload(value) : ideaPayload(value); if (!payload.title) return response({ error: "标题不能为空。" }, 400);
   const id = crypto.randomUUID(); const now = new Date().toISOString(); const secretField = resource === "notes" ? "bodySecret" : "thesisSecret"; const plainField = resource === "notes" ? "body" : "thesis";
   const validationSecret = resource === "ideas" ? await sealIdeaValidation(payload, env, id) : undefined;
-  const record = { ...payload, resource, id, [secretField]: await seal(payload[plainField], env, `${resource}:${id}`), validationSecret, [plainField]: undefined, version: 1, createdAt: now, updatedAt: now, owner: { user_id: actor.subject, email: actor.email, display_name: actor.name } };
+  const record = { ...payload, resource, id, [secretField]: await seal(payload[plainField], env, `${resource}:${id}`), validationSecret, [plainField]: undefined, version: 1, createdAt: now, updatedAt: now, owner: { user_id: actor.subject, email: actor.email, display_name: actor.name }, sourceContributor: sourceContributor(value, actor, env), createdBy: { user_id: actor.subject, email: actor.email, display_name: actor.name } };
   await records.setJSON(recordKey(resource, id), record, { onlyIfNew: true, cacheControl: "no-store" });
-  await audit("create", resource, id, actor, { version: 1, sensitivityLevel: record.sensitivityLevel });
+  await audit("create", resource, id, actor, { version: 1, sensitivityLevel: record.sensitivityLevel, sourceContributorEmail: record.sourceContributor.email });
   return response({ [resource === "notes" ? "note" : "idea"]: await clientRecord(record, env), configured: true, ingestionFrozen: false }, 201);
 }
 async function mutateRecord(resource, id, request, env, actor) {
   const current = await getRecord(resource, id); if (!current || current.deletedAt) return response({ error: "记录不存在。" }, 404); const value = await input(request);
   if (!canEdit(current, actor, env)) return response({ error: "只有记录贡献者或成员管理员可以修改。" }, 403);
   if (Number(value.expectedVersion) !== Number(current.version)) return response({ error: "版本冲突，请刷新后重试。", currentVersion: current.version }, 409);
+  if (request.method !== "DELETE" && ((current.sensitivityLevel === "public" && value.sensitivityLevel !== "public") || (current.sensitivityLevel !== "public" && value.sensitivityLevel === "public"))) return response({ error: "Public 仅用于外源 benchmark；内部资料不能转为 Public。" }, 409);
   if (request.method === "DELETE") { const updated = { ...current, deletedAt: new Date().toISOString(), deletedBy: actor.subject, version: current.version + 1, updatedAt: new Date().toISOString() }; await records.setJSON(recordKey(resource, id), updated, { cacheControl: "no-store" }); await audit("soft_delete", resource, id, actor, { fromVersion: current.version, toVersion: updated.version }); return response({ ok: true }); }
   const payload = resource === "notes" ? notePayload(value) : ideaPayload(value); if (!payload.title) return response({ error: "标题不能为空。" }, 400);
   const secretField = resource === "notes" ? "bodySecret" : "thesisSecret"; const plainField = resource === "notes" ? "body" : "thesis";
@@ -246,7 +296,7 @@ export async function nativeContributionRequest(request, env) {
     payload.manager = {
       pendingReview: ideas.filter((item) => item.status === "pending_review").length,
       contributors: [...new Set([...notes, ...ideas].map((item) => item.owner?.email).filter(Boolean))].length,
-      restrictedRecords: [...notes, ...ideas].filter((item) => item.sensitivityLevel === "restricted").length,
+      confidentialRecords: [...notes, ...ideas].filter((item) => item.sensitivityLevel === "confidential").length,
     };
   }
   return response(payload);

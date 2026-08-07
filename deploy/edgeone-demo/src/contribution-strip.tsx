@@ -4,7 +4,7 @@ import { useAuth } from "@clerk/react";
 type Summary = {
   isManager: boolean;
   mine: { notes: number; ideas: number; uploadedFiles: number; linkedIdeas: number; pendingIdeas: number; trackedIdeas: number };
-  manager?: { pendingReview: number; contributors: number; restrictedRecords: number };
+  manager?: { pendingReview: number; contributors: number; confidentialRecords: number };
 };
 
 export function ContributionStrip() {
@@ -27,6 +27,6 @@ export function ContributionStrip() {
   if (!summary) return null;
   return <section className="contribution-strip" aria-label="我的研究贡献">
     <div><strong>我的贡献</strong><span>Notes {summary.mine.notes}</span><span>Ideas {summary.mine.ideas}</span><span>附件 {summary.mine.uploadedFiles}</span><span>关联 Idea {summary.mine.linkedIdeas}</span><span>进入跟踪 {summary.mine.trackedIdeas}</span></div>
-    {summary.manager && <div className="manager-review-strip"><strong>PM Review</strong><span>待审核 {summary.manager.pendingReview}</span><span>贡献者 {summary.manager.contributors}</span><span>受限记录 {summary.manager.restrictedRecords}</span></div>}
+    {summary.manager && <div className="manager-review-strip"><strong>PM Review</strong><span>待审核 {summary.manager.pendingReview}</span><span>贡献者 {summary.manager.contributors}</span><span>Confidential {summary.manager.confidentialRecords}</span></div>}
   </section>;
 }

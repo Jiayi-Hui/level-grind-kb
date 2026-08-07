@@ -17,10 +17,11 @@ const geocodes = JSON.parse(await readFile("data/aidc-capex-geocodes.json", "utf
 
 test("publishes a versioned and checksummed Epoch AI baseline", () => {
   assert.equal(dashboard.schemaVersion, "aidc-capex.v1");
-  assert.equal(dashboard.dataCutoff, "2026-07-29");
-  assert.equal(dashboard.recordCounts.campuses, 75);
-  assert.equal(dashboard.recordCounts.timelineRecords, 424);
-  assert.equal(dashboard.recordCounts.siteChipDateRecords, 205);
+  assert.match(dashboard.dataCutoff, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(dashboard.recordCounts.campuses, dashboard.projects.length);
+  assert.ok(dashboard.recordCounts.campuses >= 75);
+  assert.ok(dashboard.recordCounts.timelineRecords >= 424);
+  assert.ok(dashboard.recordCounts.siteChipDateRecords >= 205);
   assert.equal(dashboard.recordCounts.hardwareRecords, 176);
   assert.equal(dashboard.recordCounts.reviewedForecasts, 0);
   assert.deepEqual(dashboard.reviewedForecasts, []);
@@ -71,7 +72,8 @@ test("adds a compact AI Capex workspace with real matrix and mapped projects", (
   assert.match(styles, /\.aidc-matrix-panel \.aidc-table-wrap\s*\{[^}]*max-height:/s);
   assert.match(styles, /\.aidc-project-table th,[\s\S]*position: sticky; top: 0/);
   assert.match(styles, /\.freshness-stale/);
-  assert.equal(Object.values(geocodes).filter((entry) => entry.latitude !== null).length, 75);
+  assert.ok(dashboard.projects.every((project) => geocodes[project.id]));
+  assert.ok(dashboard.projects.every((project) => geocodes[project.id].latitude !== null));
   assert.ok(Object.values(geocodes).every((entry) => (
     entry.latitude === null
     || ["source-coordinate", "epoch-satellite", "parcel", "address", "place"].includes(entry.precision)

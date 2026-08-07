@@ -259,7 +259,12 @@ const [cached, overrides, campusRows, timelineRows] = await Promise.all([
   readCsv(campusCsvPath),
   readCsv(timelineCsvPath),
 ]);
-const result = { ...cached };
+// Keep the geocode snapshot aligned with the current Epoch export. Renamed or
+// removed campuses must not linger and inflate the map count across refreshes.
+const activeProjectIds = new Set(dashboard.projects.map((project) => project.id));
+const result = Object.fromEntries(
+  Object.entries(cached).filter(([projectId]) => activeProjectIds.has(projectId)),
+);
 const campusByName = new Map(campusRows.map((row) => [row.Name, row]));
 const timelinesByName = new Map();
 for (const row of timelineRows) {

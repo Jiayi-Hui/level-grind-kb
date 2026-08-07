@@ -21,6 +21,10 @@ test("shared Notes is a Clerk-authenticated TencentDB contract, not browser stor
   assert.match(migration, /research_notes/);
   assert.match(migration, /research_audit_log/);
   assert.match(service, /verifyToken\(token/);
+  assert.match(service, /TRUSTED_GATEWAY_REQUIRED/);
+  assert.match(service, /timingSafeEqual/);
+  assert.match(api, /X-Level-Grind-Service-Token/);
+  assert.match(api, /X-Level-Grind-Email/);
   assert.match(service, /"research_notes"/);
   assert.match(service, /FOR UPDATE/);
   assert.match(service, /VERSION_CONFLICT/);
@@ -33,8 +37,12 @@ test("shared Notes is a Clerk-authenticated TencentDB contract, not browser stor
   assert.match(service, /externalAiAllowed/);
   assert.match(service, /redactionRequired/);
   assert.match(service, /canReadRaw\(actor, row\)/);
-  assert.match(service, /owner_user_id=\$2/);
+  assert.match(service, /team_gray_box_internal_ai/);
+  assert.match(service, /research_private_search_index/);
+  assert.match(service, /createHmac\("sha256", searchIndexKey\)/);
   assert.match(service, /\/v1\/internal\/askai\/private-research/);
+  assert.match(service, /externalAiAllowed: row\.external_ai_allowed === true/);
+  assert.match(service, /redactionRequired: row\.redaction_required === true/);
   assert.match(service, /NOTES_RETRIEVAL_SERVICE_TOKEN/);
   assert.match(service, /externalUse: "forbidden"/);
   assert.doesNotMatch(service, /agent-chat\.js/);

@@ -14,6 +14,9 @@ CLERK_AFTER_SIGN_UP_URL=/
 CLERK_AUTHORIZED_PARTIES=https://www.level-grind.com,https://level-grind.com
 
 LEVEL_GRIND_OWNER_EMAIL=you@example.com
+# Canonical comma-separated manager list. Keep the older names during the
+# transition; all three lists are unioned and never demote an existing member.
+LEVEL_GRIND_MANAGER_EMAILS=
 LEVEL_GRIND_PRIMARY_PM_EMAIL=primary-pm@example.com
 LEVEL_GRIND_MEMBER_MANAGER_EMAILS=co-manager@example.com
 LEVEL_GRIND_INVITED_EMAILS=you@example.com

@@ -590,3 +590,52 @@ client-side authentication protects static JSON assets.
   successful requests expose time-to-provider and time-to-first-token evidence.
 - AC-44: The prepared Tiff intake batch is production-written only after the
   release gate and authenticated import check.
+
+## V5.19 — Chat-level research capture and two-tier raw visibility
+
+- FR-76: A single AskAI answer can be favorited or unfavorited; per-answer
+  Markdown download and Obsidian export are removed.
+- FR-77: A Chat can be favorited, downloaded as one Markdown history, or
+  exported to Obsidian as one history.
+- FR-78: Favorite answers and Chats appear in Personal Knowledge and persist by
+  Clerk subject across devices. They remain private even from member managers.
+- FR-79: Configured member managers can review all raw Notes/Ideas and their
+  attachment metadata. Ordinary members can read only records they own.
+- FR-80: AskAI may retrieve team Notes/Ideas as gray-box evidence for any
+  authenticated member only when `internalAiAllowed=true`; answers never expose
+  source author, raw title, file name, attachment URL, or long verbatim text.
+- FR-81: Fable 5 is absent from the UI and server allowlist while its OpenRouter
+  endpoint conflicts with the workspace privacy policy.
+
+### Acceptance
+
+- AC-45: The same favorite appears after refresh and on another device for the
+  same Clerk account, and is absent for a different account.
+- AC-46: The answer footer contains only Favorite; the Chat header owns Favorite,
+  full-history Markdown download, and full-history Obsidian export.
+- AC-47: A configured manager can list a second user's Note/Idea; an ordinary
+  member receives only their own records.
+- AC-48: A team record with internal AI disabled is absent from AskAI retrieval.
+
+## V5.25 — Upload-first research intake, Idea Graph, and daily AIDC
+
+- FR-82: Empty Notes/Ideas libraries lead with a first-upload CTA and celebrate
+  the first confirmed server write; explanatory infrastructure copy is absent.
+- FR-83: Uploading one attachment may create several review-only Idea candidates.
+  No extracted candidate becomes a team Idea until a manager or analyst approves it.
+- FR-84: Uploader identity and source contributor identity remain separate and
+  auditable. Configured managers retain team-wide raw review; members see only
+  their own raw records.
+- FR-85: Idea Graph is a full-width workspace for candidate company, theme, and
+  driver relationships, with source/review warnings and no automatic thesis claim.
+- FR-86: AI Capex refreshes from the official Epoch export on a daily schedule,
+  publishes portable JSON, and geocodes every current campus before release.
+
+### Acceptance
+
+- AC-49: Upload-first, empty, celebration, parsing-candidate, contributor, and
+  manager-role contracts pass without changing Clerk identities or invitations.
+- AC-50: The portable build contains no runtime sibling-repository dependency.
+- AC-51: The current official 77-campus dataset publishes with 77 located records.
+- AC-52: Tiff source files remain local/private until the schema and release are
+  approved; a repeatable authenticated importer is ready and dry-run validated.

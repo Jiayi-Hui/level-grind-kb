@@ -7,7 +7,7 @@ type Note = {
   title: string;
   body?: string;
   templateFields?: Record<string, string>;
-  sensitivityLevel: "public" | "internal" | "confidential" | "restricted";
+  sensitivityLevel: "public" | "internal" | "confidential";
   aiProcessingAllowed: boolean;
   externalSearchAllowed: boolean;
   downloadAllowed: boolean;
@@ -120,7 +120,10 @@ export function SharedNotesView() {
   const [body, setBody] = useState("");
   const [sourceKind, setSourceKind] = useState("manual_note");
   const [sensitivityLevel, setSensitivityLevel] = useState<Note["sensitivityLevel"]>("internal");
-  const [aiProcessingAllowed, setAiProcessingAllowed] = useState(false);
+  // Raw Notes remain owner/manager-only, but new records participate in the
+  // team's internal gray-box retrieval by default. External AI/web use stays
+  // opt-in and is governed separately below.
+  const [aiProcessingAllowed, setAiProcessingAllowed] = useState(true);
   const [externalSearchAllowed, setExternalSearchAllowed] = useState(false);
   const [downloadAllowed, setDownloadAllowed] = useState(false);
   const [viewAllowed, setViewAllowed] = useState(true);
@@ -140,6 +143,7 @@ export function SharedNotesView() {
   const [writeConfirmation, setWriteConfirmation] = useState<string>("");
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState(false);
+  const [celebration, setCelebration] = useState("");
 
   const request = useCallback(async (path: string, init: RequestInit = {}) => {
     const token = await getToken();
@@ -181,7 +185,11 @@ export function SharedNotesView() {
   }, [load]);
 
   const resetComposer = () => {
-    setSelected(null); setTitle(""); setBody(""); setSourceKind("manual_note"); setSensitivityLevel("internal"); setAiProcessingAllowed(false); setExternalSearchAllowed(false); setDownloadAllowed(false); setViewAllowed(true); setExternalAiAllowed(false); setRedactionRequired(false); setTemplateFields({ meetingType: "", meetingDate: "", analyst: "", attendeesContext: "", executiveSummary: "", keyTakeaway: "", changeVsPreviousView: "", expectationGap: "", qandaHighlights: "", followUps: "" }); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setPreviewState("ready"); setMessage("");
+    setSelected(null); setTitle(""); setBody(""); setSourceKind("manual_note"); setSensitivityLevel("internal"); setAiProcessingAllowed(true); setExternalSearchAllowed(false); setDownloadAllowed(false); setViewAllowed(true); setExternalAiAllowed(false); setRedactionRequired(false); setTemplateFields({ meetingType: "", meetingDate: "", analyst: "", attendeesContext: "", executiveSummary: "", keyTakeaway: "", changeVsPreviousView: "", expectationGap: "", qandaHighlights: "", followUps: "" }); setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setCelebration(""); setPreviewState("ready"); setMessage("");
+  };
+  const celebrateFirstNote = () => {
+    setCelebration("🎉 第一条 Note 已创建");
+    window.setTimeout(() => setCelebration(""), 3600);
   };
   const choose = async (note: Note) => {
     setAttachments([]); setQueuedFile(null); setWriteConfirmation(""); setPreviewAttachmentId(null); setEditingBody(false); setPreviewState("ready");
@@ -197,14 +205,15 @@ export function SharedNotesView() {
       const full = payload.note;
       setSelected(full); setTitle(full.title); setBody(full.body || ""); setSourceKind(full.sourceKind || "manual_note");
       setSensitivityLevel(full.sensitivityLevel); setAiProcessingAllowed(full.internalAiAllowed ?? full.aiProcessingAllowed); setExternalSearchAllowed(full.webSearchAllowed ?? full.externalSearchAllowed); setDownloadAllowed(full.downloadAllowed); setViewAllowed(full.viewAllowed !== false); setExternalAiAllowed(full.externalAiAllowed === true); setRedactionRequired(full.redactionRequired === true); setTemplateFields(full.templateFields || {});
-      const attachmentPayload = await responseJson(await request(`/api/shared-notes/${full.id}/attachments`, { cache: "no-store" })) as { attachments?: Attachment[] };
+      const attachmentPayload = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(full.id)}`, { cache: "no-store" })) as { attachments?: Attachment[] };
       setAttachments(attachmentPayload.attachments || []);
     } catch (error) { setMessage(error instanceof Error ? error.message : "无法打开 Note。"); }
     finally { setSaving(false); }
   };
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const save = async (event?: React.FormEvent) => {
+    event?.preventDefault();
     if (!title.trim()) { setMessage("请先填写标题。"); return; }
+    const isNew = !selected;
     if (demoMode) {
       const now = new Date().toISOString();
       const next: Note = selected
@@ -212,6 +221,7 @@ export function SharedNotesView() {
         : { id: `demo-note-${now}`, title: title.trim(), body, sourceKind, sensitivityLevel, aiProcessingAllowed, externalSearchAllowed, downloadAllowed, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, redactionRequired, templateFields, version: 1, createdAt: now, updatedAt: now, owner: { display_name: "Demo user" } };
       setNotes((current) => selected ? current.map((item) => item.id === selected.id ? next : item) : [next, ...current]);
       setSelected(next); setPreviewState("success"); setWriteConfirmation(""); setMessage(queuedFile ? "本地演示记录已更新；附件没有上传，刷新页面后记录和文件都会消失。" : "本地演示记录已更新；刷新页面即还原，没有发送到团队服务。");
+      if (isNew) celebrateFirstNote();
       return;
     }
     if (!sharedWriteEnabled || !configured || ingestionFrozen) {
@@ -232,6 +242,7 @@ export function SharedNotesView() {
       setNotes(refreshed.notes || []); setSelected(confirmed);
       setMessage(selected ? "团队 Notes 已更新并已在共享列表确认。" : "团队 Notes 已创建并已在共享列表确认。");
       setWriteConfirmation(`团队写入已确认 · Note ID: ${confirmed.id} · v${confirmed.version}`);
+      if (isNew) celebrateFirstNote();
       if (queuedFile) await uploadAttachment(confirmed.id, queuedFile);
     } catch (error) { setMessage(error instanceof Error ? error.message : "保存失败。"); }
     finally { setSaving(false); }
@@ -258,14 +269,14 @@ export function SharedNotesView() {
     finally { setSaving(false); }
   };
   const loadAttachments = async (noteId: string) => {
-    const payload = await responseJson(await request(`/api/shared-notes/${noteId}/attachments`, { cache: "no-store" })) as { attachments?: Attachment[] };
+    const payload = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(noteId)}`, { cache: "no-store" })) as { attachments?: Attachment[] };
     setAttachments(payload.attachments || []);
     return payload.attachments || [];
   };
   const openAttachment = async (attachment: Attachment) => {
     if (!selected || demoMode) { setPreviewAttachmentId(attachment.id); return attachment; }
     try {
-      const payload = await responseJson(await request(`/api/shared-notes/${selected.id}/attachments/${attachment.id}`, { cache: "no-store" })) as { attachment: Attachment };
+      const payload = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(selected.id)}&attachmentId=${encodeURIComponent(attachment.id)}`, { cache: "no-store" })) as { attachment: Attachment };
       const detail = payload.attachment;
       setAttachments((current) => current.map((item) => item.id === detail.id ? { ...item, ...detail } : item));
       setPreviewAttachmentId(detail.id);
@@ -273,16 +284,16 @@ export function SharedNotesView() {
     } catch (error) { setMessage(error instanceof Error ? error.message : "无法读取附件预览。"); return attachment; }
   };
   const uploadAttachment = async (noteId: string, file: File) => {
-    setPreviewState("uploading"); setMessage("正在初始化附件并取得 COS 直传凭证…");
+    setPreviewState("uploading"); setMessage("正在上传附件…");
     try {
       const hash = await sha256(file);
-      const init = await responseJson(await request(`/api/shared-notes/${noteId}/attachments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, mediaType: file.type, byteSize: file.size, sha256: hash }) })) as { attachment: Attachment; upload?: { url?: string; method?: string; headers?: Record<string, string> } };
+      const init = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(noteId)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, mediaType: file.type, byteSize: file.size, sha256: hash }) })) as { attachment: Attachment; upload?: { url?: string; method?: string; headers?: Record<string, string> } };
       setAttachments((current) => [init.attachment, ...current.filter((item) => item.id !== init.attachment.id)]);
-      if (!init.upload?.url) throw new Error("附件直传尚不可用；服务没有返回 COS 上传地址。");
+      if (!init.upload?.url) throw new Error("附件上传暂不可用；服务没有返回上传地址。");
       const direct = await fetch(init.upload.url, { method: init.upload.method || "PUT", headers: init.upload.headers || {}, body: file });
-      if (!direct.ok) throw new Error(`COS 直传失败（${direct.status}）。`);
-      setPreviewState("processing"); setMessage("文件已直传 COS，后台正在解析…");
-      const completed = await responseJson(await request(`/api/shared-notes/${noteId}/attachments/${init.attachment.id}/complete`, { method: "POST" })) as { attachment: Attachment };
+      if (!direct.ok) throw new Error(`附件上传失败（${direct.status}）。`);
+      setPreviewState("processing"); setMessage("文件已上传，正在提取正文…");
+      const completed = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(noteId)}&attachmentId=${encodeURIComponent(init.attachment.id)}&action=complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })) as { attachment: Attachment };
       const attachment = completed.attachment;
       setAttachments((current) => [attachment, ...current.filter((item) => item.id !== attachment.id)]);
       setQueuedFile(null);
@@ -297,12 +308,12 @@ export function SharedNotesView() {
     } catch (error) { const detail = error instanceof Error ? error.message : "附件上传失败。"; setPreviewState("error"); setMessage(detail); throw error; }
   };
   const retryAttachment = async (attachment: Attachment) => {
-    try { setPreviewState("processing"); setMessage(`正在重试解析 ${attachment.fileName}…`); const payload = await responseJson(await request(`/api/shared-notes/${selected?.id}/attachments/${attachment.id}/retry`, { method: "POST" })) as { attachment: Attachment }; setAttachments((current) => [payload.attachment, ...current.filter((item) => item.id !== attachment.id)]); await loadAttachments(selected!.id); setMessage("已重新提交解析。"); }
+    try { setPreviewState("processing"); setMessage(`正在重试解析 ${attachment.fileName}…`); const payload = await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(selected?.id || "")}&attachmentId=${encodeURIComponent(attachment.id)}&action=retry`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })) as { attachment: Attachment }; setAttachments((current) => [payload.attachment, ...current.filter((item) => item.id !== attachment.id)]); await loadAttachments(selected!.id); setMessage("已重新提交解析。"); }
     catch (error) { setPreviewState("error"); setMessage(error instanceof Error ? error.message : "重试失败。"); }
   };
   const deleteAttachment = async (attachment: Attachment) => {
     if (!selected || !window.confirm(`将附件“${attachment.fileName}”移入已删除状态？`)) return;
-    try { await responseJson(await request(`/api/shared-notes/${selected.id}/attachments/${attachment.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expectedVersion: attachment.version }) })); setAttachments((current) => current.filter((item) => item.id !== attachment.id)); setMessage("附件已软删除，审计记录仍保留。"); }
+    try { await responseJson(await request(`/api/research-attachments?parentType=note&parentId=${encodeURIComponent(selected.id)}&attachmentId=${encodeURIComponent(attachment.id)}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expectedVersion: attachment.version }) })); setAttachments((current) => current.filter((item) => item.id !== attachment.id)); setMessage("附件已软删除，审计记录仍保留。"); }
     catch (error) { setPreviewState("error"); setMessage(error instanceof Error ? error.message : "删除附件失败。"); }
   };
   const importDocument = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -310,9 +321,13 @@ export function SharedNotesView() {
     event.target.value = "";
     if (!file) return;
     setQueuedFile(file);
+    if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ""));
+    if (/\.pdf$/i.test(file.name)) setSourceKind("uploaded_pdf");
+    else if (/\.docx$/i.test(file.name)) setSourceKind("uploaded_docx");
+    else setSourceKind("uploaded_text");
     if (demoMode) { setPreviewState("ready"); setMessage("当前为本地演示：文件已选择但不会上传，也不会进入解析。请切换到团队写入环境后再上传。 "); }
     else if (selected?.id) void uploadAttachment(selected.id, file);
-    else { setPreviewState("ready"); setMessage("文件已选择并暂存于当前浏览器；先保存 Note 以创建记录后会自动上传。刷新页面前请完成保存。"); }
+    else { setPreviewState("ready"); setMessage("文件已选择。确认标题后点击“创建并上传”即可；其他字段可稍后补充。"); }
   };
   const filtered = notes.filter((note) => `${note.title} ${note.sourceKind}`.toLowerCase().includes(query.trim().toLowerCase()));
   const previewAttachment = attachments.find((attachment) => attachment.id === previewAttachmentId) || attachments[0] || null;
@@ -341,36 +356,42 @@ export function SharedNotesView() {
         <button className="quiet-button" onClick={() => void load()} disabled={loading || (!demoMode && !realReadEnabled)}>{loading ? "刷新中…" : "刷新"}</button><button onClick={resetComposer} disabled={!writeOpen}>＋ 新建会议纪要</button>
       </div>
     </header>
-    <p className="research-preview-boundary">{demoMode ? "当前是本地演示：选择文件、保存 Note 都不会发送到 API、COS 或团队数据库。" : "附件先由后端初始化，再由浏览器直传 COS，最后由后台解析。新建 Note 会先保存主体再上传暂存附件；任何失败都会明确显示，不会伪装成功。"}</p>
     {previewState !== "ready" && <div className={`research-preview-state state-${previewState}`} role="status"><strong>{stateCopy[previewState].title}</strong><span>{stateCopy[previewState].detail}</span></div>}
     {unavailable ? <div className="shared-notes-unavailable"><strong>共享 Notes 暂不可用</strong><p>{message}</p><button className="quiet-button" onClick={() => void load()}>重试</button></div> : <div className="shared-notes-layout">
       <aside className="shared-notes-list"><input aria-label="检索 Notes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="检索标题或正文" />
         <div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条共享纪要`}</div>
-        {!loading && !filtered.length && <p className="shared-notes-empty">还没有团队会议纪要。</p>}
+        {!loading && !filtered.length && (!notes.length && !query.trim() ? <div className="shared-notes-empty first-record-empty"><strong>还没有你的 Note</strong><button type="button" disabled={!writeOpen} onClick={() => fileInput.current?.click()}>上传你的第一个 Note</button></div> : <p className="shared-notes-empty">没有匹配的会议纪要。</p>)}
         {filtered.map((note) => <button key={note.id} className={`shared-note-row ${selected?.id === note.id ? "selected" : ""}`} onClick={() => void choose(note)}><strong>{note.title}</strong><span>{note.owner?.display_name || note.owner?.email || "团队成员"} · {new Date(note.updatedAt).toLocaleDateString("zh-CN")}</span><small>{note.sourceKind} · {note.sensitivityLevel}</small></button>)}
       </aside>
       <form className="shared-notes-editor" onSubmit={save}>
         <div className="shared-notes-editor-head"><div><p className="eyebrow">MEETING NOTES</p><h3>{selected ? "编辑会议纪要" : "新增会议纪要"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
+        <input ref={fileInput} type="file" accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden onChange={(event) => void importDocument(event)} />
+        <section className="upload-first-panel" aria-label="上传会议纪要">
+          <div><p className="eyebrow">START WITH A FILE</p><h4>{selected ? "添加会议材料" : "先上传会议纪要"}</h4><p>{queuedFile ? `已选择：${queuedFile.name}` : "上传后可补充模板字段和正文。"}</p></div>
+          <div className="upload-first-actions"><button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => fileInput.current?.click()}>{selected || notes.length ? "选择文件" : "上传你的第一个 Note"}</button>{queuedFile && !selected && <button type="button" disabled={!writeOpen || !title.trim() || saving} onClick={() => void save()}>{saving ? "创建中…" : "创建并上传"}</button>}</div>
+        </section>
+        {celebration && <p className="first-record-celebration" role="status">{celebration}</p>}
+        <details className="manual-entry" open={Boolean(selected)}>
+          <summary>手动填写模板字段（可选）</summary>
         <div className="editor-metadata-grid notes-metadata-grid">
           <label className="metadata-title"><span>标的名称 / 标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={240} placeholder="例如：NVDA（NVDA）— Management Meeting" /></label>
           <label><span>会议类型</span><select value={templateFields.meetingType || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, meetingType: event.target.value }))}><option value="">请选择</option><option>Management Meeting</option><option>Earnings Call</option><option>Expert Call</option><option>Site Visit</option></select></label>
           <label><span>日期</span><input type="date" value={templateFields.meetingDate || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, meetingDate: event.target.value }))} /></label>
           <label><span>Analyst</span><input value={templateFields.analyst || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, analyst: event.target.value }))} placeholder="Name" /></label>
           <label><span>来源类型</span><select value={sourceKind} onChange={(event) => setSourceKind(event.target.value)}><option value="manual_note">手动 Note</option><option value="meeting_note">会议纪要</option><option value="weekly_note">周度跟踪</option><option value="uploaded_pdf">PDF 文档</option><option value="uploaded_docx">DOCX 文档</option><option value="uploaded_text">上传文本</option></select></label>
-          <label><span>数据分级</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Note["sensitivityLevel"])}><option value="public">Public · 公开</option><option value="internal">Internal · 内部</option><option value="confidential">Confidential · 机密</option><option value="restricted">Restricted · 严格受限</option></select></label>
+          <label><span>数据分级</span><select value={sensitivityLevel} onChange={(event) => setSensitivityLevel(event.target.value as Note["sensitivityLevel"])}><option value="public">Public · 外源 Benchmark</option><option value="internal">Internal · 内部</option><option value="confidential">Confidential · 内部机密</option></select></label>
         </div>
         <div className="editor-metadata-grid notes-metadata-grid"><label><span>Executive Summary</span><textarea value={templateFields.executiveSummary || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, executiveSummary: event.target.value }))} placeholder="3–5 sentences: key takeaway, what changed, and conviction impact." /></label><label><span>Key Takeaway</span><textarea value={templateFields.keyTakeaway || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, keyTakeaway: event.target.value }))} /></label><label><span>Change vs. Previous View</span><textarea value={templateFields.changeVsPreviousView || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, changeVsPreviousView: event.target.value }))} /></label><label><span>Potential Expectation Gap</span><textarea value={templateFields.expectationGap || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, expectationGap: event.target.value }))} /></label><label><span>Attendees & Context</span><textarea value={templateFields.attendeesContext || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, attendeesContext: event.target.value }))} /></label><label><span>Q&amp;A Highlights</span><textarea value={templateFields.qandaHighlights || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, qandaHighlights: event.target.value }))} /></label><label><span>Follow-ups / Action Items</span><textarea value={templateFields.followUps || ""} onChange={(event) => setTemplateFields((current) => ({ ...current, followUps: event.target.value }))} /></label></div>
-        <input ref={fileInput} type="file" accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" hidden onChange={(event) => void importDocument(event)} />
         <div className="notes-content-grid">
           <section className="notes-file-panel" aria-label="上传与文件状态">
             <div><p className="eyebrow">BACKEND PARSING</p><h4>文件解析</h4></div>
             <p>{attachments.length ? `${attachments.length} 个附件` : queuedFile ? demoMode ? "已选择（不会上传）" : "已选择，待保存后上传" : "尚未选择文件"}</p>
             {attachments.length ? <div className="attachment-list">{attachments.map((attachment) => <div className={`notes-file-details ${previewAttachment?.id === attachment.id ? "selected" : ""}`} key={attachment.id}><button type="button" className="attachment-preview-select" onClick={() => void openAttachment(attachment)}><strong title={attachment.fileName}>{attachment.fileName}</strong><span>{(attachment.mediaType || "document").toUpperCase()} · {(attachment.byteSize / 1024 / 1024).toFixed(2)} MB</span><span>{attachmentLabel(attachment)} · v{attachment.version}</span></button>{attachment.extraction?.warnings?.map((warning) => <small key={warning}>{warning}</small>)}{attachment.parseErrorCode && <small>{attachment.parseErrorCode}</small>}<div className="attachment-actions">{attachment.parseStatus === "failed" && <button type="button" className="quiet-button" onClick={() => void retryAttachment(attachment)}>重试</button>}<button type="button" className="quiet-button" onClick={() => void deleteAttachment(attachment)}>删除</button></div></div>)}</div> : <small>支持 PDF、DOCX、TXT、Markdown，单文件不超过 25 MB。扫描版 PDF 会标记为需要 OCR。</small>}
-            <small className="local-only-note">文件字节不经过前端 API：浏览器仅凭短时 COS 地址直传，正文只来自 complete 的解析结果。</small>
             <div className="attachment-actions"><button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => fileInput.current?.click()}>{attachments.length || queuedFile ? "添加附件" : "选择文件"}</button>{queuedFile && selected && <button type="button" className="quiet-button" disabled={!writeOpen} onClick={() => void uploadAttachment(selected.id, queuedFile)}>重试上传</button>}</div>
           </section>
           <section className="shared-notes-body document-preview-panel" aria-label="正文预览"><div className="document-preview-head"><span>正文预览</span><button type="button" className="quiet-button" onClick={() => setEditingBody((current) => !current)}>{editingBody ? "完成编辑" : "编辑正文"}</button></div>{editingBody ? <label className="document-edit-field"><span>可编辑 Note 正文</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={500000} placeholder="输入可供团队检索的正文。" /></label> : !previewAttachment ? <div className="document-preview-empty"><strong>尚未选择文件</strong><p>上传或选择一个附件后，可在这里查看只读文件预览。</p></div> : documentKind(previewAttachment) === "pdf" && safePreviewUrl(previewAttachment.previewUrl) ? <iframe className="document-pdf-preview" title={`${previewAttachment.fileName} PDF 预览`} src={safePreviewUrl(previewAttachment.previewUrl)!} sandbox="allow-scripts allow-same-origin" /> : <div className="document-preview-content"><div className="document-preview-file-meta"><strong>{previewAttachment.fileName}</strong><span>{documentKind(previewAttachment) === "docx" ? "DOCX · 后端已解析正文" : `${documentKind(previewAttachment).toUpperCase()} · 只读文本预览`}</span></div>{previewAttachment.extraction?.text ? <ReadonlyTextPreview text={previewAttachment.extraction.text} markdown={documentKind(previewAttachment) === "md"} /> : <div className="document-preview-empty"><strong>{attachmentLabel(previewAttachment)}</strong><p>{documentKind(previewAttachment) === "pdf" ? "尚未取得可安全内嵌的 PDF 地址；解析后的正文就绪后会显示在此处。" : "后端尚未返回可预览的正文。请稍后刷新或重试解析。"}</p></div>}</div>}</section>
         </div>
+        </details>
         <div className="shared-notes-editor-actions"><button type="submit" disabled={saving || !writeOpen}>{saving ? "保存中…" : demoMode ? "仅保存到本地演示" : "保存到团队 Notes"}</button>{selected && <button type="button" className="danger-button" disabled={saving || !writeOpen} onClick={() => void remove()}>删除</button>}</div>
         {writeConfirmation && <p className="shared-write-confirmation" role="status">{writeConfirmation}</p>}
         {message && <p className="shared-notes-message">{message}</p>}

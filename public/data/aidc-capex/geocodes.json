@@ -188,7 +188,7 @@
     "displayName": "6000 Technology Blvd, Sandston, VA 23150",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.731Z"
+    "geocodedAt": "2026-08-07T04:46:20.409Z"
   },
   "aidc-f4704755e4f7": {
     "latitude": 44.73396395117844,
@@ -271,7 +271,7 @@
     "displayName": "6030–6070 Technology Blvd, Sandston, VA 23150",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.734Z"
+    "geocodedAt": "2026-08-07T04:46:20.412Z"
   },
   "aidc-77b68a1a53ad": {
     "latitude": 37.48033002,
@@ -282,7 +282,7 @@
     "displayName": "3525–3543 Portugee Rd, Sandston, VA 23150",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.734Z"
+    "geocodedAt": "2026-08-07T04:46:20.413Z"
   },
   "aidc-96f89ee8a225": {
     "latitude": 32.2700261878772,
@@ -401,7 +401,7 @@
     "displayName": "Google Storey County",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.739Z"
+    "geocodedAt": "2026-08-07T04:46:20.420Z"
   },
   "aidc-d3340535dee8": {
     "latitude": 40.265290500000006,
@@ -415,18 +415,6 @@
     "epochRecordUrl": "https://epoch.ai/data/ai-data-centers/directory/meta-eagle-mountain",
     "geocodedAt": "2026-07-30T03:45:38.628Z"
   },
-  "aidc-8f8978072c40": {
-    "latitude": 43.35642754850562,
-    "longitude": -78.60203824717944,
-    "precision": "epoch-satellite",
-    "evidenceTier": 2,
-    "displayName": "7725 Lake Rd, Barker, NY 14012",
-    "query": "Fluidstack Lake Mariner",
-    "source": "Epoch AI Satellite Explorer",
-    "sourceUrl": "https://epoch.ai/data/ai-data-centers/directory/fluidstack-lake-mariner/satellite-explorer",
-    "epochRecordUrl": "https://epoch.ai/data/ai-data-centers/directory/fluidstack-lake-mariner",
-    "geocodedAt": "2026-07-30T03:45:39.593Z"
-  },
   "aidc-94dbe8948195": {
     "latitude": 39.72490515,
     "longitude": -82.68845499,
@@ -436,7 +424,7 @@
     "displayName": "105 Whiley Rd, Lancaster, OH 43130",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.740Z"
+    "geocodedAt": "2026-08-07T04:46:21.978Z"
   },
   "aidc-368fd614e474": {
     "latitude": 33.35450568,
@@ -447,7 +435,7 @@
     "displayName": "Google Mesa",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.740Z"
+    "geocodedAt": "2026-08-07T04:46:21.988Z"
   },
   "aidc-865bfff1c370": {
     "latitude": 51.6954295,
@@ -494,7 +482,7 @@
     "displayName": "330 Austin Blvd, Red Oak, TX 75154",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.741Z"
+    "geocodedAt": "2026-08-07T04:46:21.999Z"
   },
   "aidc-a8887506cf41": {
     "latitude": 36.4071355,
@@ -589,7 +577,7 @@
     "displayName": "15000 Lambda Drive, San Antonio, TX 78245",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.743Z"
+    "geocodedAt": "2026-08-07T04:46:22.005Z"
   },
   "aidc-33067ce31ae9": {
     "latitude": 38.744820000000004,
@@ -624,7 +612,7 @@
     "displayName": "3545 Wiseman Boulevard, San Antonio, TX 78251",
     "query": null,
     "source": "Epoch timeline/source · explicit coordinate",
-    "geocodedAt": "2026-07-30T12:22:13.745Z"
+    "geocodedAt": "2026-08-07T04:46:22.006Z"
   },
   "aidc-69b68942f557": {
     "latitude": 29.417814781438615,
@@ -889,5 +877,16 @@
     "sourceUrl": "https://epoch.ai/data/ai-data-centers/directory/southgate-melbourne/satellite-explorer",
     "epochRecordUrl": "https://epoch.ai/data/ai-data-centers/directory/southgate-melbourne",
     "geocodedAt": "2026-07-30T03:46:26.699Z"
+  },
+  "aidc-8f8978072c40": {
+    "latitude": 43.348937013719,
+    "longitude": -78.602908090738,
+    "displayName": "7725 LAKE RD, BARKER, NY, 14012",
+    "query": "7725 Lake Rd, Barker, NY 14012",
+    "source": "US Census Geocoder",
+    "sourceUrl": "https://geocoding.geo.census.gov/geocoder/",
+    "precision": "address",
+    "evidenceTier": 4,
+    "geocodedAt": "2026-08-07T04:46:21.721Z"
   }
 }

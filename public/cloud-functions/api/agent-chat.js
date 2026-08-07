@@ -158,7 +158,6 @@ const BUILT_IN_OPENROUTER_ALLOWLIST = Object.freeze([
   "openai/gpt-5.6-luna",
   "openai/gpt-5.5",
   "anthropic/claude-opus-4.8",
-  "anthropic/claude-fable-5",
   "z-ai/glm-5.2",
   "moonshotai/kimi-k3",
 ]);
@@ -476,7 +475,7 @@ export async function onRequestPost({ request, env }) {
     const retrieveGovernedContext = async () => {
       if (!includeContext) return [];
       try {
-        return await privateTeamResearchContext(input.question, env, 6);
+        return await privateTeamResearchContext(input.question, env, 6, identity.subject);
       } catch {
         // A missing/rotating encryption key or an unavailable research store
         // must not take down Event DB / AI Capex answers. The ordinary scoped

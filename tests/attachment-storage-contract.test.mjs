@@ -20,9 +20,11 @@ test("local object adapter is test-only and keeps bytes outside PostgreSQL", asy
 });
 
 test("attachment API is encrypted, versioned, audited, and uses COS presigned direct upload", async () => {
-  const [service, migration, store, dockerfile] = await Promise.all([
+  const [service, migration, candidatesMigration, extractor, store, dockerfile] = await Promise.all([
     readFile(new URL("../services/tencent-notes-api/server.mjs", import.meta.url), "utf8"),
     readFile(new URL("../infra/tencent-postgres/002_note_idea_attachments.sql", import.meta.url), "utf8"),
+    readFile(new URL("../infra/tencent-postgres/007_attachment_idea_candidates.sql", import.meta.url), "utf8"),
+    readFile(new URL("../services/tencent-notes-api/idea-candidate-extractor.mjs", import.meta.url), "utf8"),
     readFile(new URL("../services/tencent-notes-api/object-store.mjs", import.meta.url), "utf8"),
     readFile(new URL("../services/tencent-notes-api/Dockerfile", import.meta.url), "utf8"),
   ]);
@@ -34,14 +36,22 @@ test("attachment API is encrypted, versioned, audited, and uses COS presigned di
   assert.match(service, /ATTACHMENT_CONTENT_MISMATCH/);
   assert.match(service, /OBJECT_STORE_NOT_CONFIGURED/);
   assert.match(service, /soft_delete/);
+  assert.match(service, /extractIdeaCandidates/);
+  assert.match(service, /candidateCount/);
+  assert.match(service, /result\.candidates/);
   assert.match(migration, /research_attachments/);
   assert.match(migration, /research_attachment_extractions/);
   assert.match(migration, /research_attachment_jobs/);
   assert.match(migration, /deleted_at/);
   assert.match(migration, /version integer/);
-  assert.match(store, /getObjectUrl/);
-  assert.match(store, /x-cos-meta-sha256/);
-  assert.match(store, /headObject/);
+  assert.match(candidatesMigration, /idea_candidates jsonb/);
+  assert.match(extractor, /deterministic-attachment-v1/);
+  assert.doesNotMatch(extractor, /fetch\(|openai|deepseek|anthropic/i);
+  assert.match(store, /getSignedUrl/);
+  assert.match(store, /x-amz-meta-sha256/);
+  assert.match(store, /HeadObjectCommand/);
+  assert.match(store, /GetObjectCommand/);
+  assert.match(store, /DeleteObjectCommand/);
   assert.match(dockerfile, /COPY services\/tencent-notes-api\/object-store\.mjs/);
   assert.doesNotMatch(service, /COS_SECRET_KEY.*send\(/);
 });

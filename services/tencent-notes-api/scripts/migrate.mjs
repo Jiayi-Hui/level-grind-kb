@@ -6,6 +6,10 @@ const migrations = [
   "../../../infra/tencent-postgres/001_notes_p0.sql",
   "../../../infra/tencent-postgres/002_note_idea_attachments.sql",
   "../../../infra/tencent-postgres/003_notes_ideas_template_and_policy.sql",
+  "../../../infra/tencent-postgres/004_private_search_index.sql",
+  "../../../infra/tencent-postgres/005_three_level_classification.sql",
+  "../../../infra/tencent-postgres/006_source_contributor.sql",
+  "../../../infra/tencent-postgres/007_attachment_idea_candidates.sql",
 ];
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === "false" ? false : undefined });
 await client.connect();

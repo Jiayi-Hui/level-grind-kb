@@ -5,7 +5,7 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
-test("agentic research UI supports scoped chats and portable answer actions", async () => {
+test("agentic research UI supports scoped chats, favorites, and whole-chat exports", async () => {
   const source = await read("app/agentic-research.tsx");
 
   assert.match(source, /ResearchScope = "events" \| "aidc"/);
@@ -15,8 +15,20 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /deleteProject/);
   assert.match(source, /renameChat/);
   assert.match(source, /deleteChat/);
-  assert.match(source, /保存到个人知识库/);
-  assert.match(source, /下载 \.md/);
+  assert.match(source, /toggleAnswerFavorite/);
+  assert.match(source, /收藏回答/);
+  assert.match(source, /取消收藏/);
+  assert.match(source, /toggleChatFavorite/);
+  assert.match(source, /收藏 Chat/);
+  assert.match(source, /下载整个 Chat history \.md/);
+  assert.match(source, /导出整个 Chat history 到 Obsidian/);
+  assert.match(source, /markdownForChat/);
+  assert.match(source, /removePersonalKnowledge/);
+  assert.match(source, /\/api\/askai-history\?view=knowledge/);
+  assert.match(source, /favorite-answer/);
+  assert.match(source, /favorite-chat/);
+  assert.match(source, /unfavorite/);
+  assert.match(source, /账户同步/);
   assert.match(source, /obsidian:\/\/new/);
   assert.match(source, /\/data\/claim-ledger-dashboard\.json/);
   assert.match(source, /\/data\/aidc-capex\/dashboard\.json/);
@@ -46,7 +58,8 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /openai\/gpt-5\.6-luna/);
   assert.match(source, /openai\/gpt-5\.5/);
   assert.match(source, /anthropic\/claude-opus-4\.8/);
-  assert.match(source, /anthropic\/claude-fable-5/);
+  assert.doesNotMatch(source, /label: "Claude Fable 5"/);
+  assert.match(source, /\.filter\(\(item\) => item\.model !== "anthropic\/claude-fable-5"\)/);
   assert.match(source, /z-ai\/glm-5\.2/);
   assert.match(source, /moonshotai\/kimi-k3/);
   assert.match(source, /待配置预览/);
@@ -64,6 +77,8 @@ test("agentic research UI supports scoped chats and portable answer actions", as
   assert.match(source, /getTokenRef\.current\(\)/);
   assert.match(source, /must not restart hydration/);
   assert.match(source, /chat\.projectId === activeProject\?\.id/);
+  assert.doesNotMatch(source, /AGENTIC RESEARCH/);
+  assert.doesNotMatch(source, /询问事件与价格/);
 });
 
 test("AskAI history is private to a Clerk subject and protects one-time migration writes", async () => {
@@ -135,7 +150,7 @@ test("Tencent shell exposes live knowledge and one contextual AskAI workspace wh
   const vite = await read("deploy/edgeone-demo/vite.config.ts");
 
   assert.match(source, /<PersonalKnowledgeView \/>/);
-  assert.match(source, /type DemoView = "knowledge" \| "notes" \| "ideas" \| "events" \| "aidc" \| "ask" \| "settings"/);
+  assert.match(source, /type DemoView = "knowledge" \| "notes" \| "ideas" \| "graph" \| "events" \| "aidc" \| "ask" \| "settings"/);
   assert.match(source, /✦ 询问此数据库/);
   assert.match(source, /<AgenticResearchPanel scope=\{askScope\} \/>/);
   assert.match(source, /MEMBER MANAGEMENT/);

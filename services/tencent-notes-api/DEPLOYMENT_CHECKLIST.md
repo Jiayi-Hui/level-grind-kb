@@ -38,6 +38,7 @@ Required runtime variables:
 | `CLERK_SECRET_KEY` | Existing production Clerk server secret |
 | `CLERK_AUTHORIZED_PARTIES` | Exact deployed Level Grind origins |
 | `LEVEL_GRIND_OWNER_EMAIL` | Existing owner identity |
+| `LEVEL_GRIND_MANAGER_EMAILS` | Canonical comma-separated PM / manager identities; includes Tiff's existing email without creating a new Clerk user |
 | `LEVEL_GRIND_INVITED_EMAILS` | Existing invited-team allow list |
 | `NOTES_MASTER_KEY_B64` | Canonical base64 encoding of exactly 32 random bytes |
 | `NOTES_INGESTION_ENABLED` | `false` |
@@ -45,9 +46,37 @@ Required runtime variables:
 | `NOTES_OBJECT_STORE_DRIVER` | `cos` |
 | `COS_REGION` | Hong Kong COS region |
 | `COS_BUCKET` | private bucket name |
+| `NOTES_AUTO_MIGRATE` | `true` for the first immutable SCF release; set `false` after verification |
+| `NOTES_RETRIEVAL_SERVICE_TOKEN` | separate random server-to-server token shared only with EdgeOne |
 
-`CLERK_JWT_KEY`, `DATABASE_SSL_REJECT_UNAUTHORIZED=true`,
-`LEVEL_GRIND_MEMBER_MANAGER_EMAILS`, and `PG_POOL_MAX=8` are recommended.
+`CLERK_JWT_KEY`, `DATABASE_SSL_REJECT_UNAUTHORIZED=true`, and `PG_POOL_MAX=8`
+are recommended. `LEVEL_GRIND_PRIMARY_PM_EMAIL` and
+`LEVEL_GRIND_MEMBER_MANAGER_EMAILS` remain accepted compatibility aliases; do
+not remove them during the first release.
+
+### Additive role refresh, without re-inviting anyone
+
+Set the existing owner in `LEVEL_GRIND_OWNER_EMAIL` and the existing PM /
+manager addresses in `LEVEL_GRIND_MANAGER_EMAILS` (keeping the older aliases
+above if they are already populated). On each authenticated Notes/Ideas API
+request, the service looks up the existing `research_users` row by the same
+Clerk `user_id`, then only promotes its existing membership: configured owner
+becomes `Owner`, and a configured manager who is currently `Analyst` becomes
+`PM`. It never creates a new Clerk account, re-sends an invitation, changes a
+Clerk user ID, demotes a role, or changes a session. Existing team data remains
+attached to the same user row.
+
+After the first authenticated request from the owner and each manager, perform
+this readback inside the private database network (do not expose the database
+to the internet):
+
+```sql
+SELECT u.email, u.clerk_user_id, m.role, m.status
+FROM research_users u
+JOIN research_team_memberships m ON m.user_id = u.id
+WHERE m.team_id = 'level-grind'
+ORDER BY u.email;
+```
 
 Validate the secret set in the target runtime without printing it:
 
@@ -83,14 +112,16 @@ the repository-relative service path:
 docker build -f services/tencent-notes-api/Dockerfile -t level-grind-notes-api:<immutable-version> .
 ```
 
-Before a production route is enabled, run the ordered Notes/Ideas migrations:
+Before a production route is enabled, run the ordered Notes/Ideas migrations.
+The SCF image includes the same idempotent migrations and can apply them with
+`NOTES_AUTO_MIGRATE=true` while it has private VPC access:
 
 ```sh
 node services/tencent-notes-api/scripts/migrate.mjs
 ```
 
-The migration runner applies `001_notes_p0.sql` then
-`002_note_idea_attachments.sql`. `infra/shared-data/postgres/002_claim_price_refresh.sql` is for the future
+The migration runner applies `001_notes_p0.sql` through
+`005_three_level_classification.sql`. `infra/shared-data/postgres/002_claim_price_refresh.sql` is for the future
 shared Claims/price schema. Do **not** run it as part of this P0 unless that
 schema and its prerequisite Claims tables have separately been deployed.
 
@@ -100,7 +131,9 @@ user, and has a liveness health check at `/health`.
 
 Only after `/ready` succeeds, set EdgeOne server-side variables to point the
 existing shared Notes/Ideas gateway at this service. Do not put `DATABASE_URL`,
-`CLERK_SECRET_KEY`, or encryption keys in EdgeOne/browser variables.
+`CLERK_SECRET_KEY`, database credentials, COS credentials, or encryption keys in
+EdgeOne/browser variables. EdgeOne receives only `NOTES_SERVICE_BASE_URL` and
+the separate `NOTES_RETRIEVAL_SERVICE_TOKEN` required for gray-box retrieval.
 
 ## 4. Post-deploy gate and rollback
 

@@ -416,3 +416,85 @@ and explicit Report/Web/Hybrid evidence modes.
 - Lint, 51 tests, the application build, and the Tencent portable build pass.
 - Remaining gate: canonical-domain authenticated provider smoke test, then one
   reviewed deployment and idempotent Tiff batch import.
+
+## V5.22 Chat-level capture and governed research visibility candidate
+
+- Removes Fable 5 from the visible and server-side fallback model allowlists.
+- Moves Markdown download and Obsidian export to the Chat level; individual
+  answers retain only a favourite action.
+- Stores new favourite answers and chats in the same private Clerk-subject
+  history envelope used by AskAI, so the Personal Knowledge view can follow the
+  same account across devices.
+- Keeps Personal Knowledge and AskAI conversations private even from member
+  managers. Separately, configured managers can review all raw Notes/Ideas,
+  while ordinary members can list only their own records.
+- Limits gray-box team retrieval to records explicitly permitting internal AI
+  processing.
+- Verifies ESLint, 55 tests, the portable Tencent build, and local browser QA.
+- Does not claim production attachment readiness: the TencentDB/COS/ingestion
+  route still needs configured-service and two-account read-back evidence.
+- Release remains uncommitted and undeployed pending product-owner approval.
+
+## V5.23 Tencent Notes / Ideas production readiness
+
+- EdgeOne deployment `dp0q2hmd0lqe` is live on the canonical domain.
+- TencentDB, COS direct upload and SCF server-side parsing are proven with
+  disposable synthetic Markdown and PDF fixtures; refresh/read-back passed.
+- New Notes and Ideas enter the internal blind-hash gray-box index by default,
+  while raw list visibility remains contributor-or-manager controlled.
+- AskAI retrieved the unique synthetic production marker and returned a
+  grounded answer in 4.3 seconds.
+- The remaining production acceptance gate is an ordinary-member Clerk session
+  proving that the same records are absent from the raw library list while the
+  gray-box AskAI path remains available.
+- No Git commit or push was made in this release pass; the existing dirty
+  worktree and unrelated user changes were preserved.
+
+## V5.24 Governed external-AI release
+
+- SCF now runs the Linux AMD64 image `20260806-6-amd64`; `/health` and `/ready`
+  both pass with TencentDB and envelope encryption ready.
+- EdgeOne deployment `dp64p8eb3bjo` enforces the external-provider boundary:
+  team records can remain internally indexed without automatically being sent
+  to DeepSeek or OpenRouter.
+- Public records, or records explicitly allowing external AI and not requiring
+  redaction, may be supplied to an external provider. Internal/Confidential
+  records with external AI disabled remain absent from provider context.
+- Production Notes and Ideas read-back, COS attachments and server-side parsing
+  remain healthy after the release.
+- The only remaining acceptance item is a separate ordinary-member Clerk
+  session for raw-list isolation. No commit or push was made.
+
+## V5.25 Upload-first research intake and portable graph candidate
+
+- Notes and Ideas now start from file upload, show a first-record call to action,
+  celebrate the first confirmed write, and keep manual forms secondary.
+- Mixed-company attachments create explicit review candidates rather than
+  silently inventing multiple Ideas.
+- Managers may attribute a source file to Tiff while the real uploader remains
+  recorded in the audit trail; Clerk users, sessions, and invitations are unchanged.
+- AskAI is first in navigation and has more usable vertical space.
+- Idea Graph is a full-width, portable candidate relationship view; Ideas rows
+  expose date, proposer, company, ticker, direction, and percentage.
+- The official Epoch snapshot is refreshed to 77 campuses and 77 located records;
+  a daily refresh workflow is ready.
+- Twelve supplied files are prepared in a private local import manifest and pass
+  dry-run validation. They have not been uploaded to production.
+- ESLint, 64 tests, the production build, importer syntax, diff validation, and
+  desktop/mobile browser QA pass. Release remains pending explicit approval.
+
+## V5.26 Investment Graph fidelity and model-route release gate
+
+- Replaces the simplified graph candidate with the portable atlas from the
+  `investment-graph` research prototype: three-column controls/canvas/inspector,
+  industry and market multi-select, Long/Short/Observation summaries, search,
+  zoom, relayout, relationship legends and node-level thesis details.
+- Preserves daily graph evolution with a manual range control and timed playback
+  across the 2026-08-03 to 2026-08-06 snapshots.
+- Keeps the component self-contained inside Level Grind; the production build
+  has no runtime dependency on the sibling repository.
+- Makes the local AskAI boundary explicit: the Vite UI is not a provider
+  runtime. Local provider tests require the loopback function harness, while
+  release acceptance uses the authenticated EdgeOne function and real SSE.
+- Release may proceed only after lint/tests/build, desktop interaction QA, and
+  authenticated DeepSeek/OpenRouter first-token checks pass.

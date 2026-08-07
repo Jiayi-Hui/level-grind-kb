@@ -378,3 +378,85 @@ the production AI Capex view remains integrated in the authenticated
 - Chat visibility now follows the effective fallback project id; the initial default project no longer filters every newly-created chat out of the UI.
 - Production Thinking-mode smoke testing exposed reasoning-token exhaustion before a final answer. Thinking requests now omit unsupported sampling temperature, set `reasoning_effort=high`, and reserve a separate 4,096–8,000 token completion budget.
 - Verified with lint, 53/53 tests, portable EdgeOne build, and `git diff --check` under the bundled Node runtime.
+
+## V5.21 — Authenticated production provider and persistence matrix (2026-08-05)
+
+| Check | Result | Production evidence |
+|---|---|---|
+| DeepSeek Thinking | Pass | `deepseek-v4-flash` returned `deepseek-thinking-ok` with Thinking enabled; recorded provider latency 9.0s. The stream kept reasoning private and delivered the later visible `content`. |
+| GPT-5.6 Sol | Pass | `openai/gpt-5.6-sol` returned `SOL-OK`; recorded latency 2.1s. |
+| GPT-5.6 Terra | Pass | `openai/gpt-5.6-terra` returned `TERRA-OK`; recorded latency 1.7s. |
+| GPT-5.6 Luna | Pass | `openai/gpt-5.6-luna` returned `LUNA-OK`; recorded latency 1.9s. |
+| Claude Opus 4.8 | Pass | `anthropic/claude-opus-4.8` returned `OPUS48-OK`; recorded latency 2.4s. |
+| Claude Fable 5 | Blocked by provider policy | OpenRouter returned `No endpoints available matching your guardrail restrictions and data policy`; the request reached OpenRouter and failed explicitly instead of timing out silently. |
+| GLM-5.2 | Pass | `z-ai/glm-5.2` returned `GLM52-OK`; recorded latency 3.1s. |
+| Kimi K3 | Pass | `moonshotai/kimi-k3` returned `KIMI3-OK`; recorded latency 3.5s. |
+| Private AskAI history | Pass | After a full page reload, every successful marker above was restored once for the same Clerk account. |
+| Shared Note lifecycle | Pass | Created a QA Note, received a server Note ID and v1 acknowledgement, reloaded it from the shared store, observed contribution count `Notes 1`, deleted it, and confirmed absence after reload. |
+| Shared Idea lifecycle | Pass | Created a QA Idea, received a server Idea ID and v1 acknowledgement, loaded its AAPL hourly Yahoo validation card, reloaded it from the shared store, observed contribution count `Ideas 1`, deleted it, and confirmed absence after reload. |
+| QA data cleanup | Pass | Both explicitly disposable QA records were removed and their absence was verified after reload. |
+
+Code validation for this production pass: ESLint, 53/53 automated tests,
+portable EdgeOne build, and `git diff --check` all passed. The remaining model
+issue is configuration-specific: Fable 5 needs an OpenRouter endpoint whose
+data policy matches the account guardrails, or it should be removed from the
+visible allowlist until such an endpoint is available.
+
+## V5.22 — Chat-level capture and two-tier research visibility candidate (2026-08-05)
+
+| Check | Result | Evidence |
+|---|---|---|
+| Model picker | Pass | Fable 5 is absent from the reviewed fallback and UI picker; Sol, Terra, Luna, GPT-5.5, Opus 4.8, GLM-5.2, Kimi K3 and DeepSeek remain represented. |
+| Answer actions | Pass | Each assistant answer exposes only `收藏` / `取消收藏`; per-answer download and Obsidian export were removed. |
+| Chat actions | Pass | Chat header exposes whole-chat favourite, Markdown download and whole-history Obsidian export. |
+| Personal Knowledge | Pass with release gate | Favourite answers and chats render as private Personal Knowledge entries. New favourites use the Clerk-subject AskAI history envelope for cross-device read-back; anonymous access remains fail-closed. |
+| Raw Notes / Ideas visibility | Pass in contract tests | Configured owner/member managers can review all raw team records. Ordinary members receive only their own raw records. No email is hardcoded into the source. |
+| Gray-box AskAI | Pass in contract tests | Team retrieval includes only records with `internalAiAllowed=true`; raw source records are not exposed through the ordinary list API. |
+| Notes / Ideas attachment readiness | Not production-ready | UI and direct-upload protocol exist, but the authenticated local preview reports the team storage/upload service unavailable. TencentDB/COS/ingestion variables and an end-to-end upload/read-back must pass before uploads are opened to the team. |
+| Automated validation | Pass | ESLint, 55/55 tests, portable Tencent build, and `git diff --check` pass. |
+| Browser QA | Pass with backend limitation | Local preview confirms Fable removal, chat-level actions, Chat favourite appearing in Personal Knowledge, and fail-closed Notes/Ideas controls while the backend is unavailable. |
+| Release | Pending approval | No commit, push, production configuration change, or deployment has been performed for V5.22. |
+
+## V5.23 — Tencent attachment and gray-box production proof (2026-08-06)
+
+| Check | Result | Production evidence |
+|---|---|---|
+| Notes persistence | Pass | Authenticated owner created two disposable synthetic Notes; refresh/read-back returned the same server IDs and versions. |
+| COS direct upload | Pass | Markdown and PDF both received short-lived COS upload targets and completed without proxying file bytes through the browser API. |
+| SCF parsing | Pass | Markdown and text-based PDF reached `解析完成 · v3`; the PDF preview rendered extracted text after refresh. |
+| Ideas persistence | Pass | A disposable synthetic Idea, linked Note and parsed Markdown attachment survived production refresh/read-back. |
+| Search indexing | Pass | New records default to internal gray-box indexing while external-AI and web-search permissions remain false. |
+| AskAI retrieval | Pass | DeepSeek answered the unique synthetic phrase `orion-sparrow-4821` from the TencentDB blind-hash index in 4.3s without exposing the original Note title or owner in the model context. |
+| Automated checks | Pass | 12/12 targeted attachment, UI, governance and storage-contract tests passed; portable Tencent build passed. |
+| EdgeOne release | Pass | Deployment `dp0q2hmd0lqe` completed successfully and the canonical authenticated site loaded the updated Notes policy. |
+| Raw-view role matrix | Pending second account | Owner production path passes; ordinary-member raw-list isolation still requires a second physical Clerk session. |
+| Security boundary | Explicit | The production provider is external. Only synthetic/Public-safe data was used for this proof; real Internal/Confidential uploads remain subject to the external-model policy decision. |
+
+## V5.24 — External-model policy gate and SCF runtime compatibility (2026-08-06)
+
+| Check | Result | Production evidence |
+|---|---|---|
+| Retrieval metadata | Pass | SCF retrieval now returns sensitivity, external-AI permission and redaction-required metadata for Notes, Ideas and inherited attachments. |
+| External-provider gate | Pass | EdgeOne sends private team context to DeepSeek/OpenRouter only when it is Public, or explicitly permits external AI and does not require redaction. |
+| Negative privacy test | Pass | The Internal synthetic marker `orion-sparrow-4821`, with external AI disabled, was no longer returned to DeepSeek after deployment; the answer reported no matching internal record. |
+| SCF architecture | Pass | Initial ARM image failure was detected by `/health`; image was rebuilt for Linux AMD64 and deployed as `20260806-6-amd64`. |
+| SCF health/readiness | Pass | `/health` and `/ready` both returned HTTP 200; database and envelope encryption reported ready. |
+| Notes read-back | Pass | The public disposable Note reloaded with two COS attachments; PDF and Markdown both remained `解析完成 · v3`, and the PDF text preview rendered. |
+| Ideas read-back | Pass | The disposable Idea reloaded with its linked Note and parsed Markdown attachment. |
+| EdgeOne release | Pass | Deployment `dp64p8eb3bjo` completed successfully and the canonical authenticated site loaded the updated provider gate. |
+| Raw-view role matrix | Pending second account | Owner path passes; ordinary-member isolation still needs a separate Clerk session. |
+
+## V5.25 — Upload-first intake, Idea Graph, and AIDC refresh (2026-08-07)
+
+| Check | Result | Evidence |
+|---|---|---|
+| Notes/Ideas UX | Pass | Upload-first panels, first-record CTA, first-write celebration, compact toolbar, and non-overlapping PM review layout are present. |
+| Mixed-company memo | Pass | Deterministic parser returns review-only candidates; unstructured prose produces none and no candidate silently becomes an Idea. |
+| Attribution and roles | Pass | Source contributor is distinct from uploader; configured owner/manager upgrades are additive and Clerk identities/sessions are unchanged. |
+| AskAI/navigation | Pass | AskAI is first; redundant heading copy is removed; chat has more vertical room. |
+| Idea Graph | Pass | Full-width portable graph, filters, candidate warning, and node inspector render without a sibling-repo runtime import. |
+| AIDC daily | Pass | Official source snapshot contains 77 campuses, 451 timeline rows, 221 site-chip-date rows, and 77/77 located campuses. |
+| Private import | Prepared | Twelve supplied files are mapped in a private local manifest; dry-run verifies all files. Production execution is intentionally gated. |
+| Automated validation | Pass | ESLint, 64/64 tests, Vite production build, importer syntax check, and `git diff --check` pass. |
+| Browser QA | Pass | Desktop Ideas/Graph and mobile Notes were inspected; navigation, metadata, and responsive layout remain readable. |
+| Release | Pending approval | No migration, Tiff file upload, commit, push, or deployment was performed in this increment. |

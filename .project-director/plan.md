@@ -321,3 +321,51 @@
 - [x] Run targeted auth, privacy, streaming, persistence, lint, and build checks.
 - [ ] Perform desktop/mobile preview QA before requesting release approval.
 - [ ] Import the prepared Tiff batch only after an authenticated release gate.
+
+## V5.19 — Chat capture and raw-view roles
+
+- [x] Remove Fable 5 from client and server model choices.
+- [x] Move download/Obsidian actions from answers to the Chat level.
+- [x] Add answer and Chat favorites to Personal Knowledge.
+- [x] Persist favorites in the existing Clerk-subject AskAI envelope.
+- [x] Grant configured managers team raw Notes/Ideas view while ordinary users
+  remain owner-only.
+- [x] Enforce `internalAiAllowed` in team gray-box retrieval.
+- [ ] Run browser QA with Jiayi owner and Outlook ordinary-member accounts.
+- [ ] Request release approval before push or deployment.
+
+## V5.23 — Tencent upload, parse and gray-box production proof
+
+- [x] Verify authenticated Notes and Ideas persistence against TencentDB.
+- [x] Verify Markdown and PDF direct upload to COS.
+- [x] Verify SCF parsing and read-only preview after refresh.
+- [x] Enable internal gray-box indexing by default without enabling external AI
+  or web-search permissions in the record policy.
+- [x] Build, run targeted tests and deploy EdgeOne release `dp0q2hmd0lqe`.
+- [x] Verify an AskAI answer grounded in a unique synthetic indexed record.
+- [ ] Complete ordinary-member raw-view isolation and gray-box retrieval with a
+  second Clerk account.
+
+## V5.24 — External-provider policy enforcement
+
+- [x] Propagate sensitivity, external-AI and redaction metadata from SCF search.
+- [x] Gate external provider context in EdgeOne.
+- [x] Rebuild and deploy the SCF image for Linux AMD64.
+- [x] Verify SCF health, database readiness and encryption readiness.
+- [x] Deploy EdgeOne release `dp64p8eb3bjo`.
+- [x] Prove that an Internal record with external AI disabled is not returned to
+  DeepSeek/OpenRouter.
+- [ ] Complete ordinary-member raw-list isolation in a second Clerk session.
+
+## V5.25 — Upload-first intake, graph, and daily AIDC
+
+- [x] Make Notes/Ideas upload-first and add first-record CTAs and celebration.
+- [x] Add deterministic multi-Idea review candidates for mixed-company files.
+- [x] Separate source contributor attribution from uploader/audit identity.
+- [x] Move AskAI to the top and remove the redundant page header.
+- [x] Integrate a portable full-width Idea Graph and enrich Idea list metadata.
+- [x] Refresh official Epoch data and geocode all current campuses.
+- [x] Add the daily AIDC refresh workflow and future-proof count validation.
+- [x] Prepare and dry-run the private Tiff batch importer without committing bodies.
+- [x] Pass lint, 64 tests, build, diff check, and browser QA.
+- [ ] Wait for explicit approval before migrations, production import, push, or deploy.

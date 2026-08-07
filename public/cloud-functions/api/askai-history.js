@@ -1,5 +1,6 @@
 import { getStore } from "@edgeone/pages-blob";
 import { clerkIdentity } from "./_shared-auth.js";
+import { emptyFavorites, normalizeFavorites, personalKnowledgeEntries, removeFavorite, upsertFavorite } from "./_askai-favorites.js";
 
 // AskAI histories are deliberately kept out of the shared Notes/Ideas store.
 // The opaque, subject-derived key means a Clerk user can only ever address
@@ -92,6 +93,7 @@ function errorResponse(error) {
   if (code.startsWith("AUTH_")) return json({ error: "请重新登录后再试", code }, 401);
   if (code === "HISTORY_PAYLOAD_TOO_LARGE") return json({ error: "AskAI 历史过大，请先拆分或删除旧聊天。", code }, 413);
   if (code === "HISTORY_INVALID_JSON") return json({ error: "AskAI 历史请求格式无效。", code }, 400);
+  if (code === "HISTORY_INVALID_FAVORITE") return json({ error: "收藏内容格式无效，请刷新后重试。", code }, 400);
   return json({ error: "AskAI 私有历史暂时不可用。", code: "HISTORY_UNAVAILABLE" }, 503);
 }
 
@@ -100,8 +102,8 @@ async function getHistory(actor) {
   const stored = await histories.get(key, { type: "json", consistency: "strong" });
   // The redundant subject check prevents a corrupted/wrong object from ever
   // being returned into another user's session.
-  if (!stored || stored.subject !== actor.subject) return { store: { projects: [], chats: [] }, version: 0, migrated: false };
-  return { store: normalizeStore(stored.store), version: Number(stored.version) || 0, migrated: Boolean(stored.migrations?.["local-v1"]) };
+  if (!stored || stored.subject !== actor.subject) return { store: { projects: [], chats: [] }, favorites: emptyFavorites(), version: 0, migrated: false };
+  return { store: normalizeStore(stored.store), favorites: normalizeFavorites(stored.favorites), version: Number(stored.version) || 0, migrated: Boolean(stored.migrations?.["local-v1"]) };
 }
 
 async function replaceHistory(actor, body, { migrate = false } = {}) {
@@ -109,7 +111,7 @@ async function replaceHistory(actor, body, { migrate = false } = {}) {
   const current = await histories.get(key, { type: "json", consistency: "strong" });
   const currentVersion = current?.subject === actor.subject ? Number(current.version) || 0 : 0;
   if (migrate && currentVersion > 0) {
-    return { store: normalizeStore(current.store), version: currentVersion, migrated: Boolean(current.migrations?.["local-v1"]), alreadyExists: true };
+    return { store: normalizeStore(current.store), favorites: normalizeFavorites(current.favorites), version: currentVersion, migrated: Boolean(current.migrations?.["local-v1"]), alreadyExists: true };
   }
   const expectedVersion = Number(body.expectedVersion);
   if (!migrate && (!Number.isInteger(expectedVersion) || expectedVersion !== currentVersion)) {
@@ -118,15 +120,38 @@ async function replaceHistory(actor, body, { migrate = false } = {}) {
   const store = normalizeStore(body.store);
   const version = currentVersion + 1;
   await histories.setJSON(key, {
-    schemaVersion: 1, subject: actor.subject, version, store,
+    schemaVersion: 2, subject: actor.subject, version, store, favorites: normalizeFavorites(current?.favorites),
     migrations: { ...(current?.migrations || {}), ...(migrate ? { "local-v1": new Date().toISOString() } : {}) },
     updatedAt: new Date().toISOString(),
   }, { cacheControl: "no-store" });
-  return { store, version, migrated: Boolean(migrate || current?.migrations?.["local-v1"]) };
+  return { store, favorites: normalizeFavorites(current?.favorites), version, migrated: Boolean(migrate || current?.migrations?.["local-v1"]) };
+}
+
+async function mutateFavorites(actor, body) {
+  const key = await subjectKey(actor.subject);
+  const current = await histories.get(key, { type: "json", consistency: "strong" });
+  const currentVersion = current?.subject === actor.subject ? Number(current.version) || 0 : 0;
+  const expectedVersion = Number(body.expectedVersion);
+  if (!Number.isInteger(expectedVersion) || expectedVersion !== currentVersion) return { conflict: true, currentVersion };
+  const kind = body.kind === "chat" ? "chat" : body.kind === "answer" ? "answer" : "";
+  if (!kind) throw new Error("HISTORY_INVALID_FAVORITE");
+  const favorites = body.action === "unfavorite"
+    ? removeFavorite(current?.favorites, kind, clean(body.id, 220))
+    : upsertFavorite(current?.favorites, kind, body.favorite);
+  const version = currentVersion + 1;
+  await histories.setJSON(key, {
+    schemaVersion: 2, subject: actor.subject, version, store: normalizeStore(current?.store), favorites,
+    migrations: current?.migrations || {}, updatedAt: new Date().toISOString(),
+  }, { cacheControl: "no-store" });
+  return { store: normalizeStore(current?.store), favorites, version, migrated: Boolean(current?.migrations?.["local-v1"]) };
 }
 
 export async function onRequestGet({ request, env }) {
-  try { return json(await getHistory(await clerkIdentity(request, env))); }
+  try {
+    const history = await getHistory(await clerkIdentity(request, env));
+    const view = new URL(request.url).searchParams.get("view");
+    return json(view === "knowledge" ? { entries: personalKnowledgeEntries(history.favorites), version: history.version } : history);
+  }
   catch (error) { return errorResponse(error); }
 }
 
@@ -135,8 +160,11 @@ export async function onRequestPost({ request, env }) {
     const actor = await clerkIdentity(request, env);
     const body = await readBody(request);
     const migrated = body.action === "migrate-local-v1";
-    if (!migrated && body.action !== "replace") return json({ error: "AskAI 历史操作不支持。" }, 400);
-    const result = await replaceHistory(actor, body, { migrate: migrated });
+    const isFavoriteMutation = body.action === "favorite-answer" || body.action === "favorite-chat" || body.action === "unfavorite";
+    if (!migrated && body.action !== "replace" && !isFavoriteMutation) return json({ error: "AskAI 历史操作不支持。" }, 400);
+    const result = isFavoriteMutation
+      ? await mutateFavorites(actor, { ...body, kind: body.kind || (body.action === "favorite-chat" ? "chat" : "answer") })
+      : await replaceHistory(actor, body, { migrate: migrated });
     if (result.conflict) return json({ error: "另一台设备刚更新了 AskAI 历史，请刷新后重试。", currentVersion: result.currentVersion }, 409);
     return json(result, migrated && !result.alreadyExists ? 201 : 200);
   } catch (error) { return errorResponse(error); }

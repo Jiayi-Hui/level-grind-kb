@@ -1,7 +1,8 @@
-import { forwardResearchControlRequest, sharedGatewayError } from "../../../../shared-notes.js";
+import { forwardResearchControlRequest, routeParam, sharedGatewayError } from "../../../../shared-notes.js";
 
-function ids(params) {
-  const noteId = String(params?.id || ""); const attachmentId = String(params?.attachmentId || "");
+function ids(request, params) {
+  const noteId = routeParam(request, params, "id", "shared-notes");
+  const attachmentId = routeParam(request, params, "attachmentId", "attachments");
   if (!/^[0-9a-f-]{36}$/i.test(noteId)) throw new Error("INVALID_NOTE_ID");
   if (!/^[0-9a-f-]{36}$/i.test(attachmentId)) throw new Error("INVALID_ATTACHMENT_ID");
   return { noteId, attachmentId };
@@ -9,7 +10,7 @@ function ids(params) {
 
 export async function onRequestPost({ request, env, params }) {
   try {
-    const { attachmentId } = ids(params);
+    const { attachmentId } = ids(request, params);
     return await forwardResearchControlRequest(request, env, { resource: "attachments", suffix: `/${encodeURIComponent(attachmentId)}/complete`, attachment: true });
   } catch (error) { return sharedGatewayError(error, request.method, "attachments"); }
 }

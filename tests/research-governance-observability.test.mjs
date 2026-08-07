@@ -28,7 +28,15 @@ test("shared research records are owner-or-manager editable, audited, and expose
     read("deploy/edgeone-demo/src/idea-book.tsx"),
   ]);
   assert.match(store, /function canEdit/);
-  assert.match(store, /return record\.owner\?\.user_id === actor\.subject/);
+  assert.match(store, /return record\.owner\?\.user_id === actor\.subject \|\| isManager\(actor, env\)/);
+  assert.match(store, /item\.internalAiAllowed === true/);
+  assert.match(store, /record\.sensitivityLevel === "public"/);
+  assert.match(store, /record\.externalAiAllowed === true && record\.redactionRequired !== true/);
+  assert.match(store, /item\.externalAiAllowed === true && item\.redactionRequired !== true/);
+  assert.match(store, /function managerEmails/);
+  assert.match(store, /LEVEL_GRIND_OWNER_EMAIL/);
+  assert.match(store, /LEVEL_GRIND_PRIMARY_PM_EMAIL/);
+  assert.match(store, /LEVEL_GRIND_MEMBER_MANAGER_EMAILS/);
   assert.match(store, /privateTeamResearchContext/);
   assert.match(store, /privateTeamEvidence: true/);
   assert.match(store, /title: `\[Private team \$\{record\.resource/);
@@ -50,6 +58,27 @@ test("private research intake is repeatable and excluded from Git", async () => 
   assert.match(script, /internalAiAllowed: true/);
   assert.match(script, /externalAiAllowed: false/);
   assert.match(script, /redactionRequired: true/);
+});
+
+test("research classification keeps Public external and permits only internal reclassification", async () => {
+  const [migration, service, fallback, notes, ideas] = await Promise.all([
+    read("infra/tencent-postgres/005_three_level_classification.sql"),
+    read("services/tencent-notes-api/server.mjs"),
+    read("public/cloud-functions/api/_edgeone-research-store.js"),
+    read("deploy/edgeone-demo/src/shared-notes.tsx"),
+    read("deploy/edgeone-demo/src/idea-book.tsx"),
+  ]);
+  for (const source of [service, fallback, notes, ideas]) {
+    assert.match(source, /public/);
+    assert.match(source, /internal/);
+    assert.match(source, /confidential/);
+  }
+  assert.doesNotMatch(notes, /option value="restricted"/);
+  assert.doesNotMatch(ideas, /option value="restricted"/);
+  assert.match(migration, /OLD\.sensitivity_level = 'public' AND NEW\.sensitivity_level <> 'public'/);
+  assert.match(migration, /OLD\.sensitivity_level IN \('internal','confidential'\) AND NEW\.sensitivity_level = 'public'/);
+  assert.match(service, /CLASSIFICATION_TRANSITION_FORBIDDEN/);
+  assert.match(fallback, /Public 仅用于外源 benchmark/);
 });
 
 test("Ideas separate hourly market validation from editable fundamental validation", async () => {

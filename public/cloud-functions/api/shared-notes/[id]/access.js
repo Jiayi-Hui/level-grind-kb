@@ -1,7 +1,7 @@
-import { forwardNotesRequest, sharedGatewayError } from "../../shared-notes.js";
+import { forwardNotesRequest, routeParam, sharedGatewayError } from "../../shared-notes.js";
 
 export async function onRequest({ request, env, params }) {
-  const id = String(params?.id || "");
+  const id = routeParam(request, params, "id", "shared-notes");
   try { return await forwardNotesRequest(request, env, `/${encodeURIComponent(id)}/access`); }
   catch (error) { return sharedGatewayError(error, request.method, "notes"); }
 }

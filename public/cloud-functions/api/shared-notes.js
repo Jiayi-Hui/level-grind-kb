@@ -12,6 +12,8 @@ export function sharedGatewayError(error, method = "GET", resource = "notes") {
   const message = error instanceof Error ? error.message : "SHARED_RESEARCH_ERROR";
   if (message.startsWith("AUTH_")) return json({ error: "请重新登录后再试" }, 401);
   if (message.startsWith("INVALID_")) return json({ error: "请求标识不正确。", code: message }, 400);
+  if (message === "SOURCE_CONTRIBUTOR_MANAGER_ONLY") return json({ error: "只有成员管理员可以代同事登记来源资料。", code: message }, 403);
+  if (message === "SOURCE_CONTRIBUTOR_NOT_ACTIVE") return json({ error: "来源贡献者必须是当前受邀的活跃团队成员。", code: message }, 400);
   if (message === "CONTROL_BODY_JSON_REQUIRED") return json({ error: "共享研究网关仅接收 JSON 控制请求；文件必须使用后端签发的直传地址。", code: message }, 415);
   if (message === "CONTROL_BODY_TOO_LARGE") return json({ error: "控制请求过大；请不要经 EdgeOne 传输文件。", code: message }, 413);
   if (message === "CONTROL_BODY_INVALID_JSON") return json({ error: "控制请求不是有效 JSON。", code: message }, 400);
@@ -21,6 +23,18 @@ export function sharedGatewayError(error, method = "GET", resource = "notes") {
     return json({ error: "腾讯共享研究服务尚未配置，当前不可读取或写入。", code: message, configured: false, ingestionFrozen: true, demo: false }, 503);
   }
   return json({ error: "共享研究服务暂时不可用。", code: message.slice(0, 120) }, 503);
+}
+
+// EdgeOne normally exposes file-route parameters on context.params. Manual ZIP
+// deployments have occasionally omitted nested params, so recover the segment
+// from the request URL instead of turning a valid authenticated upload into a
+// misleading INVALID_* response.
+export function routeParam(request, params, key, afterSegment) {
+  const direct = String(params?.[key] || "").trim();
+  if (direct) return direct;
+  const segments = new URL(request.url).pathname.split("/").filter(Boolean);
+  const markerIndex = segments.indexOf(afterSegment);
+  return markerIndex >= 0 ? String(segments[markerIndex + 1] || "") : "";
 }
 
 function notesServiceUrl(env, resource = "notes", suffix = "") {
@@ -62,6 +76,9 @@ export async function forwardResearchControlRequest(request, env, { suffix = "",
       // Display metadata only. The Tencent service must independently validate the Clerk token
       // and authorise active team membership.
       "X-Level-Grind-Subject": identity.subject,
+      "X-Level-Grind-Email": identity.email,
+      "X-Level-Grind-Name": identity.name,
+      "X-Level-Grind-Service-Token": String(env.NOTES_GATEWAY_SERVICE_TOKEN || ""),
     },
     body,
   });

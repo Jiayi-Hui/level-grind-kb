@@ -433,3 +433,49 @@ retrieval, decryption, ranking, and provider submission happen server-side.
 The ordinary Notes/Ideas API does not grant raw manager visibility; review
 dashboards use metadata-only records. A one-time client migration can upsert
 existing local history, after which the server is authoritative.
+
+## V5.19 Favorite and visibility contract
+
+```text
+Clerk subject -> askai-history envelope
+  -> private projects / chats / messages
+  -> private answer favorites / Chat favorites
+  -> Personal Knowledge read model
+
+Notes / Ideas browser read
+  -> contributor: own raw records
+  -> configured manager: team raw records
+  -> ordinary member: no cross-user raw records
+
+AskAI team retrieval
+  -> authenticated member
+  -> server-only ranking of internalAiAllowed records
+  -> minimal gray-box excerpts
+  -> no source identity, file metadata, or raw-record links
+```
+
+`askai-history` keeps one optimistic version across history and favorite
+mutations so two devices cannot silently overwrite one another. Legacy browser
+favorites remain a local fallback; successful account reads become canonical.
+Member-manager emails remain deployment configuration, not hardcoded identity
+logic. Personal AskAI history and Personal Knowledge are never exposed through
+the manager raw-research view.
+
+## V5.25 Intake, graph, and AIDC refresh contracts
+
+```text
+private source file -> authenticated record create
+  -> source contributor attribution + uploader audit
+  -> short-lived COS upload -> SCF parse
+  -> zero-or-more review candidates -> explicit human approval
+
+approved/candidate Idea metadata -> portable Idea Graph read model
+  -> full-width client visualization -> no automatic team thesis write
+
+official Epoch ZIP -> scheduled refresh -> portable JSON -> evidence-ranked
+geocoding -> EdgeOne build artifact
+```
+
+The production client never imports the sibling `investment-graph` repository;
+its reviewed candidate seed is copied into the deployable source tree. The daily
+AIDC workflow is source refresh plus validation, not a browser runtime dependency.

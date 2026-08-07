@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "epoch-ai-refresh.v1",
+  "source": "https://epoch.ai/data/data_centers/data_centers.zip",
+  "refreshedAt": "2026-08-07T02:44:47.734Z",
+  "license": "CC BY 4.0; credit Epoch AI",
+  "previousCampusCount": 75,
+  "campusCount": 77,
+  "archiveSha256": "ed707bec8e97fa7a556019f9da892043fd2eb7ec4b8cfa24a009c0e863050bff",
+  "files": {
+    "data_centers.csv": {
+      "rows": 77,
+      "bytes": 56793,
+      "sha256": "f5addb6dcf1d792d914f6756451670c291023acff85e2f49495c20ac7447a8fa"
+    },
+    "data_center_timelines.csv": {
+      "rows": 451,
+      "bytes": 148214,
+      "sha256": "18c0aaa22ecf9cbacacfa397261496e65276886bef27867cc466a37e1732fed0"
+    },
+    "data_center_chip_quantities.csv": {
+      "rows": 221,
+      "bytes": 85784,
+      "sha256": "9627e6e504611144508b5807baa0ab49fe81433c1a4b29ff41daf5a9b2f2a2f0"
+    },
+    "data_center_chillers.csv": {
+      "rows": 143,
+      "bytes": 34665,
+      "sha256": "9711dcfdac0b0de82a1808717e106ea28e213c2a845b42a691ad3cd63caeb704"
+    },
+    "data_center_cooling_towers.csv": {
+      "rows": 527,
+      "bytes": 85832,
+      "sha256": "c9ce622e1eaf15cc70bf2445a66f17c9c2be19a3638a96c421dc7e31c3a2db66"
+    }
+  }
+}

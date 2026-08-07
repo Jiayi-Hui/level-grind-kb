@@ -6,11 +6,12 @@ import { AICapex } from "../../../app/ai-capex";
 import { AppClerkProvider, AuthGate } from "../../../app/auth-widgets";
 import { EventResearch } from "../../../app/event-research";
 import { IdeaBookView } from "./idea-book";
+import { IdeaGraphView } from "./idea-graph";
 import { SharedNotesView } from "./shared-notes";
 import "../../../app/globals.css";
 import "./mirror.css";
 
-type DemoView = "knowledge" | "notes" | "ideas" | "events" | "aidc" | "ask" | "settings";
+type DemoView = "knowledge" | "notes" | "ideas" | "graph" | "events" | "aidc" | "ask" | "settings";
 type AskScope = "events" | "aidc";
 
 const viewCopy = {
@@ -25,6 +26,10 @@ const viewCopy = {
   ideas: {
     eyebrow: "IDEA TRACKING",
     title: "Ideas库",
+  },
+  graph: {
+    eyebrow: "IDEA GRAPH",
+    title: "跨行业观点关系图",
   },
   events: {
     eyebrow: "CLAIM LEDGER",
@@ -81,6 +86,13 @@ function ContinuityApp() {
         <p className="workspace-label">RESEARCH OS</p>
         <nav aria-label="Workspace navigation">
           <button
+            className={`nav-item ${view === "ask" ? "active" : ""}`}
+            onClick={() => selectView("ask")}
+          >
+            <span className="nav-symbol">✦</span>
+            <span>AskAI</span>
+          </button>
+          <button
             className={`nav-item ${view === "knowledge" ? "active" : ""}`}
             onClick={() => selectView("knowledge")}
           >
@@ -106,6 +118,10 @@ function ContinuityApp() {
             <span className="nav-symbol">◫</span>
             <span>Ideas库</span>
           </button>
+          <button className={`nav-item ${view === "graph" ? "active" : ""}`} onClick={() => selectView("graph")} title="待审核候选关系图">
+            <span className="nav-symbol">⌘</span>
+            <span>Idea Graph</span>
+          </button>
           <button
             className={`nav-item ${view === "events" ? "active" : ""}`}
             onClick={() => selectView("events")}
@@ -124,13 +140,6 @@ function ContinuityApp() {
             <span className="nav-symbol">▦</span>
             <span>模型工作台</span>
             <small>待上线</small>
-          </button>
-          <button
-            className={`nav-item ${view === "ask" ? "active" : ""}`}
-            onClick={() => selectView("ask")}
-          >
-            <span className="nav-symbol">✦</span>
-            <span>AskAI</span>
           </button>
           <button
             className={`nav-item ${view === "settings" ? "active" : ""}`}
@@ -158,8 +167,8 @@ function ContinuityApp() {
           <span className="continuity-live"><i /> 腾讯节点在线</span>
         </header>
 
-        <div className="content">
-          <header className="page-heading">
+        <div className={`content${view === "graph" ? " graph-content" : ""}`}>
+          {view !== "ask" && view !== "graph" && <header className="page-heading">
             <div>
               <p className="eyebrow">{heading.eyebrow}</p>
               <h1>{view === "ask" ? `${heading.title} · ${askScope === "events" ? "事件库" : "AI Capex"}` : heading.title}</h1>
@@ -169,12 +178,12 @@ function ContinuityApp() {
                 ✦ 询问此数据库
               </button>
             )}
-            {view === "ask" && (
-              <button className="page-ask-button secondary" onClick={() => selectView(askScope)}>
-                ← 返回{askScope === "events" ? "事件库" : "AI Capex"}
+            {view === "ideas" && (
+              <button className="page-ask-button secondary" onClick={() => selectView("graph")}>
+                ↗ 打开 Idea Graph
               </button>
             )}
-          </header>
+          </header>}
 
           {view === "knowledge" ? (
             <PersonalKnowledgeView />
@@ -182,6 +191,8 @@ function ContinuityApp() {
             <SharedNotesView />
           ) : view === "ideas" ? (
             <IdeaBookView />
+          ) : view === "graph" ? (
+            <IdeaGraphView />
           ) : view === "events" ? (
             <EventResearch
               liveClaims={[]}

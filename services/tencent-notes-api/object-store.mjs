@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import COS from "cos-nodejs-sdk-v5";
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 function unavailable() {
   return Object.assign(new Error("OBJECT_STORE_NOT_CONFIGURED"), { status: 503 });
@@ -55,23 +56,38 @@ function createCosStore(environment, runtimeCredentials = {}) {
   if (!bucket || !region || !secretId || !secretKey) {
     return { configured: false, driver: "cos", directUpload: true, async put() { throw unavailable(); }, async get() { throw unavailable(); }, async head() { throw unavailable(); }, async presignPut() { throw unavailable(); }, async remove() { throw unavailable(); } };
   }
-  const client = new COS({ SecretId: secretId, SecretKey: secretKey, ...(securityToken ? { SecurityToken: securityToken } : {}) });
-  const call = (method, options) => new Promise((resolve, reject) => client[method](options, (error, result) => error ? reject(error) : resolve(result)));
+  // COS exposes an S3-compatible API. Using the maintained AWS SDK avoids the
+  // deprecated request stack still bundled by the legacy COS Node SDK.
+  const client = new S3Client({
+    region,
+    endpoint: `https://cos.${region}.myqcloud.com`,
+    forcePathStyle: false,
+    credentials: {
+      accessKeyId: secretId,
+      secretAccessKey: secretKey,
+      ...(securityToken ? { sessionToken: securityToken } : {}),
+    },
+  });
   return {
     configured: true,
     driver: "cos",
     directUpload: true,
     async presignPut(key, { mediaType, sha256 }) {
-      const url = await new Promise((resolve, reject) => client.getObjectUrl(
-        { Bucket: bucket, Region: region, Key: key, Method: "PUT", Sign: true, Expires: 600, Headers: { "content-type": mediaType, "x-cos-meta-sha256": sha256 } },
-        (error, result) => error ? reject(error) : resolve(result.Url || result),
-      ));
-      return { url, method: "PUT", expiresInSeconds: 600, headers: { "Content-Type": mediaType, "x-cos-meta-sha256": sha256 } };
+      const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: mediaType, Metadata: { sha256 } });
+      const url = await getSignedUrl(client, command, { expiresIn: 600 });
+      return { url, method: "PUT", expiresInSeconds: 600, headers: { "Content-Type": mediaType, "x-amz-meta-sha256": sha256 } };
     },
     async put() { throw unavailable(); },
-    async head(key) { const result = await call("headObject", { Bucket: bucket, Region: region, Key: key }); return { byteSize: Number(result.headers?.["content-length"] || result.headers?.["Content-Length"] || 0), sha256: String(result.headers?.["x-cos-meta-sha256"] || result.headers?.["X-Cos-Meta-Sha256"] || "").toLowerCase() }; },
-    async get(key) { const result = await call("getObject", { Bucket: bucket, Region: region, Key: key }); return Buffer.isBuffer(result.Body) ? result.Body : Buffer.from(result.Body || ""); },
-    async remove(key) { await call("deleteObject", { Bucket: bucket, Region: region, Key: key }); },
+    async head(key) {
+      const result = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+      return { byteSize: Number(result.ContentLength || 0), sha256: String(result.Metadata?.sha256 || "").toLowerCase() };
+    },
+    async get(key) {
+      const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      if (!result.Body) return Buffer.alloc(0);
+      return Buffer.from(await result.Body.transformToByteArray());
+    },
+    async remove(key) { await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })); },
   };
 }
 

@@ -5,6 +5,7 @@ const telemetry = getStore({ name: "level-grind-telemetry", consistency: "strong
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 const managers = (env) => new Set([
   env.LEVEL_GRIND_OWNER_EMAIL,
+  env.LEVEL_GRIND_MANAGER_EMAILS,
   env.LEVEL_GRIND_PRIMARY_PM_EMAIL,
   ...String(env.LEVEL_GRIND_MEMBER_MANAGER_EMAILS || "").split(","),
 ].map((email) => String(email || "").trim().toLowerCase()).filter(Boolean));

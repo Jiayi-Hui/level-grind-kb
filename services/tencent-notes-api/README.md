@@ -9,7 +9,9 @@ Required environment variables:
 - `DATABASE_URL`: TencentDB PostgreSQL connection string.
 - `CLERK_SECRET_KEY`: the existing Level Grind production Clerk secret.
 - `LEVEL_GRIND_OWNER_EMAIL`: Jiayi's Level Grind owner email.
-- `LEVEL_GRIND_MEMBER_MANAGER_EMAILS`: comma-separated member managers.
+- `LEVEL_GRIND_MANAGER_EMAILS`: canonical comma-separated member managers.
+  `LEVEL_GRIND_PRIMARY_PM_EMAIL` and `LEVEL_GRIND_MEMBER_MANAGER_EMAILS` remain
+  compatible aliases during an in-place deployment.
 - `LEVEL_GRIND_INVITED_EMAILS`: the existing comma-separated invited-team list.
   The service fails closed for email addresses outside this existing allowlist;
   do not create a second invitation flow here.
@@ -49,16 +51,17 @@ cloud objects when configuration is missing.
 When the approved ingestion gate is enabled, `POST /v1/notes/:id/attachments`
 (or Ideas) creates an attachment row, opaque server-generated object key and a
 short-lived signed COS `PUT` URL. The browser uploads bytes directly to COS
-with the returned `Content-Type` and `x-cos-meta-sha256` header, then calls
+with the returned `Content-Type` and `x-amz-meta-sha256` header (through COS's
+S3-compatible API), then calls
 `POST /v1/attachments/:id/complete`. The service verifies COS HEAD metadata,
 downloads once to recompute SHA-256, parses PDF/DOCX/MD/TXT, and AES-256-GCM
 encrypts extracted text before persistence. It records upload/parse jobs,
 versions, soft deletions, retries and append-only audit metadata.
 
 Set `NOTES_OBJECT_STORE_DRIVER=cos`, `COS_BUCKET`, `COS_REGION`, and use an SCF
-execution role whenever possible. SCF custom-image temporary credentials are
-read from its per-request credential headers; explicit server-only credentials
-are a fallback for other Tencent runtimes. Configuration missing or invalid
+execution role whenever possible. Temporary role credentials are resolved only
+inside the runtime; explicit server-only credentials are a fallback for other
+Tencent runtimes. Configuration missing or invalid
 fails closed; permanent SecretId/SecretKey never reaches EdgeOne or the
 browser. `local` storage exists only for non-production development/tests.
 The 25 MB limit applies to the COS object; EdgeOne/SCF only carries small JSON
@@ -136,3 +139,16 @@ Copy `.env.example` to an untracked `.env.local`, start local PostgreSQL with
 run `node services/tencent-notes-api/scripts/migrate.mjs`. Synthetic fixtures
 are opt-in only: `ALLOW_SYNTHETIC_FIXTURES=true node .../seed-synthetic.mjs`.
 Never use those fixtures in a production database.
+
+## Private indexing and gray-box retrieval
+
+Creating or updating a Note/Idea and completing attachment parsing also updates
+`research_private_search_index`. The table stores keyed HMAC-SHA256 term hashes,
+not titles, filenames, body text or attachment text. The application master key
+derives the index key with HKDF.
+
+Raw lists and detail views remain owner-or-member-manager only. AskAI calls the
+server-only `/v1/internal/askai/private-research` route with a separate retrieval
+token and the requesting Clerk user ID. Any active team member can gray-box
+retrieve only records whose current parent policy allows internal AI. Owner
+identity, original attachment names and object keys are never returned.
