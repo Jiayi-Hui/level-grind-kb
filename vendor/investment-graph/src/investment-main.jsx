@@ -4,11 +4,43 @@ import { edges, markets, nodes, nodeTypes, periods, sectors } from "./investment
 import "./investment-styles.css";
 
 const positionMeta = {
-  LONG: { label: "LONG", color: "#DF5B5B", soft: "#FBE4E2" },
-  SHORT: { label: "SHORT", color: "#31936A", soft: "#DDF2E8" },
+  LONG: { label: "LONG", color: "#31936A", soft: "#DDF2E8" },
+  SHORT: { label: "SHORT", color: "#DF5B5B", soft: "#FBE4E2" },
   NEUTRAL: { label: "NEUTRAL", color: "#9B8660", soft: "#F1E9D9" },
   NONE: { label: "", color: "#8EA1AE", soft: "#EAF0F3" },
 };
+
+const relationTypes = [
+  ["ownership", "股权 / 同一集团", "ownership"],
+  ["supplier", "供应链", "supplier"],
+  ["partnership", "合作 / 合资", "partnership"],
+  ["competitor", "竞争", "competitor"],
+];
+
+function FilterMenu({ label, options, selected, setSelected, renderMark }) {
+  const allSelected = selected.length === 0;
+  const toggle = (id) => setSelected((current) => current.includes(id)
+    ? current.filter((item) => item !== id)
+    : [...current, id]);
+
+  return (
+    <details className="atlas-filter-menu">
+      <summary>{label}{!allSelected && <b>{selected.length}</b>}<i>⌄</i></summary>
+      <div className="atlas-filter-popover">
+        <button className={allSelected ? "active" : ""} onClick={() => setSelected([])}>
+          <span className="filter-check">{allSelected ? "✓" : ""}</span>全部
+        </button>
+        {options.map(([id, optionLabel, mark]) => (
+          <button key={id} className={selected.includes(id) ? "active" : ""} onClick={() => toggle(id)}>
+            <span className="filter-check">{selected.includes(id) ? "✓" : ""}</span>
+            {renderMark?.(id, mark)}
+            <span>{optionLabel}</span>
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
 
 function graphLabel(node) {
   if (node.type === "security") {
@@ -172,28 +204,25 @@ export function InvestmentGraph() {
   const cyRef = useRef(null);
   const [selectedSectors, setSelectedSectors] = useState([]);
   const [selectedMarkets, setSelectedMarkets] = useState([]);
+  const [selectedRelationTypes, setSelectedRelationTypes] = useState([]);
+  const [selectedNodeTypes, setSelectedNodeTypes] = useState([]);
   const [period, setPeriod] = useState(periods.length - 1);
   const [playing, setPlaying] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState("byd");
-
-  function toggleSelection(id, setter) {
-    if (id === "all") {
-      setter([]);
-      return;
-    }
-    setter((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-  }
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const visible = useMemo(() => {
     const eligibleNodeIds = new Set(
       nodes
-        .filter((node) => node.start <= period)
+        .filter((node) => node.start <= period
+          && (node.type === "theme" || !selectedNodeTypes.length || selectedNodeTypes.includes(node.type)))
         .map((node) => node.id),
     );
     const visibleEdges = edges.filter(
       (item) => item.views.includes("portfolio")
         && !isBoundaryMembershipEdge(item)
+        && (!item.relationType || !selectedRelationTypes.length || selectedRelationTypes.includes(item.relationType))
         && item.start <= period
         && eligibleNodeIds.has(item.source)
         && eligibleNodeIds.has(item.target),
@@ -202,7 +231,7 @@ export function InvestmentGraph() {
       nodes: nodes.filter((node) => eligibleNodeIds.has(node.id)),
       edges: visibleEdges,
     };
-  }, [period]);
+  }, [period, selectedNodeTypes, selectedRelationTypes]);
 
   const hasActiveFilter = selectedSectors.length > 0 || selectedMarkets.length > 0;
   const primaryNodeIds = useMemo(() => {
@@ -249,10 +278,6 @@ export function InvestmentGraph() {
       peer: nodes.find((node) => node.id === (item.source === selected.id ? item.target : item.source)),
       direction: item.source === selected.id ? "out" : "in",
     }));
-
-  const visibleLongs = displayed.nodes.filter((node) => node.position === "LONG").length;
-  const visibleShorts = displayed.nodes.filter((node) => node.position === "SHORT").length;
-  const visibleObservations = displayed.nodes.filter((node) => node.type === "security" && node.position === "NONE").length;
 
   useEffect(() => {
     if (!playing) return undefined;
@@ -355,11 +380,11 @@ export function InvestmentGraph() {
         },
         {
           selector: "node[position = 'LONG']",
-          style: { "background-color": "#FFF9F7", "border-color": "#DF5B5B", "border-width": 3 },
+          style: { "background-color": "#F7FBF8", "border-color": "#31936A", "border-width": 3 },
         },
         {
           selector: "node[position = 'SHORT']",
-          style: { "background-color": "#F7FBF8", "border-color": "#31936A", "border-width": 3 },
+          style: { "background-color": "#FFF9F7", "border-color": "#DF5B5B", "border-width": 3 },
         },
         {
           selector: "node[type = 'security'][position = 'NONE']",
@@ -493,6 +518,7 @@ export function InvestmentGraph() {
       neighborhood.addClass("neighbor");
       node.removeClass("neighbor").select();
       setSelectedId(node.id());
+      setDetailOpen(true);
     };
 
     cy.on("tap", "node", (event) => focusNode(event.target));
@@ -633,93 +659,46 @@ export function InvestmentGraph() {
   }
 
   const selectedPosition = positionMeta[selected.position] || positionMeta.NONE;
+  const nodeTypeOptions = Object.entries(nodeTypes)
+    .filter(([id]) => id !== "theme")
+    .map(([id, meta]) => [id, meta.label, meta]);
+  const hasToolbarFilter = selectedSectors.length || selectedMarkets.length || selectedRelationTypes.length || selectedNodeTypes.length || query;
+
+  function clearFilters() {
+    setSelectedSectors([]);
+    setSelectedMarkets([]);
+    setSelectedRelationTypes([]);
+    setSelectedNodeTypes([]);
+    setQuery("");
+  }
 
   return (
     <main className="atlas-shell">
-      <header className="atlas-topbar">
-        <div className="atlas-brand">
-          <div className="atlas-brandmark"><i /><i /><i /></div>
-          <div><span>LEVEL GRIND · RESEARCH OS</span><strong>Investment Graph</strong></div>
-        </div>
-        <div className="atlas-context"><span>研究工作台</span><b>/</b><strong>组合图谱</strong></div>
-        <div className="atlas-source"><i /> 候选关系 · 0803–0806 研究笔记</div>
-        <button className="outline-button" onClick={fitGraph}>重置视图</button>
-      </header>
-
-      <section className="atlas-workspace">
-        <aside className="atlas-controls">
-          <div className="atlas-intro">
-            <p className="atlas-eyebrow">PORTFOLIO INTELLIGENCE</p>
-            <h1>组合知识图谱</h1>
-          </div>
-
-          <div className="book-summary">
-            <article><i className="long" /><span>Long</span><strong>{visibleLongs}</strong></article>
-            <article><i className="short" /><span>Short</span><strong>{visibleShorts}</strong></article>
-            <article><i className="relations" /><span>Observations</span><strong>{visibleObservations}</strong></article>
-          </div>
-
+      <section className={`atlas-workspace ${detailOpen ? "detail-open" : ""}`}>
+        <div className="atlas-toolbar">
           <label className="atlas-search">
             <span>⌕</span>
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索证券、主题或驱动" />
             {query && <button onClick={() => setQuery("")}>×</button>}
           </label>
-
-          <div className="atlas-control-section">
-            <div className="atlas-control-heading"><span>行业筛选</span><em>01</em></div>
-            <div className="atlas-sector-grid">
-              {sectors.map(([id, label]) => <button key={id} className={(id === "all" ? selectedSectors.length === 0 : selectedSectors.includes(id)) ? "active" : ""} onClick={() => toggleSelection(id, setSelectedSectors)}>{label}</button>)}
-            </div>
-          </div>
-
-          <div className="atlas-control-section">
-            <div className="atlas-control-heading"><span>上市市场</span><em>02</em></div>
-            <div className="atlas-market-grid">
-              {markets.map(([id, label]) => <button key={id} className={(id === "all" ? selectedMarkets.length === 0 : selectedMarkets.includes(id)) ? "active" : ""} onClick={() => toggleSelection(id, setSelectedMarkets)}>{label}</button>)}
-            </div>
-          </div>
-
-          <div className="position-legend">
-            <div className="atlas-control-heading"><span>投资方向</span><em>03</em></div>
-            <div><span><i className="long" />Long · 红边</span><span><i className="short" />Short · 绿边</span></div>
-          </div>
-
-          <div className="relation-legend">
-            <div className="atlas-control-heading"><span>公司关系</span><em>04</em></div>
-            <div>
-              <span><i className="ownership" />股权 / 同一集团</span>
-              <span><i className="supplier" />供应链</span>
-              <span><i className="partnership" />合作 / 合资</span>
-              <span><i className="competitor" />竞争</span>
-            </div>
-          </div>
-
-          <div className="type-legend">
-            <div className="atlas-control-heading"><span>Node类型</span><em>05</em></div>
-            <div>{Object.entries(nodeTypes).filter(([id]) => id !== "security").map(([id, meta]) => <span key={id}><i style={{ background: meta.color }} />{meta.label}</span>)}</div>
-          </div>
-        </aside>
+          <FilterMenu label="行业" options={sectors.filter(([id]) => id !== "all")} selected={selectedSectors} setSelected={setSelectedSectors} />
+          <FilterMenu label="市场" options={markets.filter(([id]) => id !== "all")} selected={selectedMarkets} setSelected={setSelectedMarkets} />
+          <FilterMenu label="公司关系" options={relationTypes} selected={selectedRelationTypes} setSelected={setSelectedRelationTypes} renderMark={(_, mark) => <i className={`relation-mark ${mark}`} />} />
+          <FilterMenu label="节点类型" options={nodeTypeOptions} selected={selectedNodeTypes} setSelected={setSelectedNodeTypes} renderMark={(_, meta) => <i className="node-mark" style={{ background: meta.color }} />} />
+          <label className="atlas-date"><span>日期</span><select value={period} onChange={(event) => { setPlaying(false); setPeriod(Number(event.target.value)); }}>{periods.map((item, index) => <option key={item} value={index}>{item.slice(5).replace("-", "/")}</option>)}</select></label>
+          {hasToolbarFilter && <button className="atlas-clear" onClick={clearFilters}>清除</button>}
+        </div>
 
         <section className="atlas-stage">
-          <div className="atlas-stage-meta">
-            <div><span>当前网络</span><strong>产业逻辑网络</strong><small>{selectedSectors.length ? selectedSectors.map((id) => sectors.find(([sectorId]) => sectorId === id)?.[1]).join(" + ") : "全部行业"} · {selectedMarkets.length ? selectedMarkets.map((id) => markets.find(([marketId]) => marketId === id)?.[1]).join(" + ") : "全部市场"} · {periods[period]}</small></div>
-            <div className="atlas-kpis">
-              <article><strong>{displayed.nodes.length}</strong><span>节点</span></article>
-              <article><strong>{displayed.edges.length}</strong><span>关系</span></article>
-              <article><strong>{new Set(displayed.nodes.map((node) => node.type)).size}</strong><span>类型</span></article>
-            </div>
-          </div>
-
           <div ref={graphRef} className="atlas-canvas" aria-label="Interactive long-short investment knowledge graph" />
 
           <div className="atlas-tools">
             <button onClick={() => changeZoom(0.18)} title="放大">＋</button>
             <button onClick={() => changeZoom(-0.18)} title="缩小">−</button>
-            <button onClick={fitGraph} title="适应画布">⌗</button>
-            <button onClick={rerunLayout} title="重新布局">↻</button>
+            <button onClick={rerunLayout} title="重置视图" aria-label="重置视图">↻</button>
           </div>
 
-          <div className="atlas-hint"><span>{hasActiveFilter ? "主体居中；虚线主题框 = 直接关联行业" : "虚线弧 = 行业间传导；节点大小 = |仓位|"}</span><i />拖动节点<i />点击聚焦一度关系</div>
+          <div className="atlas-mini-legend"><span><i className="long" />Long</span><span><i className="short" />Short</span><span><i className="watch" />观察</span></div>
 
           <div className="atlas-timeline">
             <button className={playing ? "playing" : ""} onClick={() => setPlaying(!playing)}>{playing ? "Ⅱ" : "▶"}</button>
@@ -731,8 +710,8 @@ export function InvestmentGraph() {
           </div>
         </section>
 
-        <aside className="atlas-detail">
-          <div className="atlas-detail-top"><span>NODE INSPECTOR</span><em>{selected.type.toUpperCase()}</em></div>
+        <aside className={`atlas-detail ${detailOpen ? "open" : ""}`} aria-hidden={!detailOpen}>
+          <div className="atlas-detail-top"><span>NODE INSPECTOR</span><button onClick={() => setDetailOpen(false)} aria-label="关闭详情">×</button></div>
           <div className="atlas-node-head">
             <i style={{
               background: selected.type === "security" && selected.position === "NONE" ? "#FFFEFA" : selected.position !== "NONE" ? selectedPosition.soft : nodeTypes[selected.type].color,

@@ -2,20 +2,20 @@
 
 ## What the reviewed prototype provides
 
-`Jiayi-Hui/investment-graph` at `cc920ca` is a standalone Cytoscape/React
+`Jiayi-Hui/investment-graph` at `377444abdc1972cecd0a2ceab78d5c9aa65c8bff` is the canonical Cytoscape/React
 prototype. It has a useful full-width pan/zoom graph, industry/market filters,
 timeline, and node inspector. Its current node and edge dataset is explicitly a
 candidate extraction from a local research summary; it has no shared-Idea API,
 auth boundary, source anchors, or edit/audit contract.
 
-## Safe first integration
+## Current integration
 
-- Keep the graph a separate app, opened from both the primary navigation and
-  Ideas header through `VITE_IDEA_GRAPH_URL`.
-- Default to the reviewed GitHub repository rather than silently presenting
-  candidate data as the team's live Idea Book.
-- Do not import its curated data into shared Notes/Ideas or duplicate it in
-  the Level Grind deployment.
+- The canonical package is mirrored into `vendor/investment-graph` by the
+  repeatable sync script; Level Grind does not maintain a second graph UI.
+- Idea Graph is the signed-in workspace's default landing view and remains in
+  the left navigation so users can return to it from every research module.
+- The graph remains a research read model. Its curated data is not silently
+  written back into shared Notes or Ideas.
 
 ## Required before making the graph a first-class shared view
 

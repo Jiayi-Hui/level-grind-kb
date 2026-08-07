@@ -61,7 +61,7 @@ const clerkPublishableKey =
   || "pk_live_Y2xlcmsubGV2ZWwtZ3JpbmQuY29tJA";
 
 function ContinuityApp() {
-  const [view, setView] = useState<DemoView>("events");
+  const [view, setView] = useState<DemoView>("graph");
   const [askScope, setAskScope] = useState<AskScope>("events");
   const [mobileNav, setMobileNav] = useState(false);
   const heading = viewCopy[view];

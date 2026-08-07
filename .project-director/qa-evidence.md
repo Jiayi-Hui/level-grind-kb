@@ -82,7 +82,7 @@
   authenticated canonical-domain session after explicit release approval.
 ## V5.27 QA evidence
 
-- Canonical repository: `Jiayi-Hui/investment-graph@c4c94a3b44167c8a098c57ba6dcccbd8c6ab207d`.
+- Canonical repository: `Jiayi-Hui/investment-graph@377444abdc1972cecd0a2ceab78d5c9aa65c8bff`.
 - Canonical package: build passed; 13 graph model/interaction tests passed.
 - Level Grind: portable EdgeOne build passed; 65 tests passed; lint passed on
   Node 24.14.0.
@@ -111,3 +111,14 @@
   - machinery memo receipt: Idea `0b8e02ef-4067-423a-8daf-2a1944f4c1cd`.
 - Pending production evidence: ordinary-account raw-view comparison in a
   separate authenticated Clerk session.
+
+## V5.28 — Idea Graph default workspace (2026-08-07)
+
+- Synced the latest reviewed `Jiayi-Hui/investment-graph` main commit
+  `377444abdc1972cecd0a2ceab78d5c9aa65c8bff` into the portable vendor mirror.
+- Changed the signed-in default view from Events to Idea Graph while retaining
+  the existing left-navigation entry.
+- Level Grind source tests: 65/65 passed on Node 24.
+- Portable EdgeOne build passed on Node 24.
+- Lint reported no errors; the canonical package retains one non-blocking
+  unused-function warning (`fitGraph`).

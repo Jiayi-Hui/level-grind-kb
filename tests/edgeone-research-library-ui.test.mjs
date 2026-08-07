@@ -147,18 +147,20 @@ test("Idea Graph preserves atlas controls and daily playback", async () => {
   ]);
   assert.match(main, /view === "graph"/);
   assert.match(main, /graph-content/);
+  assert.match(main, /useState<DemoView>\("graph"\)/);
   assert.match(graph, /@jiayi-hui\/investment-graph/);
   assert.match(graph, /<InvestmentGraph/);
   assert.doesNotMatch(graph, /cytoscape|selectedSectors|selectedMarkets|graphPositions/);
   assert.match(packageJson, /file:vendor\/investment-graph/);
   assert.equal(sourceManifest.repository, "Jiayi-Hui/investment-graph");
-  assert.equal(sourceManifest.sourceCommit, "c4c94a3b44167c8a098c57ba6dcccbd8c6ab207d");
+  assert.equal(sourceManifest.sourceCommit, "377444abdc1972cecd0a2ceab78d5c9aa65c8bff");
   assert.match(hostCss, /\.atlas-shell/);
   assert.doesNotMatch(hostCss, /\.atlas-workspace|\.atlas-controls|\.atlas-stage|\.atlas-detail/);
 
   assert.match(canonicalGraph, /selectedSectors/);
   assert.match(canonicalGraph, /selectedMarkets/);
-  assert.match(canonicalGraph, /toggleSelection/);
+  assert.match(canonicalGraph, /function FilterMenu/);
+  assert.match(canonicalGraph, /const toggle = \(id\)/);
   assert.match(canonicalGraph, /crossIndustryBridgeIds/);
   assert.match(canonicalGraph, /graphPositions/);
   assert.match(canonicalGraph, /layout:\s*\{\s*name:\s*"preset"/);
@@ -169,7 +171,7 @@ test("Idea Graph preserves atlas controls and daily playback", async () => {
   assert.match(canonicalGraph, /setPlaying/);
   assert.match(canonicalGraph, /VISIBLE CONNECTIONS/);
   assert.match(canonicalGraph, /sourceUrl/);
-  assert.match(canonicalGraph, /atlas-kpis/);
+  assert.match(canonicalGraph, /atlas-metrics/);
   assert.match(canonicalData, /export const periods/);
   assert.match(canonicalData, /"2026-08-06"/);
   assert.match(canonicalData, /export const sectors/);

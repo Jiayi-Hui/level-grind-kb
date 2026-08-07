@@ -525,3 +525,10 @@ The remaining release proof is the live ordinary-account comparison: the
 manager session is verified; a separate ordinary Clerk session is still
 required to demonstrate that raw manager-owned records are absent while AskAI
 retains gray-box team retrieval.
+
+## V5.28 delivery status
+
+The latest canonical Investment Graph commit is mirrored into Level Grind and
+Idea Graph is now the default signed-in workspace. The navigation entry remains
+available in its existing position. This change is locally verified and ready
+for preview; production deployment is intentionally held for release approval.
