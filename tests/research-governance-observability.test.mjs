@@ -33,6 +33,7 @@ test("shared research records are owner-or-manager editable, audited, and expose
   assert.match(store, /record\.internalAiAllowed !== false/);
   assert.match(store, /grayBoxExcerpt/);
   assert.match(store, /maxLength = 1800/);
+  assert.match(store, /if \(!retrieved\.length && clean\(question\)\) retrieved = await retrieve\(""\)/);
   assert.doesNotMatch(store, /content: clean\(record\.content, 5000\)/);
   assert.match(store, /function managerEmails/);
   assert.match(store, /LEVEL_GRIND_OWNER_EMAIL/);

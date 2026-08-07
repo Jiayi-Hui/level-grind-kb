@@ -165,22 +165,30 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
   const notesServiceBaseUrl = String(env.NOTES_SERVICE_BASE_URL || "").replace(/\/+$/, "");
   const retrievalToken = String(env.NOTES_RETRIEVAL_SERVICE_TOKEN || "");
   if (notesServiceBaseUrl && retrievalToken && clerkUserId) {
-    const response = await fetch(`${notesServiceBaseUrl}/v1/internal/askai/private-research`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Level-Grind-Retrieval-Token": retrievalToken,
-      },
-      body: JSON.stringify({ question, clerkUserId, limit, scope }),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) throw new Error(`NOTES_RETRIEVAL_${response.status}`);
-    const payload = await response.json();
+    const retrieve = async (searchQuestion) => {
+      const response = await fetch(`${notesServiceBaseUrl}/v1/internal/askai/private-research`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Level-Grind-Retrieval-Token": retrievalToken,
+        },
+        body: JSON.stringify({ question: searchQuestion, clerkUserId, limit, scope }),
+        signal: AbortSignal.timeout(8_000),
+      });
+      if (!response.ok) throw new Error(`NOTES_RETRIEVAL_${response.status}`);
+      const payload = await response.json();
+      return Array.isArray(payload.records) ? payload.records : [];
+    };
+    let retrieved = await retrieve(question);
+    // Coverage/overview questions often contain no domain term represented in
+    // the blind index. When strict matching returns nothing, retrieve the most
+    // recent governed records so AskAI can still summarize library coverage.
+    if (!retrieved.length && clean(question)) retrieved = await retrieve("");
     // The internal Tencent service has already restricted this route to active
     // team members and records explicitly enabled for team AskAI processing.
     // Do not confuse that permission with raw-record visibility or downloads:
     // only a bounded, question-relevant gray-box excerpt crosses this boundary.
-    return (Array.isArray(payload.records) ? payload.records : [])
+    return retrieved
       .filter((record) => record.internalAiAllowed !== false)
       .map((record, index) => ({
         id: `private-team:${record.type || "research"}:${index + 1}`,
