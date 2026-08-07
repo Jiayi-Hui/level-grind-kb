@@ -170,7 +170,8 @@ export function IdeaBookView() {
     if (!writeOpen) { setMessage("尚未开放上传：共享数据库、对象存储或写入队列未配置完成，不会发送或保存这条 Idea。"); return; }
     try {
       const endpoint = selected ? `/api/shared-ideas/${selected.id}` : "/api/shared-ideas";
-      const payload = await readJson(await request(endpoint, { method: selected ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version || 0, title, ticker, thesis, status, direction, noteIds, templateFields, sensitivityLevel, viewAllowed, internalAiAllowed, externalAiAllowed, webSearchAllowed, downloadAllowed, redactionRequired }) })) as { idea: Idea };
+      const persistedThesis = thesis || (!selected && queuedFile ? `附件：${queuedFile.name}` : "");
+      const payload = await readJson(await request(endpoint, { method: selected ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version || 0, title, ticker, thesis: persistedThesis, status, direction, noteIds, templateFields, sensitivityLevel, viewAllowed, internalAiAllowed, externalAiAllowed, webSearchAllowed, downloadAllowed, redactionRequired }) })) as { idea: Idea };
       const refreshed = await readJson(await request("/api/shared-ideas", { cache: "no-store" })) as { ideas?: Idea[] };
       const confirmed = (refreshed.ideas || []).find((idea) => idea.id === payload.idea?.id);
       if (!confirmed) throw new Error("团队 Idea 写入未能在刷新后确认；已停止后续附件上传。");

@@ -82,7 +82,9 @@ test("Notes and Ideas start with an upload-first flow and keep manual entry seco
     assert.doesNotMatch(source, /research-preview-boundary/);
   }
   assert.match(notes, /上传你的第一个 Note/);
+  assert.match(notes, /const persistedBody = body \|\| \(!selected && queuedFile/);
   assert.match(ideas, /上传你的第一个 Idea/);
+  assert.match(ideas, /const persistedThesis = thesis \|\| \(!selected && queuedFile/);
   assert.match(css, /first-record-celebration/);
   assert.match(css, /manager-review-strip/);
 });

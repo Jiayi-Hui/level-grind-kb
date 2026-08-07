@@ -231,10 +231,14 @@ export function SharedNotesView() {
     setSaving(true); setMessage("");
     try {
       const endpoint = selected ? `/api/shared-notes/${selected.id}` : "/api/shared-notes";
+      // The encrypted parent must exist before the server can issue a direct
+      // COS upload URL. Keep this interim body factual and minimal; parsed
+      // attachment text is indexed separately as the research source.
+      const persistedBody = body || (!selected && queuedFile ? `附件：${queuedFile.name}` : "");
       const payload = await responseJson(await request(endpoint, {
         method: selected ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version ?? 0, title, body, sourceKind, sensitivityLevel, templateFields, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, downloadAllowed, redactionRequired, aiProcessingAllowed, externalSearchAllowed }),
+        body: JSON.stringify({ id: selected?.id, expectedVersion: selected?.version ?? 0, title, body: persistedBody, sourceKind, sensitivityLevel, templateFields, viewAllowed, internalAiAllowed: aiProcessingAllowed, externalAiAllowed, webSearchAllowed: externalSearchAllowed, downloadAllowed, redactionRequired, aiProcessingAllowed, externalSearchAllowed }),
       })) as { note: Note };
       const refreshed = await responseJson(await request("/api/shared-notes", { cache: "no-store" })) as { notes?: Note[] };
       const confirmed = (refreshed.notes || []).find((note) => note.id === payload.note?.id);
