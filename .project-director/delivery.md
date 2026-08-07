@@ -507,6 +507,21 @@ adapter and `idea-graph-host.css` for viewport sizing. The package commit
 contains the complete 08/06 dataset, fixed cluster layout, filters, hover
 network behavior, playback, details, sources, statistics, and legends.
 
-Production release and twelve-file import remain gated on the ordered
-TencentDB/API confirmation. No Clerk user, invitation, or session migration is
-part of this release.
+Production release completed through GitHub Actions run `31150583470`; the
+upload-first hotfix completed through run `31151310194`. The canonical graph is
+live at `level-grind.com` and production browser QA matches the reviewed local
+network.
+
+The approved intake batch is now stored and parsed in production: 10 Notes
+(`0803`–`0806`, the weekly report, Microsoft expert exchange, two meeting-note
+PDFs, the Daily, and one Public RSI/compute benchmark) and two Ideas (auto and
+machinery investment memos). The manager view reads back 12 Notes in total
+(including two prior smoke records) and three Ideas in total (including one
+prior smoke record). Markdown, PDF and DOCX all completed the TencentDB parent
+write, COS attachment lifecycle and server-side parser/index path. No Clerk
+user, invitation, identity or session migration was performed.
+
+The remaining release proof is the live ordinary-account comparison: the
+manager session is verified; a separate ordinary Clerk session is still
+required to demonstrate that raw manager-owned records are absent while AskAI
+retains gray-box team retrieval.

@@ -92,5 +92,22 @@
     together and rendered a connected 13-node/10-edge network;
   - playback advanced 2026-08-06 to 2026-08-03 after play was activated;
   - inspector, relationship list, source area, statistics, and legends were visible.
-- Pending production evidence: migration/import receipts, production URL hash,
-  and two-account raw-view comparison.
+- Production EdgeOne QA passed at `https://www.level-grind.com/` after Actions
+  runs `31150583470` (canonical graph) and `31151310194` (upload-first parent
+  creation fix).
+- Production manager-session intake proof:
+  - 10 requested Notes are visible alongside two earlier smoke records;
+  - two requested Ideas are visible alongside one earlier smoke record;
+  - every requested attachment reports `解析完成 · v3` and displays server
+    read-back text;
+  - `0803.md` receipt: Note `c0ec7dda-e5f7-47d9-bb84-8dbbca37991d`, attachment
+    `926b1aab-9c49-4148-a875-b3e1bef723e4`;
+  - `0804.md` receipt: Note `2e7b3c16-a458-46f9-b1aa-7e9da7db61b2`, attachment
+    `4edf036e-7804-407d-b7ea-ba631fa39408`;
+  - weekly PDF receipt: Note `3056d69b-f48d-4a86-bb31-75552a7ad5af`, attachment
+    `4e5212cf-d6bd-4a44-b00a-406764822a69`;
+  - Public RSI benchmark receipt: Note `c1ea6d46-4732-4dd5-b5cd-0eed32b93ff6`,
+    attachment `1e01ef05-201d-4113-96d4-c81de59c32b9`;
+  - machinery memo receipt: Idea `0b8e02ef-4067-423a-8daf-2a1944f4c1cd`.
+- Pending production evidence: ordinary-account raw-view comparison in a
+  separate authenticated Clerk session.

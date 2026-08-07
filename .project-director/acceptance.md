@@ -457,7 +457,9 @@
   relationship sources, statistics, and legends remain canonical.
 - [x] 08/06 is the latest reviewed graph period and is rendered by default.
 - [x] Portable EdgeOne build, 65 source tests, and lint pass under Node 24.
-- [ ] Production database import confirms ordered migrations 001–007.
-- [ ] Production EdgeOne deployment is green and public graph QA passes.
-- [ ] All twelve approved files have confirmed server/attachment records.
+- [x] Production database import confirms ordered migrations 001–007 through
+  authenticated create, attachment-complete, parse and indexed read-back flows.
+- [x] Production EdgeOne deployment is green and public graph QA passes.
+- [x] All twelve approved files have confirmed server/attachment records and
+  parsed read-back (10 Notes, including one Public benchmark; 2 Ideas).
 - [ ] Manager can review the import; ordinary account cannot list/open it.
