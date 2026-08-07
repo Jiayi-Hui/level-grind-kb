@@ -384,12 +384,12 @@ async function retrievePrivateResearchForAskAi(clerkUserId, question, limit = 24
       const type = candidate.entity_type; const table = type === "note" ? "research_notes" : "research_ideas"; const allowed = type === "note" ? "ai_processing_allowed" : "internal_ai_allowed"; const prefix = type === "note" ? "body" : "thesis";
       const row = (await pool.query(`SELECT * FROM ${table} WHERE id=$1 AND team_id=$2 AND deleted_at IS NULL AND ${allowed}=true`, [candidate.entity_id, TEAM])).rows[0];
       if (!row) continue;
-      records.push({ type, id: row.id, title: `[Private team ${type === "note" ? "Note" : "Idea"}]`, ticker: row.ticker || undefined, content: decrypted(prefix,row,type), sensitivityLevel: row.sensitivity_level, externalAiAllowed: row.external_ai_allowed === true, redactionRequired: row.redaction_required === true, updatedAt: row.updated_at, score: Number(candidate.overlap || 0) });
+      records.push({ type, id: row.id, title: `[Private team ${type === "note" ? "Note" : "Idea"}]`, ticker: row.ticker || undefined, content: decrypted(prefix,row,type), sensitivityLevel: row.sensitivity_level, internalAiAllowed: true, externalAiAllowed: row.external_ai_allowed === true, redactionRequired: row.redaction_required === true, updatedAt: row.updated_at, score: Number(candidate.overlap || 0) });
       continue;
     }
     const row = (await pool.query(`SELECT a.*,e.*,CASE WHEN a.target_type='note' THEN n.ai_processing_allowed ELSE i.internal_ai_allowed END AS internal_ai_allowed,CASE WHEN a.target_type='note' THEN n.external_ai_allowed ELSE i.external_ai_allowed END AS external_ai_allowed,CASE WHEN a.target_type='note' THEN n.sensitivity_level ELSE i.sensitivity_level END AS sensitivity_level,CASE WHEN a.target_type='note' THEN n.redaction_required ELSE i.redaction_required END AS redaction_required FROM research_attachments a JOIN research_attachment_extractions e ON e.attachment_id=a.id LEFT JOIN research_notes n ON a.target_type='note' AND n.id=a.target_id AND n.deleted_at IS NULL LEFT JOIN research_ideas i ON a.target_type='idea' AND i.id=a.target_id AND i.deleted_at IS NULL WHERE a.id=$1 AND a.team_id=$2 AND a.deleted_at IS NULL`, [candidate.entity_id, TEAM])).rows[0];
     if (!row?.internal_ai_allowed) continue;
-    records.push({ type: "attachment", id: row.id, title: "[Private team Attachment]", content: decryptText({ ciphertext_b64: row.text_ciphertext_b64, nonce_b64: row.text_nonce_b64, auth_tag_b64: row.text_auth_tag_b64, wrapped_data_key_b64: row.text_wrapped_data_key_b64, key_wrap_nonce_b64: row.text_key_wrap_nonce_b64, key_wrap_auth_tag_b64: row.text_key_wrap_auth_tag_b64, key_version: row.text_key_version }, cryptoContext, attachmentBinding(row.id)), sensitivityLevel: row.sensitivity_level, externalAiAllowed: row.external_ai_allowed === true, redactionRequired: row.redaction_required === true, updatedAt: row.updated_at, score: Number(candidate.overlap || 0) });
+    records.push({ type: "attachment", id: row.id, title: "[Private team Attachment]", content: decryptText({ ciphertext_b64: row.text_ciphertext_b64, nonce_b64: row.text_nonce_b64, auth_tag_b64: row.text_auth_tag_b64, wrapped_data_key_b64: row.text_wrapped_data_key_b64, key_wrap_nonce_b64: row.text_key_wrap_nonce_b64, key_wrap_auth_tag_b64: row.text_key_wrap_auth_tag_b64, key_version: row.text_key_version }, cryptoContext, attachmentBinding(row.id)), sensitivityLevel: row.sensitivity_level, internalAiAllowed: true, externalAiAllowed: row.external_ai_allowed === true, redactionRequired: row.redaction_required === true, updatedAt: row.updated_at, score: Number(candidate.overlap || 0) });
   }
   return { records, requesterFound: true, indexMode: "blind-hash-lexical-v1" };
 }
@@ -410,9 +410,11 @@ async function handler(req,res){const url=new URL(req.url||"/",`http://${req.hea
       if (!serviceTokenMatches(req.headers["x-level-grind-retrieval-token"])) throw err("RETRIEVAL_SERVICE_AUTH_REQUIRED", 401);
       const input = await readBody(req);
       if (!clean(input.clerkUserId, 128)) throw err("CLERK_USER_ID_REQUIRED");
-      // Contract: this is internal-only. Neither external model nor web-search
-      // flags can elevate a record into this result set.
-      return send(res, 200, { scope: "team_gray_box_internal_ai", externalUse: "forbidden", ...await retrievePrivateResearchForAskAi(input.clerkUserId, clean(input.question, 4000), input.limit) });
+      // Contract: this server-to-server route may return only records approved
+      // for team AskAI processing. EdgeOne must reduce them to bounded,
+      // question-relevant excerpts before provider use; raw-record visibility
+      // is never granted to the requesting browser.
+      return send(res, 200, { scope: "team_gray_box_internal_ai", modelUse: "governed_excerpt_only", rawRecordVisibility: "forbidden", ...await retrievePrivateResearchForAskAi(input.clerkUserId, clean(input.question, 4000), input.limit) });
     } catch (e) { return send(res, Number(e?.status || 500), { error: Number(e?.status || 500) >= 500 ? "RETRIEVAL_SERVICE_ERROR" : e.message }); }
   }
   const attachmentTargetMatch = url.pathname.match(/^\/v1\/(notes|ideas)\/([0-9a-f-]{36})\/attachments$/i);

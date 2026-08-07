@@ -151,4 +151,8 @@ Raw lists and detail views remain owner-or-member-manager only. AskAI calls the
 server-only `/v1/internal/askai/private-research` route with a separate retrieval
 token and the requesting Clerk user ID. Any active team member can gray-box
 retrieve only records whose current parent policy allows internal AI. Owner
-identity, original attachment names and object keys are never returned.
+identity, original attachment names and object keys are never returned. Before
+the selected model is called, EdgeOne ranks the decrypted text against the
+question and keeps only bounded, relevant excerpts (at most 1,800 characters
+per result). The browser never receives another member's raw record, title,
+filename, author identity or full decrypted body.

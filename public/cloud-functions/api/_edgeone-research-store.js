@@ -134,6 +134,30 @@ function researchScore(record, terms) {
     + (content.includes(term) ? term.length : 0), 0);
 }
 
+function grayBoxExcerpt(value, question, maxLength = 1800) {
+  const text = clean(value, 20_000);
+  if (!text) return "";
+  const terms = researchTerms(question);
+  const chunks = text
+    .split(/\n{2,}|(?<=[。！？.!?])\s+/u)
+    .map((chunk, index) => ({ index, text: clean(chunk, 900) }))
+    .filter((chunk) => chunk.text);
+  const ranked = chunks
+    .map((chunk) => ({
+      ...chunk,
+      score: terms.reduce((total, term) => total + (chunk.text.toLowerCase().includes(term) ? term.length : 0), 0),
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+  const selected = [];
+  let length = 0;
+  for (const chunk of ranked) {
+    if (selected.length >= 6 || length + chunk.text.length > maxLength) continue;
+    selected.push(chunk);
+    length += chunk.text.length;
+  }
+  return clean(selected.sort((a, b) => a.index - b.index).map((chunk) => chunk.text).join("\n\n"), maxLength);
+}
+
 // Server-only gray-box retrieval. This helper is imported by agent-chat and is
 // not exposed as a browser route. It strips owner identity, original titles,
 // attachment names and object keys before model context is assembled.
@@ -152,14 +176,17 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
     });
     if (!response.ok) throw new Error(`NOTES_RETRIEVAL_${response.status}`);
     const payload = await response.json();
+    // The internal Tencent service has already restricted this route to active
+    // team members and records explicitly enabled for team AskAI processing.
+    // Do not confuse that permission with raw-record visibility or downloads:
+    // only a bounded, question-relevant gray-box excerpt crosses this boundary.
     return (Array.isArray(payload.records) ? payload.records : [])
-      .filter((record) => record.sensitivityLevel === "public"
-        || (record.externalAiAllowed === true && record.redactionRequired !== true))
+      .filter((record) => record.internalAiAllowed !== false)
       .map((record, index) => ({
-      id: `private-team:${record.type || "research"}:${index + 1}`,
-      title: clean(record.title || `[Private team Research ${index + 1}]`, 160),
-      content: clean(record.content, 5000),
-      privateTeamEvidence: true,
+        id: `private-team:${record.type || "research"}:${index + 1}`,
+        title: clean(record.title || `[Private team Research ${index + 1}]`, 160),
+        content: grayBoxExcerpt(record.content, question),
+        privateTeamEvidence: true,
       })).filter((entry) => entry.content);
   }
   const terms = researchTerms(question);
@@ -168,9 +195,7 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
   )));
   const stored = (await Promise.all(listings.flatMap((listing) => listing.blobs.map(({ key }) => (
     records.get(key, { type: "json", consistency: "strong" })
-  ))))).filter((item) => item && !item.deletedAt && item.internalAiAllowed === true
-    && (item.sensitivityLevel === "public"
-      || (item.externalAiAllowed === true && item.redactionRequired !== true)));
+  ))))).filter((item) => item && !item.deletedAt && item.internalAiAllowed === true);
   const decrypted = await Promise.all(stored.map((item) => clientRecord(item, env)));
   const ranked = decrypted
     .map((record) => ({
@@ -183,7 +208,7 @@ export async function privateTeamResearchContext(question, env, limit = 6, clerk
   return ranked.map(({ record }, index) => ({
     id: `private-team:${record.resource}:${index + 1}`,
     title: `[Private team ${record.resource === "notes" ? "Note" : "Idea"} ${index + 1}]`,
-    content: clean(record.resource === "notes" ? record.body : record.thesis, 5000),
+    content: grayBoxExcerpt(record.resource === "notes" ? record.body : record.thesis, question),
     privateTeamEvidence: true,
   })).filter((entry) => entry.content);
 }

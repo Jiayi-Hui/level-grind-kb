@@ -30,9 +30,10 @@ test("shared research records are owner-or-manager editable, audited, and expose
   assert.match(store, /function canEdit/);
   assert.match(store, /return record\.owner\?\.user_id === actor\.subject \|\| isManager\(actor, env\)/);
   assert.match(store, /item\.internalAiAllowed === true/);
-  assert.match(store, /record\.sensitivityLevel === "public"/);
-  assert.match(store, /record\.externalAiAllowed === true && record\.redactionRequired !== true/);
-  assert.match(store, /item\.externalAiAllowed === true && item\.redactionRequired !== true/);
+  assert.match(store, /record\.internalAiAllowed !== false/);
+  assert.match(store, /grayBoxExcerpt/);
+  assert.match(store, /maxLength = 1800/);
+  assert.doesNotMatch(store, /content: clean\(record\.content, 5000\)/);
   assert.match(store, /function managerEmails/);
   assert.match(store, /LEVEL_GRIND_OWNER_EMAIL/);
   assert.match(store, /LEVEL_GRIND_PRIMARY_PM_EMAIL/);
