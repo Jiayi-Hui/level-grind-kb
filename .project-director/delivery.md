@@ -532,3 +532,13 @@ The latest canonical Investment Graph commit is mirrored into Level Grind and
 Idea Graph is now the default signed-in workspace. The navigation entry remains
 available in its existing position. This change is locally verified and ready
 for preview; production deployment is intentionally held for release approval.
+
+## V5.29 delivery status
+
+Notes and Ideas now put edit/delete controls, creation and last-edit dates, and
+prominent classification labels directly in the left list. The Idea editor is
+shorter: manual Note linking and the two validation dashboards are hidden from
+this stage, while historical `noteIds` remain intact for future model-derived,
+source-attributed relationships. Ticker entry remains and clearly signals the
+future automatic price-tracking path. Personal Knowledge and Reports now sit
+below AI Capex in navigation.

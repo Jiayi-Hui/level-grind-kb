@@ -456,6 +456,15 @@
 - [x] Node and edge hover neighborhoods, daily playback, inspector,
   relationship sources, statistics, and legends remain canonical.
 - [x] 08/06 is the latest reviewed graph period and is rendered by default.
+
+## V5.29 Notes / Ideas workspace cleanup
+
+- [x] Every Note and Idea exposes edit and soft-delete controls in its left-list row.
+- [x] Left-list rows show both creation date and last-edit date.
+- [x] Public, Internal and Confidential use larger, distinct pale-color labels.
+- [x] Idea entry includes an explicit Idea date and retains the ticker field with an automatic-price-tracking hint.
+- [x] Manual Note association and the large fundamental/market validation panels are removed from the Idea editor; existing attributed link data remains preserved.
+- [x] Personal Knowledge and Reports move below AI Capex in the left navigation.
 - [x] Portable EdgeOne build, 65 source tests, and lint pass under Node 24.
 - [x] Production database import confirms ordered migrations 001–007 through
   authenticated create, attachment-complete, parse and indexed read-back flows.

@@ -17,6 +17,8 @@ test("EdgeOne ships first-class Notes库 and Ideas库 navigation with fail-close
   assert.match(main, /打开 Idea Graph/);
   assert.match(main, /<SharedNotesView \/>/);
   assert.match(main, /<IdeaBookView \/>/);
+  assert.ok(main.indexOf("<span>AI Capex</span>") < main.indexOf("<span>个人知识库</span>"));
+  assert.ok(main.indexOf("<span>个人知识库</span>") < main.indexOf("<span>报告库</span>"));
 
   for (const source of [notes, ideas]) {
     assert.match(source, /VITE_UI_FIXTURES === "true"/);
@@ -66,6 +68,8 @@ test("Notes uses the authenticated direct-COS attachment contract without browse
   assert.match(notes, /团队 Notes 写入未能在刷新后确认/);
   assert.match(notes, /disabled=\{!writeOpen\}/);
   assert.match(notes, /团队写入已确认/);
+  assert.match(notes, /void remove\(note\)/);
+  assert.match(notes, /创建 .* · 编辑/);
 });
 
 test("Notes and Ideas start with an upload-first flow and keep manual entry secondary", async () => {
@@ -108,10 +112,16 @@ test("Notes renders attachment content in a read-only document preview, with a s
   assert.match(css, /document-text-preview/);
 });
 
-test("Idea Book models workflow statuses and linked Notes in the preview contract", async () => {
+test("Idea Book keeps attributed links in data while removing manual Note linkage", async () => {
   const ideas = await readFile(new URL("../deploy/edgeone-demo/src/idea-book.tsx", import.meta.url), "utf8");
   for (const status of ["draft", "pending_review", "approved", "rejected", "archived"]) assert.match(ideas, new RegExp(status));
-  assert.match(ideas, /关联 Notes/);
+  assert.doesNotMatch(ideas, />关联 Notes</);
+  assert.match(ideas, /noteIds/);
+  assert.match(ideas, /Idea 日期/);
+  assert.match(ideas, /填写 ticker 后自动开始价格跟踪/);
+  assert.doesNotMatch(ideas, /FUNDAMENTAL VALIDATION|MARKET VALIDATION/);
+  assert.match(ideas, /创建 .* · 编辑/);
+  assert.match(ideas, /void remove\(idea\)/);
   assert.match(ideas, /ATTACHMENT PARSING/);
   assert.match(ideas, /\/api\/research-attachments\?parentType=idea&parentId=/);
   assert.match(ideas, /sha256/);

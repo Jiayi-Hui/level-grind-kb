@@ -93,18 +93,6 @@ function ContinuityApp() {
             <span>AskAI</span>
           </button>
           <button
-            className={`nav-item ${view === "knowledge" ? "active" : ""}`}
-            onClick={() => selectView("knowledge")}
-          >
-            <span className="nav-symbol">⌂</span>
-            <span>个人知识库</span>
-          </button>
-          <button className="nav-item" disabled title="待上线">
-            <span className="nav-symbol">▤</span>
-            <span>报告库</span>
-            <small>待上线</small>
-          </button>
-          <button
             className={`nav-item ${view === "notes" ? "active" : ""}`}
             onClick={() => selectView("notes")}
           >
@@ -135,6 +123,18 @@ function ContinuityApp() {
           >
             <span className="nav-symbol">▥</span>
             <span>AI Capex</span>
+          </button>
+          <button
+            className={`nav-item ${view === "knowledge" ? "active" : ""}`}
+            onClick={() => selectView("knowledge")}
+          >
+            <span className="nav-symbol">⌂</span>
+            <span>个人知识库</span>
+          </button>
+          <button className="nav-item" disabled title="待上线">
+            <span className="nav-symbol">▤</span>
+            <span>报告库</span>
+            <small>待上线</small>
           </button>
           <button className="nav-item" disabled title="待上线">
             <span className="nav-symbol">▦</span>

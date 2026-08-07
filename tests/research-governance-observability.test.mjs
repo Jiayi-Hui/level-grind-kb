@@ -81,15 +81,14 @@ test("research classification keeps Public external and permits only internal re
   assert.match(fallback, /Public 仅用于外源 benchmark/);
 });
 
-test("Ideas separate hourly market validation from editable fundamental validation", async () => {
+test("Ideas retain governed validation data while keeping the editor compact", async () => {
   const [idea, market, store] = await Promise.all([
     read("deploy/edgeone-demo/src/idea-book.tsx"),
     read("app/market-validation.tsx"),
     read("public/cloud-functions/api/_edgeone-research-store.js"),
   ]);
-  assert.match(idea, /Idea 股价验证/);
-  assert.match(idea, /基本面证据 \/ 反向证据/);
-  assert.match(idea, /validationNextCheck/);
+  assert.match(idea, /填写 ticker 后自动开始价格跟踪/);
+  assert.doesNotMatch(idea, /FUNDAMENTAL VALIDATION|MARKET VALIDATION/);
   assert.match(market, /interval=1h/);
   assert.match(market, /最大 Upside/);
   assert.match(market, /最大 Downside/);

@@ -94,6 +94,11 @@ function documentKind(attachment: Attachment) {
   if (name.endsWith(".md") || name.endsWith(".markdown")) return "md";
   return "txt";
 }
+const sensitivityCopy: Record<Note["sensitivityLevel"], string> = {
+  public: "Public",
+  internal: "Internal",
+  confidential: "Confidential",
+};
 function ReadonlyTextPreview({ text, markdown }: { text: string; markdown: boolean }) {
   return <article className={`document-text-preview ${markdown ? "markdown" : "plain"}`} aria-label="只读正文预览">{text.split(/\r?\n/).map((line, index) => {
     const trimmed = line.trim();
@@ -251,10 +256,10 @@ export function SharedNotesView() {
     } catch (error) { setMessage(error instanceof Error ? error.message : "保存失败。"); }
     finally { setSaving(false); }
   };
-  const remove = async () => {
-    if (!selected || !window.confirm(`将“${selected.title}”移入已删除状态？`)) return;
+  const remove = async (target: Note | null = selected) => {
+    if (!target || !window.confirm(`将“${target.title}”移入已删除状态？`)) return;
     if (demoMode) {
-      setNotes((current) => current.filter((note) => note.id !== selected.id));
+      setNotes((current) => current.filter((note) => note.id !== target.id));
       resetComposer(); setPreviewState("success"); setMessage("演示删除完成：只改变本地内存，未写入团队服务。");
       return;
     }
@@ -264,9 +269,9 @@ export function SharedNotesView() {
     }
     setSaving(true); setMessage("");
     try {
-      await responseJson(await request(`/api/shared-notes/${selected.id}`, {
+      await responseJson(await request(`/api/shared-notes/${target.id}`, {
         method: "DELETE", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selected.id, expectedVersion: selected.version }),
+        body: JSON.stringify({ id: target.id, expectedVersion: target.version }),
       }));
       resetComposer(); await load(); setMessage("已删除；原记录保留在共享数据库的审计历史中。");
     } catch (error) { setMessage(error instanceof Error ? error.message : "删除失败。"); }
@@ -365,7 +370,17 @@ export function SharedNotesView() {
       <aside className="shared-notes-list"><input aria-label="检索 Notes" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="检索标题或正文" />
         <div className="shared-notes-count">{loading ? "加载中…" : `${filtered.length} 条共享纪要`}</div>
         {!loading && !filtered.length && (!notes.length && !query.trim() ? <div className="shared-notes-empty first-record-empty"><strong>还没有你的 Note</strong><button type="button" disabled={!writeOpen} onClick={() => fileInput.current?.click()}>上传你的第一个 Note</button></div> : <p className="shared-notes-empty">没有匹配的会议纪要。</p>)}
-        {filtered.map((note) => <button key={note.id} className={`shared-note-row ${selected?.id === note.id ? "selected" : ""}`} onClick={() => void choose(note)}><strong>{note.title}</strong><span>{note.owner?.display_name || note.owner?.email || "团队成员"} · {new Date(note.updatedAt).toLocaleDateString("zh-CN")}</span><small>{note.sourceKind} · {note.sensitivityLevel}</small></button>)}
+        {filtered.map((note) => <article key={note.id} className={`shared-note-row ${selected?.id === note.id ? "selected" : ""}`}>
+          <button type="button" className="shared-note-row-main" onClick={() => void choose(note)}>
+            <strong>{note.title}</strong>
+            <span>创建 {new Date(note.createdAt).toLocaleDateString("zh-CN")} · 编辑 {new Date(note.updatedAt).toLocaleDateString("zh-CN")}</span>
+            <span>{note.owner?.display_name || note.owner?.email || "团队成员"} · {note.sourceKind}</span>
+          </button>
+          <footer className="shared-note-row-footer">
+            <span className={`sensitivity-pill sensitivity-${note.sensitivityLevel}`}>{sensitivityCopy[note.sensitivityLevel]}</span>
+            <span className="shared-note-row-actions"><button type="button" onClick={() => void choose(note)}>编辑</button><button type="button" className="delete" disabled={!writeOpen} onClick={() => void remove(note)}>删除</button></span>
+          </footer>
+        </article>)}
       </aside>
       <form className="shared-notes-editor" onSubmit={save}>
         <div className="shared-notes-editor-head"><div><p className="eyebrow">MEETING NOTES</p><h3>{selected ? "编辑会议纪要" : "新增会议纪要"}</h3></div>{selected && <span>v{selected.version}</span>}</div>
@@ -396,7 +411,7 @@ export function SharedNotesView() {
           <section className="shared-notes-body document-preview-panel" aria-label="正文预览"><div className="document-preview-head"><span>正文预览</span><button type="button" className="quiet-button" onClick={() => setEditingBody((current) => !current)}>{editingBody ? "完成编辑" : "编辑正文"}</button></div>{editingBody ? <label className="document-edit-field"><span>可编辑 Note 正文</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={500000} placeholder="输入可供团队检索的正文。" /></label> : !previewAttachment ? <div className="document-preview-empty"><strong>尚未选择文件</strong><p>上传或选择一个附件后，可在这里查看只读文件预览。</p></div> : documentKind(previewAttachment) === "pdf" && safePreviewUrl(previewAttachment.previewUrl) ? <iframe className="document-pdf-preview" title={`${previewAttachment.fileName} PDF 预览`} src={safePreviewUrl(previewAttachment.previewUrl)!} sandbox="allow-scripts allow-same-origin" /> : <div className="document-preview-content"><div className="document-preview-file-meta"><strong>{previewAttachment.fileName}</strong><span>{documentKind(previewAttachment) === "docx" ? "DOCX · 后端已解析正文" : `${documentKind(previewAttachment).toUpperCase()} · 只读文本预览`}</span></div>{previewAttachment.extraction?.text ? <ReadonlyTextPreview text={previewAttachment.extraction.text} markdown={documentKind(previewAttachment) === "md"} /> : <div className="document-preview-empty"><strong>{attachmentLabel(previewAttachment)}</strong><p>{documentKind(previewAttachment) === "pdf" ? "尚未取得可安全内嵌的 PDF 地址；解析后的正文就绪后会显示在此处。" : "后端尚未返回可预览的正文。请稍后刷新或重试解析。"}</p></div>}</div>}</section>
         </div>
         </details>
-        <div className="shared-notes-editor-actions"><button type="submit" disabled={saving || !writeOpen}>{saving ? "保存中…" : demoMode ? "仅保存到本地演示" : "保存到团队 Notes"}</button>{selected && <button type="button" className="danger-button" disabled={saving || !writeOpen} onClick={() => void remove()}>删除</button>}</div>
+        <div className="shared-notes-editor-actions"><button type="submit" disabled={saving || !writeOpen}>{saving ? "保存中…" : demoMode ? "仅保存到本地演示" : "保存到团队 Notes"}</button></div>
         {writeConfirmation && <p className="shared-write-confirmation" role="status">{writeConfirmation}</p>}
         {message && <p className="shared-notes-message">{message}</p>}
       </form>
