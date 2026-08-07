@@ -460,3 +460,22 @@ visible allowlist until such an endpoint is available.
 | Automated validation | Pass | ESLint, 64/64 tests, Vite production build, importer syntax check, and `git diff --check` pass. |
 | Browser QA | Pass | Desktop Ideas/Graph and mobile Notes were inspected; navigation, metadata, and responsive layout remain readable. |
 | Release | Pending approval | No migration, Tiff file upload, commit, push, or deployment was performed in this increment. |
+
+## V5.26 — Investment Graph parity and production model smoke (2026-08-07)
+
+| Check | Result | Production evidence |
+|---|---|---|
+| Graph fidelity | Pass | The portable Idea Graph uses the sibling Investment Graph's three-column atlas, node inspector, relationship legend, zoom/fit/re-layout controls and daily evolution rail inside the Level Grind shell. |
+| Multi-select | Pass | Production accepted simultaneous `AI硬件 + 汽车` industry filters and the `美股` market filter. |
+| Daily evolution | Pass | The 2026-08-03—2026-08-06 slider and playback control render on the canonical site. |
+| DeepSeek | Pass | `deepseek-v4-flash` returned `OK`; provider latency shown by the production UI was 6.7s. |
+| OpenRouter Sol | Pass | `openai/gpt-5.6-sol` returned `OK`; provider latency 1.8s. |
+| OpenRouter Terra | Pass | `openai/gpt-5.6-terra` returned `OK`; provider latency 1.3s. |
+| OpenRouter Luna | Pass | `openai/gpt-5.6-luna` returned `OK`; provider latency 1.4s. |
+| OpenRouter GPT-5.5 | Pass | `openai/gpt-5.5` returned `OK`; provider latency 1.7s. |
+| OpenRouter Opus 4.8 | Pass | `anthropic/claude-opus-4.8` returned `OK`; provider latency 1.4s. |
+| OpenRouter GLM-5.2 | Pass | `z-ai/glm-5.2` returned `OK`; provider latency 0.9s. |
+| OpenRouter Kimi K3 | Pass | `moonshotai/kimi-k3` returned `OK`; provider latency 2.6s. |
+| Current AIDC snapshot | Pass | The refreshed Epoch source now contains 75 campuses and all 75 have a publishable map position; regression checks follow the live source rather than a stale fixed count. |
+| Automated validation | Pass | ESLint, 65/65 tests, the portable EdgeOne build and `git diff --check` passed. |
+| Release | Pass | GitHub Actions run `31148679855` deployed commit `f18cda4` from `production` to the canonical EdgeOne site. |
