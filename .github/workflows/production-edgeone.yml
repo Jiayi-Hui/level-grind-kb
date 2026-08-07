@@ -35,6 +35,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Install Notes API dependencies
+        run: npm ci --prefix services/tencent-notes-api
+
       - name: Build portable EdgeOne release
         run: npm run edgeone-demo:build
 
