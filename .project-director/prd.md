@@ -639,3 +639,33 @@ client-side authentication protects static JSON assets.
 - AC-51: The current official 77-campus dataset publishes with 77 located records.
 - AC-52: Tiff source files remain local/private until the schema and release are
   approved; a repeatable authenticated importer is ready and dry-run validated.
+
+## V5.27 — Canonical Idea Graph restoration and production intake
+
+- FR-87: Level Grind consumes a checksum-verified read-only package mirror of
+  the reviewed private `investment-graph` commit as the canonical graph
+  implementation. It must not maintain copied graph data or a parallel
+  simplified React implementation.
+- FR-88: Industry and A/H/US market filters are independent multi-selects. A
+  multi-industry view retains cross-industry drivers, nodes, and edges.
+- FR-89: The graph retains the original preset industry-cluster layout, pale
+  dashed industry boundaries, equal circular security nodes, white/grey
+  observation securities, connection-neighborhood hover emphasis, daily
+  playback, inspector, relation sources, statistics, and legends.
+- FR-90: The reviewed 08/06 increment remains present in every packaged and
+  deployed build.
+- FR-91: After graph acceptance, additive production database migrations run
+  before the authenticated twelve-file import. Manager and ordinary-account
+  raw views are verified without changing Clerk identities or invitations.
+
+### Acceptance
+
+- AC-53: A source-integrity test pins the canonical graph commit and rejects
+  reintroduction of `idea-graph-data.js` or a copied graph implementation.
+- AC-54: Automated and browser QA cover multi-industry bridges, market
+  multi-select, preset layout, node/edge hover neighborhoods, observation-node
+  styling, 08/06 playback, details, sources, statistics, and legends.
+- AC-55: Migrations complete before upload; all twelve requested files receive
+  confirmed server records and attachment states.
+- AC-56: The configured manager can review the imported raw records while the
+  ordinary account cannot list or open them; both retain governed AskAI access.

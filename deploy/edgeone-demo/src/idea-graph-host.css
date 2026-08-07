@@ -1,0 +1,4 @@
+.atlas-shell {
+  min-height: 720px;
+  height: calc(100dvh - 72px);
+}

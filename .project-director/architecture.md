@@ -476,6 +476,11 @@ official Epoch ZIP -> scheduled refresh -> portable JSON -> evidence-ranked
 geocoding -> EdgeOne build artifact
 ```
 
-The production client never imports the sibling `investment-graph` repository;
-its reviewed candidate seed is copied into the deployable source tree. The daily
-AIDC workflow is source refresh plus validation, not a browser runtime dependency.
+The private `investment-graph` repository is the canonical source for the
+Cytoscape component, candidate data, styles, and interactions. A repeatable
+sync command creates a read-only vendor package and records the canonical Git
+commit plus per-file SHA-256 checksums, so CI does not need credentials for the
+private sibling repository. Level Grind owns only the generated mirror, a host
+adapter, and scoped sizing overrides; tests reject stale or altered mirrors and
+any parallel graph implementation. The daily AIDC workflow remains source
+refresh plus validation, not a browser runtime dependency.

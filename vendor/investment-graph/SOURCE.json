@@ -1,0 +1,10 @@
+{
+  "repository": "Jiayi-Hui/investment-graph",
+  "sourceCommit": "c4c94a3b44167c8a098c57ba6dcccbd8c6ab207d",
+  "files": {
+    "package.json": "434edb097ac617b35890050808363bdcdf8200bcdc089fa386b1fc693088e8df",
+    "src/investment-main.jsx": "1d168dfab10d776bad2a49d88d7ea8397de7c33b492aaadb333a1f7a6871b821",
+    "src/investment-data.js": "66e18b7c171f37822f5bd9562d1a73a34b6809240f8c3b0da921a6396c6484d0",
+    "src/investment-styles.css": "2691e2edf9772014581975cd14c327d8089fcd16e2a18e36660f0ae564a6fb22"
+  }
+}

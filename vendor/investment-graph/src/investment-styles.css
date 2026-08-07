@@ -1,4 +1,23 @@
-.atlas-shell { min-height: 720px; height: calc(100dvh - 72px); display: grid; grid-template-rows: 72px minmax(0, 1fr); background: radial-gradient(circle at 78% -10%, rgba(197,216,202,.28), transparent 31%), var(--paper); }
+.atlas-shell {
+  font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #10251F;
+  background: #F3F2ED;
+  font-synthesis: none;
+  --paper: #F3F2ED;
+  --panel: #FFFEFA;
+  --panel-blue: #EEF2EC;
+  --line: #DEDFD8;
+  --line-strong: #CBD1CA;
+  --ink: #10251F;
+  --muted: #68756E;
+  --blue: #214A3D;
+  --accent: #C75C35;
+  --green: #173F34;
+  --long: #DF5B5B;
+  --short: #31936A;
+}
+
+.atlas-shell { min-height: 100vh; display: grid; grid-template-rows: 72px minmax(0, 1fr); background: radial-gradient(circle at 78% -10%, rgba(197,216,202,.28), transparent 31%), var(--paper); }
 .atlas-topbar { padding: 0 30px; display: flex; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); background: rgba(250,250,246,.88); backdrop-filter: blur(20px) saturate(1.2); }
 .atlas-brand { min-width: 245px; display: flex; align-items: center; gap: 12px; }
 .atlas-brand > div:last-child { display: grid; gap: 1px; }
@@ -146,6 +165,9 @@
 .relation-note small { color: #98A5AA; font-size: 7px; }
 .relation-note a { color: #A65334; font-size: 7px; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
+.atlas-shell, .atlas-shell * { box-sizing: border-box; }
+.atlas-shell button, .atlas-shell input { font: inherit; }
+.atlas-shell button { color: inherit; }
 .atlas-shell ::-webkit-scrollbar { width: 5px; height: 5px; }
 .atlas-shell ::-webkit-scrollbar-thumb { border-radius: 4px; background: #C8CEC8; }
 .atlas-shell ::-webkit-scrollbar-track { background: transparent; }
@@ -160,6 +182,7 @@
   .relation-note { grid-row: 7; }
   .atlas-stage { min-height: 730px; }
 }
+
 @media (max-width: 760px) {
   .atlas-context { display: none; }
   .atlas-source { display: none; }

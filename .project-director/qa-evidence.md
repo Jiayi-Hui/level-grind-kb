@@ -80,3 +80,17 @@
   upload area, and contribution summaries render without horizontal overflow.
 - Production data write remains intentionally pending: it requires an
   authenticated canonical-domain session after explicit release approval.
+## V5.27 QA evidence
+
+- Canonical repository: `Jiayi-Hui/investment-graph@c4c94a3b44167c8a098c57ba6dcccbd8c6ab207d`.
+- Canonical package: build passed; 13 graph model/interaction tests passed.
+- Level Grind: portable EdgeOne build passed; 65 tests passed; lint passed on
+  Node 24.14.0.
+- Browser desktop QA at `127.0.0.1:4174`:
+  - default 08/06 view rendered 94 nodes, 117 relations, seven node types;
+  - AI hardware + autos and A-share + Hong Kong filters remained selected
+    together and rendered a connected 13-node/10-edge network;
+  - playback advanced 2026-08-06 to 2026-08-03 after play was activated;
+  - inspector, relationship list, source area, statistics, and legends were visible.
+- Pending production evidence: migration/import receipts, production URL hash,
+  and two-account raw-view comparison.

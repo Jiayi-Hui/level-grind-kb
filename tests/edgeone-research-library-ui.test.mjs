@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -132,28 +133,55 @@ test("Idea Book models workflow statuses and linked Notes in the preview contrac
 });
 
 test("Idea Graph preserves atlas controls and daily playback", async () => {
-  const [graph, data, css, main] = await Promise.all([
+  const [graph, hostCss, main, packageJson, canonicalGraph, canonicalData, canonicalCss, sourceManifest] = await Promise.all([
     readFile(new URL("../deploy/edgeone-demo/src/idea-graph.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../deploy/edgeone-demo/src/idea-graph-data.js", import.meta.url), "utf8"),
-    readFile(new URL("../deploy/edgeone-demo/src/idea-graph.css", import.meta.url), "utf8"),
+    readFile(new URL("../deploy/edgeone-demo/src/idea-graph-host.css", import.meta.url), "utf8"),
     readFile(new URL("../deploy/edgeone-demo/src/main.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../node_modules/@jiayi-hui/investment-graph/src/investment-main.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../node_modules/@jiayi-hui/investment-graph/src/investment-data.js", import.meta.url), "utf8"),
+    readFile(new URL("../node_modules/@jiayi-hui/investment-graph/src/investment-styles.css", import.meta.url), "utf8"),
+    readFile(new URL("../vendor/investment-graph/SOURCE.json", import.meta.url), "utf8").then(JSON.parse),
   ]);
   assert.match(main, /view === "graph"/);
   assert.match(main, /graph-content/);
-  assert.match(graph, /selectedSectors/);
-  assert.match(graph, /selectedMarkets/);
-  assert.match(graph, /toggleSelection/);
-  assert.match(graph, /逐日观点演进/);
-  assert.match(graph, /type="range"/);
-  assert.match(graph, /setPlaying/);
-  assert.match(graph, /fitGraph/);
-  assert.match(graph, /rerunLayout/);
-  assert.match(data, /export const periods/);
-  assert.match(data, /export const sectors/);
-  assert.match(data, /export const markets/);
-  assert.match(css, /\.atlas-workspace/);
-  assert.match(css, /\.atlas-controls/);
-  assert.match(css, /\.atlas-stage/);
-  assert.match(css, /\.atlas-detail/);
-  assert.doesNotMatch(graph, /investment-graph\/src/);
+  assert.match(graph, /@jiayi-hui\/investment-graph/);
+  assert.match(graph, /<InvestmentGraph/);
+  assert.doesNotMatch(graph, /cytoscape|selectedSectors|selectedMarkets|graphPositions/);
+  assert.match(packageJson, /file:vendor\/investment-graph/);
+  assert.equal(sourceManifest.repository, "Jiayi-Hui/investment-graph");
+  assert.equal(sourceManifest.sourceCommit, "c4c94a3b44167c8a098c57ba6dcccbd8c6ab207d");
+  assert.match(hostCss, /\.atlas-shell/);
+  assert.doesNotMatch(hostCss, /\.atlas-workspace|\.atlas-controls|\.atlas-stage|\.atlas-detail/);
+
+  assert.match(canonicalGraph, /selectedSectors/);
+  assert.match(canonicalGraph, /selectedMarkets/);
+  assert.match(canonicalGraph, /toggleSelection/);
+  assert.match(canonicalGraph, /crossIndustryBridgeIds/);
+  assert.match(canonicalGraph, /graphPositions/);
+  assert.match(canonicalGraph, /layout:\s*\{\s*name:\s*"preset"/);
+  assert.match(canonicalGraph, /mouseover/);
+  assert.match(canonicalGraph, /mouseout/);
+  assert.match(canonicalGraph, /逐日观点演进/);
+  assert.match(canonicalGraph, /type="range"/);
+  assert.match(canonicalGraph, /setPlaying/);
+  assert.match(canonicalGraph, /VISIBLE CONNECTIONS/);
+  assert.match(canonicalGraph, /sourceUrl/);
+  assert.match(canonicalGraph, /atlas-kpis/);
+  assert.match(canonicalData, /export const periods/);
+  assert.match(canonicalData, /"2026-08-06"/);
+  assert.match(canonicalData, /export const sectors/);
+  assert.match(canonicalData, /export const markets/);
+  assert.match(canonicalCss, /\.atlas-workspace/);
+  assert.match(canonicalCss, /\.atlas-controls/);
+  assert.match(canonicalCss, /\.atlas-stage/);
+  assert.match(canonicalCss, /\.atlas-detail/);
+  assert.match(canonicalGraph, /"border-style": "dashed"/);
+  assert.match(canonicalGraph, /width: 62/);
+  assert.match(canonicalGraph, /height: 62/);
+
+  for (const [relativePath, expected] of Object.entries(sourceManifest.files)) {
+    const content = await readFile(new URL(`../vendor/investment-graph/${relativePath}`, import.meta.url));
+    assert.equal(createHash("sha256").update(content).digest("hex"), expected, `${relativePath} must match its canonical source hash`);
+  }
 });

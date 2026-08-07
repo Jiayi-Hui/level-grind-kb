@@ -445,3 +445,19 @@
 - [x] The build is portable and does not import the sibling repository at runtime.
 - [ ] Authenticated production DeepSeek and every configured OpenRouter option return
   a visible first token and complete/error event after deployment.
+## V5.27 Idea Graph restoration and production intake
+
+- [x] Canonical graph package is pinned to a reviewed Git commit.
+- [x] No deployable `idea-graph-data.js` or copied graph component remains.
+- [x] Industry and A/H/US market filters permit multiple simultaneous values.
+- [x] Multi-industry filtering retains cross-industry bridge paths.
+- [x] Preset cluster positions, dashed boundaries, equal security circles, and
+  white/grey observation-node styling are preserved.
+- [x] Node and edge hover neighborhoods, daily playback, inspector,
+  relationship sources, statistics, and legends remain canonical.
+- [x] 08/06 is the latest reviewed graph period and is rendered by default.
+- [x] Portable EdgeOne build, 65 source tests, and lint pass under Node 24.
+- [ ] Production database import confirms ordered migrations 001–007.
+- [ ] Production EdgeOne deployment is green and public graph QA passes.
+- [ ] All twelve approved files have confirmed server/attachment records.
+- [ ] Manager can review the import; ordinary account cannot list/open it.

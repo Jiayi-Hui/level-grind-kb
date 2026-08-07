@@ -369,3 +369,18 @@
 - [x] Prepare and dry-run the private Tiff batch importer without committing bodies.
 - [x] Pass lint, 64 tests, build, diff check, and browser QA.
 - [ ] Wait for explicit approval before migrations, production import, push, or deploy.
+## V5.27 Canonical Idea Graph and production intake
+
+1. Package `investment-graph` as the canonical reusable component and generate
+   a checksum-verified read-only mirror of the reviewed private commit for
+   portable CI. **Completed**
+2. Remove copied graph data/styles/implementation and retain only a host sizing
+   adapter. **Completed**
+3. Run source contracts, full build/lint/tests, desktop multi-filter QA, and
+   daily playback QA. **Completed**
+4. Confirm ordered TencentDB migrations 001–007 through production capability
+   checks and an authenticated import write. **In progress**
+5. Merge the reviewed release to `production`, wait for EdgeOne CI, and verify
+   the public deployment. **Pending**
+6. Import the twelve approved files, then compare manager and ordinary-account
+   raw views without changing either Clerk identity. **Pending**

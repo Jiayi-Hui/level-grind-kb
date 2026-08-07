@@ -498,3 +498,15 @@ and explicit Report/Web/Hybrid evidence modes.
   release acceptance uses the authenticated EdgeOne function and real SSE.
 - Release may proceed only after lint/tests/build, desktop interaction QA, and
   authenticated DeepSeek/OpenRouter first-token checks pass.
+## V5.27 delivery status
+
+The Idea Graph source-of-truth split is resolved. The standalone prototype and
+Level Grind now consume one canonical package rather than two maintained graph
+implementations. Level Grind contributes only `idea-graph.tsx` as a host
+adapter and `idea-graph-host.css` for viewport sizing. The package commit
+contains the complete 08/06 dataset, fixed cluster layout, filters, hover
+network behavior, playback, details, sources, statistics, and legends.
+
+Production release and twelve-file import remain gated on the ordered
+TencentDB/API confirmation. No Clerk user, invitation, or session migration is
+part of this release.
